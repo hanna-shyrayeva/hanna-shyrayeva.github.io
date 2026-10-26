@@ -1,0 +1,70 @@
+/* ==========================================================================
+   Tab bar — floating bottom dock (Figma 1734:10238 · 1795:13550 · 1941:15336)
+   Three compositions, all 16px side gutters, stacked bottom-up:
+     menu            : pill 60 · 16 · home indicator            (block 89)
+     button & menu   : action button 48 · 16 · pill 60 · 16 · home indicator
+     button          : action button 48 · 24 · home indicator    (screen without a tab bar)
+   The home indicator sits 8px above the bottom edge (Figma frame 21 = 8 + 5 + 8).
+   ========================================================================== */
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 393px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  pointer-events: none;                 /* let content through the gutters */
+}
+
+.tabbar__pill {
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  padding: var(--space-sm) 0;           /* 8px */
+  background: var(--tabbar-bg);         /* light: static-dark · dark: one step lighter than cards */
+  box-shadow: var(--tabbar-shadow);     /* dark theme: lifts it off cards scrolling underneath */
+  border-radius: var(--radius-xl);      /* 16px */
+}
+
+.tabbar__tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;                             /* Figma: icon 24 + gap 2 + label 18 = button 44 */
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-on-static);        /* white icon + label (inactive) */
+}
+.tabbar__tab svg { width: 24px; height: 24px; }
+.tabbar__tab span { font: var(--font-weight-medium) 12px/18px var(--font-family-base); }  /* role: label · pill = 8+24+2+18+8 = 60 */
+.tabbar__tab--active { color: var(--brand-on-dark); }   /* brand colour, readable on the dark bar */
+.tabbar__tab:active { opacity: .6; }                          /* pressed */
+
+.tabbar__home {
+  pointer-events: none;
+  width: 139px;
+  height: 5px;
+  margin: var(--space-sm) 0;            /* 8 · 5 · 8 = Figma home-indicator frame 21 */
+  border-radius: 100px;
+  background: var(--color-fg-primary);
+}
+
+/* pill → home indicator: Figma gap 8 + 8 frame inset = 16 */
+.tabbar__pill + .tabbar__home { margin-top: var(--space-lg); }
+
+/* page action button above the pill (or alone, when the screen has no tab bar) */
+.tabbar__action {
+  pointer-events: auto;
+  width: 100%;
+  margin-bottom: var(--space-lg);       /* 16 to the pill */
+}
+.tabbar__action + .tabbar__home { margin-top: var(--space-sm); }   /* 16 + 8 = 24 to the indicator */

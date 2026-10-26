@@ -1,0 +1,89 @@
+/* ==========================================================================
+   AI chat — the one panel used on Home, Goals and Monitors (shared/ai-chat.js)
+   ========================================================================== */
+
+/* header: the chat's name, then new chat, history, close; in the history: back, "Chats", close */
+.ac-head { display: flex; align-items: center; gap: var(--space-xs); min-height: 40px; padding-bottom: var(--space-md); box-shadow: inset 0 -1px 0 var(--color-border-primary); }
+.ac-head__title { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ac-icon { flex: none; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-fg-tertiary); cursor: pointer; }
+.ac-icon svg { width: 22px; height: 22px; }
+.ac-icon:hover:not(:disabled) { background: var(--color-surface-primary); color: var(--color-fg-primary); }
+.ac-icon:disabled { opacity: .35; cursor: default; }
+.ac-head .ac-icon:first-child { margin-left: -8px; }   /* back sits on the text edge */
+.web-panel .chat-thread { padding-top: var(--space-lg); }
+.chat-ai__block p { margin: 0; }
+.chat-ai__block h3 { margin: 4px 0 0; }
+
+/* figures inside an answer: small grey cards */
+.ac-figs { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.ac-fig { flex: 1 1 140px; display: flex; flex-direction: column; gap: 2px; padding: var(--space-md); border-radius: var(--radius-lg); background: var(--color-surface-primary); }
+
+/* a note under an answer, e.g. "not financial advice" */
+.ac-note { padding: var(--space-md); border-radius: var(--radius-lg); background: var(--color-surface-info); color: var(--color-fg-primary); }
+
+/* quick actions: a ready-made question (on the home and in every new chat) */
+.quick-actions--row { flex-direction: row; flex-wrap: wrap; }
+.quick-action svg { width: 18px; height: 18px; }
+
+/* a new chat, before the first message */
+.ac-empty { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-md); padding: var(--space-xl) 0; text-align: center; }
+.ac-empty > * { margin: 0; }
+.ac-empty__icon { width: 64px; height: 64px; margin-bottom: var(--space-sm); }
+.ac-empty__icon svg { width: 100%; height: 100%; display: block; }
+.ac-empty .link { padding: 0; }
+.ac-empty .quick-actions { justify-content: center; margin-top: var(--space-sm); }
+.ac-empty .quick-action { background: var(--color-surface-primary); }   /* grey on the white panel */
+
+/* copy, like, dislike under an answer */
+.ac-acts { display: flex; gap: var(--space-xs); }
+.ac-acts button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-fg-tertiary); }
+.ac-acts button svg { width: 20px; height: 20px; }
+.ac-acts button:hover, .ac-acts button[aria-pressed="true"] { color: var(--color-fg-primary); background: var(--color-surface-primary); }
+.ac-reveal { animation: ac-in var(--motion-base) var(--ease-enter) both; }
+@keyframes ac-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* phone: the More menu, dark and full screen, as the web side menu */
+.ac-more { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--color-static-dark); color: var(--color-on-static); }
+.ac-more .statusbar { position: static; background: transparent; color: var(--color-on-static); }
+.ac-more__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-xl); padding: var(--space-md) var(--space-lg) var(--space-md); scrollbar-width: none; }
+.ac-more__close { align-self: flex-start; width: 24px; height: 24px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.ac-more__close svg { width: 24px; height: 24px; display: block; }
+.ac-more .web-side__actions { margin-top: auto; }
+.ac-more .web-side__actions .btn { height: 48px; }
+.ac-more__home { flex: 0 0 auto; width: 139px; height: 5px; margin: var(--space-sm) auto; border-radius: 100px; background: var(--color-on-static); }
+
+/* phone: full screen (DS chat: white, own scroll, dock at the bottom) */
+.ac-mob { position: absolute; inset: 0; z-index: 70; display: flex; flex-direction: column; background: var(--color-surface-secondary); }
+.ac-mob .statusbar { position: static; background: var(--color-surface-secondary); }
+.ac-mob .ac-head { padding: var(--space-sm) var(--space-lg) var(--space-md); }
+.ac-mob .chat-thread { padding-top: var(--space-lg); }
+.ac-mob .chat-dock { padding-bottom: 28px; }   /* clears the home indicator */
+.ac-mob > .chat-disclaimer { padding-bottom: 28px; }
+
+/* chats history (Figma 2621:43588) */
+.ac-history { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-lg); padding-top: var(--space-lg); scrollbar-width: none; }
+.ac-mob .ac-history { padding: var(--space-lg); }
+.ac-htabs { display: flex; gap: var(--space-md); }
+.ac-hist-row { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-lg); }
+.ac-hist-row:hover { background: var(--color-surface-primary); }
+.ac-hist-row__open { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.ac-hist-row__btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-fg-tertiary); }
+.ac-hist-row__btn svg { width: 22px; height: 22px; }
+
+/* what the assistant drafts waits on the page, outlined in green, until it is saved or discarded */
+.card.is-ai { position: relative; }
+.card.is-ai::before {   /* a 2px outline in the brand gradient (as the Njorda AI button), drawn over the card's edge, so nothing moves */
+  content: ''; position: absolute; inset: 0; padding: 2px; border-radius: inherit; pointer-events: none;
+  background: var(--gradient-brand);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.ac-tag {   /* a flag hanging from the top edge, right: it takes no line of the card */
+  position: absolute; top: 0; right: var(--space-lg); z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 4px 8px; border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--gradient-brand); color: var(--color-fg-static-black); font: var(--font-weight-semibold) 11px/14px var(--font-family-base); white-space: nowrap; }
+.ac-tag svg { width: 10px; height: 10px; }
+.ac-draft-acts { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+.ac-draft-acts .btn { width: auto; }
+
+/* a page that redrew itself with the chat open: the panel and the narrower page are there at once, no slide */
+.web.ac-instant .web-main, .web.ac-instant .web-panel { transition: none !important; }

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onboarding — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/navbar.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/checkbox.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/spinner.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="ds/components/onboarding.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  body { background: #fff; padding: var(--pb-page-pad); }
+
+  /* web onboarding (Figma Onboarding 1361:4880): white nav bar, a 480 card centred on the page */
+  .ob-web { position: relative; width: 100%; height: 100%; background: var(--color-surface-primary); font-family: var(--font-family-base); color: var(--color-fg-primary); }
+  .ob-web .navbar { position: absolute; left: 0; right: 0; top: 0; }
+  .ob-web__stage { position: absolute; inset: 74px 0 0; display: flex; align-items: center; justify-content: center; }
+  .ob-card { width: 480px; display: flex; flex-direction: column; gap: var(--space-2xl); padding: var(--space-2xl); border-radius: var(--radius-xl); background: var(--color-surface-secondary); }
+  .ob-logo { display: block; width: 121px; height: 26px; }
+  [data-theme="dark"] .ob-logo { filter: invert(1); }
+  .ob-foot { display: flex; justify-content: center; gap: 6px; }
+  .ob-foot .link { text-decoration: none; }
+  .onb__block .link { text-decoration: none; }   /* no underlines on links, on the web and on a phone */
+  .ob-terms { display: flex; align-items: center; gap: var(--space-sm); }
+  .ob-terms .link { text-decoration: none; }
+  .field--pw .field__icon { cursor: pointer; }
+  .ob-form { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .field--readonly .field__input { color: var(--color-fg-secondary); }
+  .ob-lang { position: relative; }
+  .ob-lang .lang__menu { width: 140px; }
+  .ob-wait { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); text-align: center; }
+  /* QR modal: narrower and tighter than the Figma 361/32/24 (24 on every side), so the content isn't lost in white */
+  .modal--bankid { max-width: 320px; }   /* both BankID windows: same width, and both close with Cancel */
+  .modal--qr { padding: var(--space-xl); gap: var(--space-lg); }
+  .modal--qr .qr { margin: 0 auto; }
+  .qr-steps { align-self: stretch; text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 0; }
+
+  /* mobile: the design-system onboarding page (white) */
+  .phone.onb-phone, .onb-phone .statusbar, .onb-phone .page-header { background: var(--color-surface-secondary); }
+  .onb-phone .page-header { justify-content: space-between; }
+  .onb-phone .onb { min-height: calc(100% - 96px); }
+
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, D = A.D;
+
+  /* copy: English (the native prototype) and Swedish (the Figma file) */
+  var COPY = {
+    en: { welcome: 'Welcome to Njorda!', login: 'Log in', signup: 'Sign up', back: 'Welcome back', lede: 'Get an overview, analyse and invest smarter.',
+      another: 'BankID on another device', thisDevice: 'Log in with BankID on this device', regThisDevice: 'Sign up with BankID on this device', more: 'More options', noAcc: 'No account?', haveAcc: 'Already have an account?',
+      loginOptions: 'Login options', withEmail: 'Log in with email', withApple: 'Log in with Apple', withGoogle: 'Log in with Google', withBankid: 'Log in with BankID', regBankid: 'Sign up with BankID',
+      email: 'Email', password: 'Password', phEmail: 'name@example.com', phPw: 'Your password', phNewPw: 'At least 8 characters', phFirst: 'Anna', phLast: 'Andersson', forgot: 'Forgot your password?', errEmail: 'Enter your email, like name@example.com', errPw: 'Enter your password',
+      forgotTitle: 'Forgot your password?', forgotLede: 'Enter your email and we’ll send you a link to reset it.', send: 'Send reset link',
+      sentTitle: 'Password reset email sent', sentLede: 'A password reset link is on its way! If you don’t see it within a few minutes, please check your spam folder.', toStart: 'Back to the start page',
+      regOptions: 'Sign up options', regLede: 'Take control of your savings and invest smarter.', regEmail: 'Sign up with email', regApple: 'Sign up with Apple', regGoogle: 'Sign up with Google',
+      regTitle: 'Create your account', regFormLede: 'Ready to invest like a pro?', first: 'First name', last: 'Last name', agree: 'I agree to Njorda’s', terms: 'terms', next: 'Next',
+      errFirst: 'Enter your first name', errLast: 'Enter your last name', errTerms: 'Accept the terms to continue',
+      created: 'Account created',
+      qrTitle: 'Scan the QR code with the BankID app', qr1: 'Open the BankID app and tap the QR icon.', qr2: 'Point the camera at the QR code shown here on the screen.',
+      waitTitle: 'Waiting for BankID', waitBody: 'Confirm in the BankID app. You’ll come back here automatically.', cancel: 'Cancel', loggingIn: 'Logging you in…' },
+    sv: { welcome: 'Välkommen till Njorda!', login: 'Logga in', signup: 'Registrera dig', back: 'Välkommen tillbaka', lede: 'Få överblick, analysera och investera smartare.',
+      another: 'BankID på en annan enhet', thisDevice: 'Logga in med BankID på den här enheten', regThisDevice: 'Registrera dig med BankID på den här enheten', more: 'Fler alternativ', noAcc: 'Inget konto?', haveAcc: 'Har du redan ett konto?',
+      loginOptions: 'Inloggningsalternativ', withEmail: 'Logga in med Email', withApple: 'Logga in med Apple', withGoogle: 'Logga in med Google', withBankid: 'Logga in med BankID', regBankid: 'Registrera med BankID',
+      email: 'Email', password: 'Lösenord', phEmail: 'namn@exempel.se', phPw: 'Ditt lösenord', phNewPw: 'Minst 8 tecken', phFirst: 'Anna', phLast: 'Andersson', forgot: 'Glömt ditt lösenord?', errEmail: 'Ange din email, till exempel namn@exempel.se', errPw: 'Ange ditt lösenord',
+      forgotTitle: 'Glömt ditt lösenord?', forgotLede: 'Ange din email så skickar vi en länk för att återställa det.', send: 'Skicka länk',
+      sentTitle: 'Länken är skickad', sentLede: 'En länk för att återställa lösenordet är på väg! Hittar du den inte inom några minuter, kolla skräpposten.', toStart: 'Gå tillbaka till startsidan',
+      regOptions: 'Registreringsalternativ', regLede: 'Ta kontroll över ditt sparande och investera smartare.', regEmail: 'Registrera med Email', regApple: 'Registrera med Apple', regGoogle: 'Registrera med Google',
+      regTitle: 'Skapa ditt konto', regFormLede: 'Redo att investera som ett proffs?', first: 'Förnamn', last: 'Efternamn', agree: 'Jag godkänner Njordas', terms: 'villkor', next: 'Nästa',
+      errFirst: 'Ange ditt förnamn', errLast: 'Ange ditt efternamn', errTerms: 'Godkänn villkoren för att fortsätta',
+      created: 'Kontot är skapat',
+      qrTitle: 'Skanna QR-koden med BankID-appen', qr1: 'Öppna BankID-appen och tryck på QR-ikonen.', qr2: 'Rikta kameran mot QR-koden som visas här på skärmen.',
+      waitTitle: 'Väntar på BankID', waitBody: 'Bekräfta i BankID-appen. Du kommer tillbaka hit automatiskt.', cancel: 'Avbryt', loggingIn: 'Loggar in…' }
+  };
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'Getting in',
+    intro: 'In Sweden people sign in to anything with money through BankID, so the app opens on it. Other ways wait under “More options”.',
+    states: [
+      { id: 'bankid', label: 'Log in with BankID', note: 'On a computer BankID on another device comes first, with a QR code. On a phone, this device.' },
+      { id: 'email', label: 'Log in with email', note: 'For people without BankID. An empty field says what is missing.' },
+      { id: 'register', label: 'Sign up with BankID', note: 'Same order as logging in, and every button says Sign up.' },
+      { id: 'signup', label: 'Sign up with email', note: 'Four fields and the terms. Apple or Google fill in the email.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    var web = ctx.mode === 'web';
+    var s = { lang: 'en', langMenu: false, view: { email: 'email', register: 'register', signup: 'regEmail' }[ctx.state] || 'login',
+      provider: null, err: {}, pw: false, terms: true, modal: null, history: [] };
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function t(k) { return COPY[s.lang][k]; }
+
+    /* ---------- building blocks ---------- */
+    function link(key, go) { return '<button type="button" class="link" data-go="' + go + '">' + esc(t(key)) + '</button>'; }
+    function btn(cls, text, go, icon) { return '<button type="button" class="btn ' + cls + '" data-go="' + go + '">' + (icon ? I(icon, 'btn__icon') : '') + esc(text) + '</button>'; }
+    function foot(q, key, go) { return '<p class="ob-foot type-body"><span class="tone-secondary">' + esc(t(q)) + '</span>' + link(key, go) + '</p>'; }
+    function head(titleKey, ledeKey) {
+      return '<h1 class="onb__title type-page-title">' + esc(t(titleKey)) + '</h1>' + (ledeKey ? '<p class="onb__lede type-body tone-secondary">' + esc(t(ledeKey)) + '</p>' : '');
+    }
+    function field(id, label, type, ph, extra) {
+      var e = s.err[id];
+      return '<div class="input">' + (extra && extra.header ? '<div class="input__header"><label class="input__label type-body tone-default" for="ob-' + id + '">' + esc(label) + '</label>' + extra.header + '</div>' : '<label class="input__label type-body tone-default" for="ob-' + id + '">' + esc(label) + '</label>') +
+        '<div class="field' + (type === 'password' ? ' field--pw' : '') + (e ? ' field--error' : '') + (extra && extra.readonly ? ' field--readonly' : '') + '"><input class="field__input" id="ob-' + id + '" type="' + (type === 'password' && s.pw ? 'text' : type) + '" placeholder="' + esc(ph) + '"' + (extra && extra.value ? ' value="' + esc(extra.value) + '"' : '') + (extra && extra.readonly ? ' readonly' : '') + ' autocomplete="off">' +
+        (type === 'password' ? '<span class="field__icon" role="button" tabindex="0" data-a="eye" aria-label="Show password">' + I(s.pw ? 'eye-closed' : 'eye') + '</span>' : '') + '</div>' +
+        (e ? '<span class="input__error type-label">' + esc(e) + '</span>' : '') + '</div>';
+    }
+
+    /* the order of the BankID buttons depends on the platform */
+    function bankidButtons(reg) {   // sign-up never says “Log in”
+      var other = btn(web ? 'btn--primary' : 'btn--secondary', t('another'), 'qr', 'bankid');
+      var here = btn(web ? 'btn--secondary' : 'btn--primary', t(reg ? 'regThisDevice' : 'thisDevice'), 'wait', 'bankid');
+      return web ? other + here : here + other;
+    }
+
+    var VIEWS = {
+      login: function () { return head('back', 'lede') + '<div class="onb__controls">' + bankidButtons() + link('more', 'loginOptions') + '</div>' + foot('noAcc', 'signup', 'register'); },
+      loginOptions: function () {
+        return head('loginOptions', 'lede') + '<div class="onb__controls">' + btn('btn--secondary', t('withEmail'), 'email', 'email') + btn('btn--secondary', t('withApple'), 'social:apple', 'apple') + btn('btn--secondary', t('withGoogle'), 'social:google', 'google') + link('withBankid', 'login') + '</div>' + foot('noAcc', 'signup', 'register');
+      },
+      email: function () {
+        return head('back', 'lede') + '<form class="ob-form" novalidate data-form="email">' + field('email', t('email'), 'email', t('phEmail')) +
+          field('pw', t('password'), 'password', t('phPw'), { header: link('forgot', 'forgot') }) +
+          '<button type="submit" class="btn btn--primary">' + esc(t('login')) + '</button></form>' + foot('noAcc', 'signup', 'register');
+      },
+      forgot: function () { return head('forgotTitle', 'forgotLede') + '<form class="ob-form" novalidate data-form="forgot">' + field('email', t('email'), 'email', t('phEmail')) + '<button type="submit" class="btn btn--primary">' + esc(t('send')) + '</button></form>'; },
+      sent: function () { return head('sentTitle', 'sentLede') + '<div class="onb__controls">' + btn('btn--primary', t('toStart'), 'login') + '</div>'; },
+      register: function () { return head('welcome', 'lede') + '<div class="onb__controls">' + bankidButtons(true) + link('more', 'regOptions') + '</div>' + foot('haveAcc', 'login', 'login'); },
+      regOptions: function () {
+        return head('regOptions', 'regLede') + '<div class="onb__controls">' + btn('btn--secondary', t('regEmail'), 'regEmail', 'email') + btn('btn--secondary', t('regApple'), 'regSocial:apple', 'apple') + btn('btn--secondary', t('regGoogle'), 'regSocial:google', 'google') + link('regBankid', 'register') + '</div>' + foot('haveAcc', 'login', 'login');
+      },
+      regEmail: function () {
+        var social = !!s.provider;
+        return head('regTitle', 'regFormLede') + '<form class="ob-form" novalidate data-form="register">' +
+          field('first', t('first'), 'text', t('phFirst')) + field('last', t('last'), 'text', t('phLast')) +
+          (social ? field('email', t('email'), 'email', '', { value: 'e*****@' + (s.provider === 'apple' ? 'icloud.com' : 'gmail.com'), readonly: true }) : field('email', t('email'), 'email', t('phEmail')) + field('pw', t('password'), 'password', t('phNewPw'))) +
+          '<div class="ob-terms"><button type="button" class="checkbox' + (s.err.terms ? ' checkbox--error' : '') + '" role="checkbox" aria-checked="' + s.terms + '" data-a="terms" aria-label="' + esc(t('agree') + ' ' + t('terms')) + '"><span class="checkbox__check">' + I('checkmark') + '</span></button>' +
+          '<span class="type-body tone-secondary">' + esc(t('agree')) + '</span><button type="button" class="link">' + esc(t('terms')) + '</button></div>' +
+          (s.err.terms ? '<span class="input__error type-label">' + esc(s.err.terms) + '</span>' : '') +
+          '<button type="submit" class="btn btn--primary">' + esc(t('next')) + '</button></form>' + foot('haveAcc', 'login', 'login');
+      }
+    };
+
+    function langSwitch() {
+      return '<div class="lang ob-lang"><button type="button" class="lang-globe" data-a="lang" aria-label="Language" aria-expanded="' + s.langMenu + '">' + I('globe') + '</button>' +
+        (s.langMenu ? '<div class="lang__menu" role="menu">' + [['en', 'English'], ['sv', 'Svenska']].map(function (l) {
+          return '<button type="button" class="lang__item type-body" role="menuitemradio" aria-selected="' + (s.lang === l[0]) + '" data-lang="' + l[0] + '"><span class="lang__check">' + I('checkmark') + '</span>' + l[1] + '</button>';
+        }).join('') + '</div>' : '') + '</div>';
+    }
+
+    function modalHtml() {
+      if (s.modal === 'qr') {
+        return '<div class="modal-backdrop" data-bg><div class="modal modal--bankid modal--qr" role="dialog" aria-modal="true">' +
+          '<span class="qr-bankid">' + I('bankid') + '</span><h3 class="modal__title type-section-title">' + esc(t('qrTitle')) + '</h3>' +
+          '<div class="qr" role="img" aria-label="QR code"><svg viewBox="0 0 29 29" shape-rendering="crispEdges">' + qr() + '</svg></div>' +
+          '<ol class="qr-steps type-body tone-secondary"><li>' + esc(t('qr1')) + '</li><li>' + esc(t('qr2')) + '</li></ol>' +
+          '<button type="button" class="btn btn--h40 btn--neutral-2" data-a="close">' + esc(t('cancel')) + '</button></div></div>';
+      }
+      if (s.modal === 'wait') {
+        return '<div class="modal-backdrop" data-bg><div class="modal modal--bankid" role="dialog" aria-modal="true"><div class="ob-wait"><span class="qr-bankid">' + I('bankid') + '</span>' +
+          '<h3 class="modal__title type-section-title">' + esc(t('waitTitle')) + '</h3><p class="type-body-lg tone-secondary">' + esc(t('waitBody')) + '</p>' +
+          '<button type="button" class="btn btn--h40 btn--neutral-2" data-a="close">' + esc(t('cancel')) + '</button></div></div></div>';
+      }
+      return '';
+    }
+    function qr() {
+      var n = 29, out = '', seed = 7;
+      function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+      function finder(x, y) { out += '<rect x="' + x + '" y="' + y + '" width="7" height="7"/><rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="5" height="5" style="fill:var(--palette-neutral-0)"/><rect x="' + (x + 2) + '" y="' + (y + 2) + '" width="3" height="3"/>'; }
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+        var inF = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
+        if (!inF && rnd() > .52) out += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>';
+      }
+      finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+      return out;
+    }
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var body = VIEWS[s.view]();
+      var backBtn = s.view === 'login' ? '<span class="page-header__spacer"></span>' : '<button type="button" class="page-header__back" data-a="back" aria-label="Back">' + I('back') + '</button>';
+      if (web) {
+        ctx.screen.innerHTML = '<div class="ob-web"><div class="navbar"><button type="button" class="link" data-go="login" aria-label="Njorda, back to the start" style="padding:0"><img class="ob-logo" src="ds/assets/images/njorda-logo.svg" alt="Njorda"></button>' + langSwitch() + '</div>' +
+          '<div class="ob-web__stage"><div class="ob-card"><div class="onb__block">' + body + '</div></div></div>' + modalHtml() + '</div>';
+      } else {
+        ctx.screen.innerHTML = '<div class="phone onb-phone">' + A.statusbar() + '<header class="page-header">' + backBtn + langSwitch() + '</header>' +
+          '<main class="onb"><div class="onb__block">' + body + '</div></main></div>' + A.tabbar(null, '') + modalHtml();
+      }
+      bind();
+    }
+    function go(v) {
+      s.err = {}; s.langMenu = false; s.modal = null;
+      if (v === 'qr' || v === 'wait') { s.modal = v; draw(); return; }
+      if (v.indexOf('social:') === 0) { loggingIn(); return; }
+      if (v.indexOf('regSocial:') === 0) { s.provider = v.split(':')[1]; v = 'regEmail'; }
+      else if (v === 'regEmail') s.provider = null;
+      if (v !== s.view) s.history.push(s.view);
+      s.view = v; draw();
+    }
+    /* the block ends at sign-in: a confirmation, no jump into the app */
+    function loggingIn() {
+      draw();
+      A.confirmPill(ctx.screen, t('loggingIn'), web ? 40 : 60);
+    }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(b); }; }); }
+      on('[data-go]', function (b) { go(b.getAttribute('data-go')); });
+      on('[data-a="back"]', function () { s.err = {}; s.view = s.history.pop() || 'login'; draw(); });
+      on('[data-a="lang"]', function () { s.langMenu = !s.langMenu; draw(); });
+      on('[data-lang]', function (b) { keep(); s.lang = b.getAttribute('data-lang'); s.langMenu = false; draw(); restore(); });
+      on('[data-a="close"]', function () { s.modal = null; draw(); });
+      on('[data-a="eye"]', function () { keep(); s.pw = !s.pw; draw(); restore(); });
+      on('[data-a="terms"]', function () { keep(); s.terms = !s.terms; delete s.err.terms; draw(); restore(); });
+      var bg = root.querySelector('[data-bg]');
+      if (bg) bg.onclick = function (e) { if (e.target === bg) { s.modal = null; draw(); } };
+      var form = root.querySelector('[data-form]');
+      if (form) form.onsubmit = function (e) { e.preventDefault(); submit(form.getAttribute('data-form')); };
+      root.querySelectorAll('.field__input').forEach(function (f) { f.oninput = function () { var w = f.closest('.field'); w.classList.remove('field--error'); var er = w.parentNode.querySelector('.input__error'); if (er) er.remove(); }; });
+    }
+
+    /* keep typed values across redraws (language switch, show password) */
+    var saved = {};
+    function keep() { ctx.screen.querySelectorAll('.field__input').forEach(function (f) { saved[f.id] = f.value; }); }
+    function restore() { Object.keys(saved).forEach(function (id) { var f = ctx.screen.querySelector('#' + id); if (f && !f.readOnly) f.value = saved[id]; }); }
+    function val(id) { var f = ctx.screen.querySelector('#ob-' + id); return f ? f.value.trim() : ''; }
+
+    function submit(kind) {
+      keep(); s.err = {};
+      if (kind === 'email') {
+        if (!/^\S+@\S+\.\S+$/.test(val('email'))) s.err.email = t('errEmail');
+        if (!val('pw')) s.err.pw = t('errPw');
+        if (Object.keys(s.err).length) { draw(); restore(); return; }
+        loggingIn();
+      } else if (kind === 'forgot') {
+        if (!/^\S+@\S+\.\S+$/.test(val('email'))) { s.err.email = t('errEmail'); draw(); restore(); return; }
+        go('sent');
+      } else if (kind === 'register') {
+        if (!val('first')) s.err.first = t('errFirst');
+        if (!val('last')) s.err.last = t('errLast');
+        if (!s.provider) {
+          if (!/^\S+@\S+\.\S+$/.test(val('email'))) s.err.email = t('errEmail');
+          if (!val('pw')) s.err.pw = t('errPw');
+        }
+        if (!s.terms) s.err.terms = t('errTerms');
+        if (Object.keys(s.err).length) { draw(); restore(); return; }
+        draw(); restore();
+        A.confirmPill(ctx.screen, t('created'), web ? 40 : 60);
+      }
+    }
+
+    /* ---------- start ---------- */
+    draw();
+    if (ctx.state === 'signup') { s.history = ['login', 'register', 'regOptions']; }
+    if (ctx.state === 'email') { s.history = ['login', 'loginOptions']; }
+    if (ctx.state === 'register') { s.history = ['login']; }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+/* ==========================================================================
+   Checkbox — 24×24 (Figma 1376:6293). States: empty · checked · error.
+   empty: surface-secondary + border-secondary
+   checked: border-green fill + dark check (fg-static-black), no visible border
+   error: surface-secondary + border-error
+   ========================================================================== */
+
+.checkbox {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px solid var(--checkbox-border);
+  border-radius: var(--radius-sm);          /* 6px */
+  background: var(--checkbox-bg);
+  color: var(--checkbox-check);
+  transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+.checkbox__check { width: 16px; height: 16px; opacity: 0; }
+.checkbox__check svg { width: 16px; height: 16px; display: block; }
+
+.checkbox[aria-checked="true"] {
+  background: var(--checkbox-bg-checked);
+  border-color: var(--checkbox-bg-checked);
+}
+.checkbox[aria-checked="true"] .checkbox__check { opacity: 1; }
+
+.checkbox--error { border-color: var(--checkbox-border-error); }
+
+.checkbox:focus-visible { outline: 2px solid var(--color-fg-primary); outline-offset: 2px; }
+
+/* disabled: muted fill / border, no interaction */
+.checkbox:disabled, .checkbox[aria-disabled="true"] { background: var(--input-bg-disabled); border-color: var(--color-border-primary); cursor: default; }
+.checkbox[aria-checked="true"]:disabled, .checkbox[aria-checked="true"][aria-disabled="true"] { background: var(--btn-primary-bg-disabled); border-color: var(--btn-primary-bg-disabled); color: var(--btn-primary-fg-disabled); }

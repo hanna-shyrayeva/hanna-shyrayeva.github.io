@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitors — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/menu.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/state.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+
+  /* page bits not in the design system (Figma 2051:37778, 2051:38196, 2052:5110) */
+  .mon-tabs { display: flex; gap: var(--space-md); }
+  .mon-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+  /* web: two cards a row, so a rule reads in one or two lines instead of one long one */
+  .web .mon-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .web .mon-list > .monitor-card.is-ai { grid-column: 1 / -1; }
+  .mon-card .monitor-message { margin-top: auto; }   /* the message sits at the bottom, so cards in a row line up */
+  .mon-card .monitor-card__menu { border-radius: 8px; }
+  @media (hover: hover) { .mon-card .monitor-card__menu:hover { background: var(--color-surface-tertiary); } }
+  .mon-card.is-paused .monitor-card__body { opacity: .5; }
+  .mon-ctrl { position: relative; }
+  .mon-ctrl .action-menu { position: absolute; top: 32px; right: 0; }
+  .mon-empty { display: flex; flex-direction: column; gap: 120px; }
+  .mon-empty .empty-state { max-width: none; padding-top: 72px; }
+  .phone .mon-empty { gap: var(--space-2xl); }
+  .phone .mon-empty .empty-state { padding-top: var(--space-xl); }
+  .mon-ideas { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .mon-ideas .link-card { min-height: 84px; }
+  /* "Need inspiration?" — the AI idea, as on Goals: gradient ring, same technique as .btn--ai-secondary */
+  .mon-ideas .link-card.is-ai { border: 2px solid transparent; padding: calc(var(--space-lg) - 2px);
+    background: linear-gradient(var(--color-surface-secondary), var(--color-surface-secondary)) padding-box, var(--gradient-brand) border-box; }
+
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, B = window.BADGE_ICONS, D = A.D;
+  var inv = D.totals.investments;
+  var top = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings); }, []).filter(function (h) { return ['Fund', 'Stock', 'ETF'].indexOf(h.t) > -1; })
+    .sort(function (a, b) { return b.value - a.value; })[0];
+  var techShare = D.sectors.filter(function (s) { return s.name === 'Technology'; })[0].share;
+
+  var STATUS = {
+    'Triggered':    { cls: 'negative', icon: 'triggered', label: 'Triggered', msg: 'negative' },
+    'Check failed': { cls: 'warning',  icon: 'failed',    label: 'Check failed', msg: 'warning' },
+    'OK':           { cls: 'positive', icon: 'ok',        label: 'OK' },
+    'Checking':     { cls: 'neutral',  icon: 'checking',  label: 'Checking…' },
+    'Paused':       { cls: 'paused',   icon: 'paused',    label: 'Paused' }
+  };
+  var ORDER = ['Triggered', 'Check failed', 'OK', 'Checking', 'Paused'];   // what needs attention first, as in Figma
+
+  /* ideas → the prompt they send and the monitor the assistant proposes */
+  var IDEAS = [
+    { n: 'Portfolio drop alert', d: 'Get notified when your portfolio value drops significantly.',
+      ask: 'Notify me if my portfolio falls more than 5% in a month',
+      make: { n: 'Portfolio drop alert', rule: 'Notify me if my portfolio falls more than 5% in 30 days.', now: 'Last 7 days: +' + D.totals.weekPct.toFixed(2) + '%' } },
+    { n: 'Concentration risk', d: 'Monitor if a single position becomes too large.',
+      ask: 'Tell me if any single holding goes above 35% of my investments',
+      make: { n: 'Large holding alert', rule: 'Notify me if any single holding is more than 35% of my investments.', now: 'Largest now: ' + top.n + ', ' + (top.value / inv * 100).toFixed(1) + '%' } },
+    { n: 'Sector share', d: 'Know when one sector takes too big a part of your investments.',
+      ask: 'Tell me if technology goes above 30% of my investments',
+      make: { n: 'Tech share', rule: 'Notify me if technology is more than 30% of my investments.', now: 'Right now: ' + techShare.toFixed(1) + '%' } },
+    { n: 'Dividends', d: 'Know when a dividend lands in your accounts.',
+      ask: 'Tell me when a dividend is paid into my accounts',
+      make: { n: 'Dividends', rule: 'Notify me when a dividend is paid into any of my accounts.', now: 'Next expected: Investor AB, in May' } }
+  ];
+
+  var INSPIRE = { n: 'Need inspiration?', d: 'Njorda AI can suggest a monitor based on your investments.', ask: 'Suggest a monitor based on my investments' };
+  function fresh() {
+    return D.monitors.slice().sort(function (a, b) { return ORDER.indexOf(a.state) - ORDER.indexOf(b.state); })
+      .map(function (m, i) { return { id: i, n: m.n, rule: m.rule, state: m.state, orig: m.state, checked: m.checked, message: m.message }; });
+  }
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'Money monitors that explain themselves',
+    intro: 'A monitor watches one rule about your money. The work was in its states and in how a new one gets made.',
+    states: [
+      { id: 'list', label: 'My monitors', note: 'The ones that need attention come first. Triggered says what happened, Check failed says why.' },
+      { id: 'ai', label: 'Create with AI', note: 'Describe the rule in plain words. The draft appears in the list to save or discard.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    var web = ctx.mode === 'web';
+    var s = {
+      list: fresh(),   // never starts empty: the empty page only shows if every monitor is deleted
+      tab: 'mine', open: false, menu: null,
+      draft: null,   // the monitor the assistant drafted: on the page, outlined, until it is saved or discarded
+      spot: null
+    };
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+    /* ---------- pieces ---------- */
+    function badge(st) { var b = STATUS[st]; return '<span class="badge badge--' + b.cls + '">' + B[b.icon] + b.label + '</span>'; }
+    function toggle(on) { return '<button type="button" class="toggle" role="switch" aria-checked="' + on + '" aria-label="Monitor on" data-a="toggle"><span class="toggle__handle"></span></button>'; }
+
+    function card(m, i) {
+      var st = STATUS[m.state], on = m.state !== 'Paused';
+      var msg = m.message && st.msg ? '<div class="monitor-message monitor-message--' + st.msg + ' type-body">' + esc(m.message) + '</div>' : '';
+      var body = '<div class="monitor-card__body"><p class="type-body-strong">' + esc(m.n) + '</p><p class="type-body tone-secondary">' + esc(m.rule) + '</p></div>';
+      var meta = '<div class="monitor-card__meta">' + badge(m.state) + '<span class="type-caption tone-secondary">' + esc(m.checked) + '</span></div>';
+      var cls = 'card monitor-card mon-card' + (on ? '' : ' is-paused') + (s.spot === i ? ' spot' : '');
+      // web and phone alike: the actions wait behind ⋮
+      var menu = s.menu === i ? '<div class="action-menu"><ul>' +
+        '<li><button type="button" class="action-menu__item" data-a="recheck"><span class="action-menu__icon">' + I('refresh') + '</span>Recheck</button></li>' +
+        '<li><button type="button" class="action-menu__item" data-a="edit"><span class="action-menu__icon">' + I('edit') + '</span>Edit</button></li>' +
+        '<li><button type="button" class="action-menu__item" data-a="delete"><span class="action-menu__icon">' + I('delete') + '</span>Delete</button></li></ul></div>' : '';
+      return '<article class="' + cls + '" data-i="' + i + '"><div class="monitor-card__header">' + meta +
+        '<div class="monitor-card__controls mon-ctrl">' + toggle(on) + '<button type="button" class="monitor-card__menu" data-a="menu" aria-label="More actions">' + I('more-vert') + '</button>' + menu + '</div></div>' +
+        body + msg + '</article>';
+    }
+
+    function ideas() {
+      return '<div class="mon-ideas"><p class="type-body-lg tone-secondary">' + (web ? 'Click' : 'Tap') + ' any idea to customise it with Njorda AI and add it as a monitor.</p>' +
+        '<button type="button" class="link-card is-ai" data-inspire><span class="link-card__text"><span class="type-body-strong">' + esc(INSPIRE.n) + '</span><span class="type-body tone-secondary">' + esc(INSPIRE.d) + '</span></span><span class="link-card__arrow" style="color:var(--color-fg-tertiary)">' + I('arrow-right') + '</span></button>' +
+        IDEAS.map(function (d, k) {
+          return '<button type="button" class="link-card" data-idea="' + k + '"><span class="link-card__text"><span class="type-body-strong">' + esc(d.n) + '</span><span class="type-body tone-secondary">' + esc(d.d) + '</span></span><span class="link-card__arrow" style="color:var(--color-fg-tertiary)">' + I('arrow-right') + '</span></button>';
+        }).join('') + '</div>';
+    }
+
+    function tabs() {
+      return '<div class="mon-tabs">' +
+        '<button type="button" class="tab' + (s.tab === 'mine' ? ' tab--active' : '') + '" data-tab="mine">My monitors <span class="tab__badge">' + s.list.length + '</span></button>' +
+        '<button type="button" class="tab' + (s.tab === 'ideas' ? ' tab--active' : '') + '" data-tab="ideas">Ideas</button></div>';
+    }
+
+    function draftCard() {
+      var d = s.draft;
+      return '<article class="card monitor-card is-ai"><div class="monitor-card__body">' + A.aiTag() + '<p class="type-body-strong">' + esc(d.n) + '</p><p class="type-body tone-secondary">' + esc(d.rule) + '</p>' +
+        '<p class="type-caption tone-secondary">Checks every day at 08:00. ' + esc(d.now) + '</p></div>' +
+        '<div class="ac-draft-acts"><button type="button" class="btn btn--h36 btn--primary" data-draft="save">Save</button><button type="button" class="btn btn--h36 btn--neutral-2" data-draft="discard">Discard</button></div></article>';
+    }
+    function content() {
+      if (s.tab === 'ideas') return ideas();
+      if (!s.list.length && !s.draft) {
+        return '<div class="mon-empty"><div class="empty-state"><p class="type-section-title">No active monitors yet</p><p class="type-body-lg tone-secondary">Describe one to Njorda AI<br>or start from an idea below</p></div>' +
+          '<div class="mon-ideas"><p class="type-section-title">Ideas</p>' + ideas() + '</div></div>';
+      }
+      return '<div class="mon-list">' + (s.draft ? draftCard() : '') + s.list.map(card).join('') + '</div>';
+    }
+
+    var chat = A.chat({
+      web: web, screen: function () { return ctx.screen; }, draw: function () { draw(); }, later: later,
+      // creating a monitor, or asking for one: the draft goes on this page; anything else gets the usual answer
+      answer: function (q) { return s.creating || A.chatTopic(q) === 'monitors' ? propose(q) : A.chatAnswer(q, false); },
+      onNew: function () { s.creating = false; },
+      pages: { monitors: 'Monitors' },
+      empty: function () {   // only while creating; otherwise the usual greeting
+        if (!s.creating) return null;
+        return '<div class="ac-empty"><span class="ac-empty__icon">' + I('ai-chat') + '</span><p class="type-section-title">What would you like to monitor?</p>' +
+          '<p class="type-body tone-secondary">Describe it in plain words, for example:<br>“Notify me if my portfolio drops more than 5% in a month”.</p></div>';
+      },
+      onShow: function () { s.open = false; draw(); },
+      onClose: function () { s.open = false; draw(); }
+    });
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var ph = ctx.screen.querySelector('.phone'), scroll = ph ? ph.scrollTop : 0;
+      if (web) {
+        ctx.screen.innerHTML = '<div class="web' + (s.open ? ' has-panel' : '') + '">' + A.webSide('monitors') +
+          '<main class="web-main"><div class="web-head"><h1 class="web-head__title type-page-title">Monitors</h1>' +
+          '<button type="button" class="btn btn--h40 btn--primary" data-a="create">Create monitor</button></div>' +
+          tabs() + content() + '</main>' +
+          chat.panel() + '</div>';
+      } else {
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() +
+          '<header class="page-header"><h1 class="page-header__title type-page-title">Monitors</h1></header>' +
+          '<main class="screen-content" style="padding-bottom:200px">' + tabs() + content() + '</main></div>' +
+          A.tabbar('more', '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-a="create">Create monitor</button></div>') +
+          chat.panel(s.open);
+        ctx.screen.querySelector('.phone').scrollTop = scroll;
+      }
+      bind();
+    }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { fn(b, e); }; }); }
+      on('[data-tab]', function (b) { s.tab = b.getAttribute('data-tab'); s.menu = null; draw(); });
+      on('[data-idea]', function (b) { openChat(IDEAS[+b.getAttribute('data-idea')]); });
+      on('[data-inspire]', function () { openChat(INSPIRE); });
+      on('[data-a="create"]', function () { openChat(null, null, true); });
+      chat.bind(root);
+      on('[data-act="ai"]', function () { if (s.open) { chat.stop(); s.open = false; } else { s.open = true; s.creating = false; chat.s.tab = 'chat'; } draw(); });   // Njorda AI in the side menu
+      on('[data-draft]', function (b, e) {
+        e.stopPropagation();
+        if (b.getAttribute('data-draft') === 'save') { var d = s.draft; s.draft = null; add(d); return; }
+        s.draft = null; draw(); A.confirmPill(ctx.screen, 'Draft discarded', web ? 40 : 200);
+      });
+      root.querySelectorAll('.mon-card').forEach(function (c) {
+        var i = +c.getAttribute('data-i'), m = s.list[i];
+        c.querySelectorAll('[data-a]').forEach(function (b) {
+          b.onclick = function (e) {
+            e.stopPropagation();
+            var a = b.getAttribute('data-a');
+            if (a === 'menu') { s.menu = s.menu === i ? null : i; draw(); return; }
+            s.menu = null;
+            if (a === 'toggle') {
+              if (m.state === 'Paused') { m.state = 'Checking'; m.checked = 'Check running'; draw(); later(function () { settle(m); draw(); }, 1400); }
+              else { m.state = 'Paused'; m.checked = 'Not checking'; draw(); }
+            } else if (a === 'recheck') {
+              m.state = 'Checking'; m.checked = 'Check running'; draw(); later(function () { settle(m); draw(); }, 1400);
+            } else if (a === 'delete') {
+              draw();
+              A.confirmModal(root, 'Delete monitor?', '“' + m.n + '” will stop checking and be removed.', 'Delete', function () {
+                s.list.splice(i, 1); s.spot = null; draw(); A.confirmPill(root, 'Monitor deleted', web ? 40 : 200);
+              });
+            } else if (a === 'edit') {
+              openChat(null, 'What would you like to change in “' + m.n + '”? For example, the limit or the time period.');
+            }
+          };
+        });
+      });
+    }
+
+    function settle(m) {
+      m.state = m.orig === 'Paused' || m.orig === 'Checking' ? 'OK' : m.orig;
+      m.checked = 'Today, 09:41';
+    }
+
+    function add(make) {
+      s.list.unshift({ id: Date.now(), n: make.n, rule: make.rule, state: 'Checking', orig: 'OK', checked: 'Check running', message: null });
+      s.tab = 'mine'; s.spot = 0;
+      draw();
+      A.confirmPill(ctx.screen, 'Monitor created', web ? 40 : 200);
+      ctx.note('The new monitor runs its first check straight away, so you see a real status, not an empty promise.');
+      later(function () { settle(s.list[0]); draw(); }, 1600);
+    }
+
+    /* ---------- AI ---------- */
+    function openChat(idea, greeting, blank) {   // blank: Create monitor by hand, an empty chat with nothing typed in
+      s.open = true; s.creating = true; s.menu = null; s.tab = 'mine';
+      if (greeting) chat.greet('<p>' + esc(greeting) + '</p>'); else chat.reset();
+      draw();
+      if (blank || (!idea && greeting)) return;
+      var d = idea || IDEAS[3];   // the example asks for a monitor Elsa does not have yet
+      later(function () { if (s.open) chat.type(d.ask); }, idea ? 300 : 900);
+    }
+    // the idea the question is closest to; a plain question gets the dividends one
+    function pick(q) {
+      var k = /drop|fall|down/i.test(q) ? 0 : /holding|position|single/i.test(q) ? 1 : /tech|sector/i.test(q) ? 2 : 3;
+      return IDEAS.filter(function (d) { return d.ask === q; })[0] || IDEAS[k];
+    }
+    function propose(q) {
+      var make = pick(q).make;
+      return { wait: 'Setting up your monitor…', delay: 1500, page: 'monitors', title: 'Monitor: ' + make.n, parts: [
+        '<p>Here’s the monitor I’d set up:</p>',
+        '<p><b>' + esc(make.n) + ':</b> ' + esc(make.rule) + '</p>',
+        '<p>It checks every day at 08:00. It’s on Monitors now: save it there, or tell me what to change.</p>'
+      ], before: function () { s.draft = make; s.tab = 'mine'; } };
+    }
+
+    /* ---------- start ---------- */
+    A.moreMenu(ctx, function () { s.open = true; s.creating = false; chat.s.tab = 'chat'; draw(); }, 'monitors');   // phone: the More tab opens the menu, and Njorda AI there opens this page's chat
+    draw();
+    if (ctx.state === 'ai') openChat(null);
+    var spot = ctx.screen.querySelector('.spot'), phone = ctx.screen.querySelector('.phone');
+    if (spot && phone) phone.scrollTop = Math.max(0, spot.offsetTop - 120);
+  }
+})();
+</script>
+</body>
+</html>

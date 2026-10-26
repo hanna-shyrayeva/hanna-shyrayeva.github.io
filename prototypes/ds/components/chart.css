@@ -1,0 +1,157 @@
+/* ==========================================================================
+   Chart — performance area chart card + period picker (chart tabs)
+   ========================================================================== */
+
+.chart-card { display: flex; flex-direction: column; gap: var(--space-lg); }
+
+/* --- period picker (chart tabs) --- */
+.chart-tabs { display: flex; gap: var(--space-sm); }
+
+.chart-tab {
+  border: 0;
+  padding: 6px var(--space-md);           /* py6 px12 */
+  border-radius: var(--radius-chip);      /* 10 — Figma chart-tab radius (decided) */
+  background: var(--tab-bg-default);      /* = surface-secondary (blends on card) */
+  color: var(--tab-fg);
+  font: var(--font-weight-regular) 12px/16px var(--font-family-base);
+  white-space: nowrap;
+}
+.chart-tab--active { background: var(--tab-bg-active); color: var(--brand-on-primary); font-weight: var(--font-weight-medium); }   /* weight = second cue */
+
+/* --- chart canvas --- */
+.chart-canvas { position: relative; width: 100%; height: 160px; overflow: hidden; touch-action: pan-y; }   /* anchors the inspect layer */
+.chart-canvas svg { display: block; width: 100%; height: 100%; }
+/* performance: a smooth green line over a green fade (App.curve + App.chartFill), the same look as the side menu */
+.chart-canvas { color: var(--chart-trend); }
+.chart-line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-area { fill: url(#chart-fill) var(--chart-area-fill); stroke: none; }
+
+/* --- date axis --- */
+.chart-dates {
+  display: flex;
+  justify-content: space-between;
+  color: var(--chart-axis-label);
+  font: var(--font-weight-regular) 12px/16px var(--font-family-base);
+}
+
+/* --- tap-to-inspect: press or drag on the chart to read a point ---
+   vertical dashed guide at the nearest point, a marker on the line, and a tooltip with
+   date (14R secondary) + value (14M, figures). Tooltip sits right of the guide and flips
+   left near the edge; release / tap outside hides it. Formats: "14 Jun 2026", "1 491 625 SEK". */
+.chart-inspect { position: absolute; inset: 0; pointer-events: none; }
+.chart-inspect[hidden] { display: none; }
+.chart-guide { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--chart-crosshair); }
+.chart-marker {
+  position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  border-radius: 50%; background: var(--chart-marker);
+  box-shadow: 0 0 0 2px var(--chart-marker-ring);
+}
+.chart-tip {
+  position: absolute; top: 8px;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  box-shadow: var(--elevation-float);
+  white-space: nowrap;
+}
+.chart-tip { color: var(--color-fg-primary); }   /* the canvas is green for the line; the figures stay ink */
+.chart-tip__value { display: flex; align-items: center; gap: 6px; }
+.chart-tip__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--chart-marker); flex: 0 0 auto; }
+
+/* ==========================================================================
+   Allocation bars (Figma "bar charts" 1766:9078) — Regions, Sectors, Asset class …
+   Group: title 16M · 16 · rows gap 8. Row: h30, radius chip (10), padding 5/10, 14R,
+   label left, % right. The fill covers --pct of the row. Text on the fill stays dark
+   (static black) while text on the empty part follows the theme, so the row is two
+   stacked layers and the top one (fill) is clipped to --pct.
+   RN: a base View + an absolutely positioned fill View (width = pct, overflow hidden)
+   whose inner row has the full width, measured with onLayout.
+   ========================================================================== */
+.alloc { display: flex; flex-direction: column; gap: var(--space-lg); }
+.alloc__title { margin: 0; }                                   /* type-body-strong (16M) */
+.alloc__rows { display: flex; flex-direction: column; gap: var(--space-sm); }
+.alloc-row { position: relative; height: 30px; border-radius: var(--radius-chip); overflow: hidden; }
+.alloc-row__layer {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm);
+  padding: 5px 10px;
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.alloc-row__layer > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.alloc-row__layer--base { background: var(--chart-bar-bg); color: var(--chart-bar-fg); }
+.alloc-row__layer--fill { background: var(--chart-bar-fill); color: var(--chart-bar-fg-on-fill);
+                          clip-path: inset(0 calc(100% - var(--pct, 0%)) 0 0); }
+
+/* ==========================================================================
+   Added from the Phase 1 screens (30 Sep 2026)
+   Share charts use the share ramp --chart-ramp-1…10 (Figma chart/treemap · sankey · heatmap
+   group-green-1…10): the bigger the share, the higher the step. Step by share:
+   >10% → 10 · 5–10% → 8 · 2–5% → 6 · 1–2% → 5 · 0.5–1% → 4 · <0.5% → 3.
+   Label on steps 7–10: --chart-ramp-fg (static black); on 1–6: fg-primary (reads in dark).
+   Every chart answers a tap (no hover): the tapped part is outlined and .chart-readout says what it is.
+   ========================================================================== */
+
+/* --- reference range on an allocation row (Figma chart/bar/accent) --- */
+.alloc-row__ref { position: absolute; bottom: 3px; height: 3px; border-radius: 2px; background: var(--chart-bar-accent); z-index: 2; }
+
+/* --- details line under a chart: what was tapped (title 14M · line 14R secondary) --- */
+.chart-readout { display: flex; flex-direction: column; gap: 2px; min-height: 62px; padding: var(--space-md); border-radius: var(--radius-md); background: var(--color-surface-primary); }
+
+/* --- chart picker row — full-width select (width stays the same whichever chart is picked) → option panel as wide as the card --- */
+.chart-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.chart-head .select { width: 100%; }
+.chart-head .dropdown-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; }
+
+/* --- bubble chart (Risk): across risk (max loss %), up expected return (%) ---
+   holdings = circles sized by value (√value), benchmarks = diamonds, portfolio = larger diamond (Figma chart/benchmark/*) */
+.bubble-legend { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); }
+.bubble-legend__item { display: inline-flex; align-items: center; gap: 6px; }
+.bubble-legend__item svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.bubble-chart { position: relative; height: 300px; touch-action: pan-y; }
+.bubble-chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.bc-axis { stroke: var(--chart-axis-line); stroke-width: 1; }
+.bc-zero { stroke: var(--color-fg-tertiary); stroke-width: 1; stroke-dasharray: 3 3; }
+.bc-tick { fill: var(--chart-axis-label); font: 400 11px/14px var(--font-family-base); font-variant-numeric: tabular-nums; }
+.bc-title { fill: var(--chart-axis-label); font: 400 12px/16px var(--font-family-base); }
+.bc-holding { fill: var(--chart-bench-holding); fill-opacity: .55; stroke: var(--chart-bench-holding); stroke-width: 1; }
+.bc-bench { fill: var(--chart-bench-benchmark); }
+.bc-port { fill: var(--chart-bench-portfolio); stroke: var(--color-surface-secondary); stroke-width: 1.5; }
+.bc-sel { fill: none; stroke: var(--chart-line-stroke); stroke-width: 2; }
+.bubble-chart .chart-tip { top: auto; max-width: 230px; white-space: normal; pointer-events: none; }   /* kept inside the card, never off-screen */
+.bubble-chart .chart-tip[hidden] { display: none; }
+
+/* --- treemap: boxes sized by share (squarified); tap a group to go one level deeper --- */
+.trail { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; min-height: 24px; }
+.trail button { padding: 0; border: 0; background: none; color: var(--color-fg-secondary); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.trail svg { width: 16px; height: 16px; color: var(--color-fg-tertiary); }
+.treemap { position: relative; height: 320px; }
+.tm-box { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 2px solid var(--color-surface-secondary); border-radius: var(--radius-md); overflow: hidden; text-align: left; font: inherit; cursor: pointer; }
+.tm-box:active { filter: brightness(.94); }
+.tm-box.is-sel { box-shadow: inset 0 0 0 2px var(--color-fg-primary); }
+.tm-box span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- flow diagram (Sankey): groups on the left → holdings on the right, bands sized by value --- */
+.sankey svg { display: block; width: 100%; overflow: visible; }
+.sk-link { fill-opacity: .55; cursor: pointer; }
+.sk-link.is-sel, .sk-link:active { fill-opacity: .9; }
+.sk-node { fill: var(--chart-sankey-node); }
+.sk-label { fill: var(--color-fg-primary); font: 400 11px/14px var(--font-family-base); }
+.sk-label--cat { font-weight: 500; font-size: 12px; }
+
+/* --- heatmap: rows = holdings, columns = groups; scrolls sideways, first column pinned --- */
+.heat { overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--space-lg) * -1); padding: 0 var(--space-lg); }
+.heat::-webkit-scrollbar { display: none; }
+.heat table { border-collapse: separate; border-spacing: 2px; }
+.heat th { font: 400 11px/14px var(--font-family-base); color: var(--chart-axis-label); text-align: left; white-space: nowrap; }
+.heat thead th { vertical-align: bottom; height: 76px; padding: 0; }
+.heat thead th span { display: inline-block; width: 20px; margin-left: 20px; transform: rotate(-45deg); transform-origin: 0 100%; }
+.heat tbody th { position: sticky; left: 0; z-index: 1; max-width: 128px; overflow: hidden; text-overflow: ellipsis; padding-right: var(--space-sm); background: var(--color-surface-secondary); }
+.heat td { width: 44px; min-width: 44px; height: 30px; border-radius: 6px; text-align: center; font: 500 11px/14px var(--font-family-base); font-variant-numeric: tabular-nums; cursor: pointer; }
+.heat td.is-zero { background: var(--color-surface-primary); cursor: default; }
+.heat td.is-sel { box-shadow: inset 0 0 0 2px var(--color-fg-primary); }
+
+/* --- web: hover on a period --- */
+@media (hover: hover) { .chart-tab:not(.chart-tab--active):hover { background: var(--tab-page-bg-pressed); } }

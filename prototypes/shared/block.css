@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;600&family=Funnel+Sans:wght@400;500;600&display=swap');
+/* ==========================================================================
+   Prototype block — the frame around a live prototype on a case-study page.
+   Portfolio chrome (not the Njorda app): a light story column with the
+   states as a vertical list on the left, the device on the right.
+   ========================================================================== */
+
+.pb {
+  --pb-ink: #1b1d1c;
+  --pb-muted: #5f6461;
+  --pb-line: #dcdfdd;
+  --pb-stage: #e8ebe9;
+  --pb-accent: #2b8040;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  color: var(--pb-ink);
+  font: 400 16px/1.55 'Funnel Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.pb *, .pb *::before, .pb *::after { box-sizing: border-box; }
+
+/* --- story column --- */
+.pb-story { display: flex; flex-direction: column; gap: 20px; position: sticky; top: var(--pb-page-pad, 32px); }
+.pb-head { display: flex; flex-direction: column; gap: 8px; }
+.pb-eyebrow { margin: 0; font-size: 13px; color: var(--pb-muted); }
+.pb-title { margin: 0; font-family: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif; font-size: 24px; line-height: 1.2; font-weight: 600; }
+.pb-intro { margin: 0; font-size: 15px; color: var(--pb-muted); }
+
+/* states: one per line; the active one shows its note underneath */
+.pb-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-left: 1px solid var(--pb-line); }
+.pb-step {
+  display: block;
+  width: 100%;
+  margin-left: -1px;
+  padding: 7px 0 7px 16px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  color: var(--pb-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pb-step:hover { color: var(--pb-ink); }
+.pb-step:focus-visible { outline: 2px solid var(--pb-accent); outline-offset: 2px; }
+.pb-step__t { display: block; font-size: 15px; line-height: 22px; font-weight: 500; }
+.pb-step__d { display: none; margin-top: 4px; font-size: 14px; line-height: 1.5; color: var(--pb-muted); }
+.pb-step[aria-current="step"] { border-left-color: #4cff7b; color: var(--pb-ink); }   /* the bright app green, in both themes */
+.pb-step[aria-current="step"] .pb-step__d { display: block; }
+
+.pb-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.pb-seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--pb-stage); }
+.pb-seg button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pb-muted);
+  font: 500 13px/18px 'Funnel Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+.pb-seg button[aria-pressed="true"] { background: var(--pb-seg-on, #fff); color: var(--pb-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.pb-seg button:focus-visible { outline: 2px solid var(--pb-accent); outline-offset: 2px; }
+.pb-hint { margin: 0; font-size: 13px; color: var(--pb-muted); }
+
+/* --- stage + devices --- */
+/* the preview area fills the window height (page padding 32 above and below); the device is centred in it */
+.pb-stage { min-width: 0; height: calc(var(--pb-vh, 100vh) - 2 * var(--pb-page-pad, 32px)); display: flex; align-items: center; justify-content: center; padding: 24px; border-radius: 20px; background: var(--pb-stage); position: sticky; top: var(--pb-page-pad, 32px); }
+.pb-device { flex: 0 0 auto; }
+.pb-clip { position: relative; overflow: hidden; }
+/* the app screen: its own colours and type come from the design system, not the portfolio */
+.pb-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; color: var(--color-fg-primary); font-family: var(--font-family-base); }
+
+.pb-device--web { border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, .12); }
+.pb-bar { height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 12px; background: var(--pb-bar, #f1f2f1); border-bottom: 1px solid var(--pb-line); }
+.pb-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--pb-bar-dot, #d3d6d4); }
+.pb-device--mob { padding: 10px; border-radius: 54px; background: #111; box-shadow: 0 10px 30px rgba(0, 0, 0, .18); }
+.pb-device--mob .pb-clip { border-radius: 44px; }
+
+/* fixed things in the app (tab bar, modals, toasts) pin to the scaled screen */
+.pb-screen .phone { min-height: 0; height: 100%; overflow-y: auto; scrollbar-width: none; }
+.pb-screen .phone::-webkit-scrollbar,
+.pb-screen .chat-thread::-webkit-scrollbar { display: none; }
+.pb-screen .chat-thread { scrollbar-width: none; }
+
+/* --- narrow layouts --- */
+.pb.is-stacked { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.pb.is-stacked .pb-story { position: static; }
+.pb.is-stacked .pb-stage { padding: 16px; height: auto; position: static; }
+
+/* inside the case page: the page sizes the iframe to the block, so the block must not stretch to it */
+html.pb-embed, html.pb-embed body { height: auto; }
+
+/* #...&bare=1: only the device (used to export preview images) */
+html.pb-bare { --pb-page-pad: 0px; }
+html.pb-bare, html.pb-bare body { background: var(--pb-bare-bg, #e8ebe9) !important; padding: 0 !important; }
+html.pb-bare .pb { grid-template-columns: minmax(0, 1fr); }
+html.pb-bare .pb-story { display: none; }
+html.pb-bare .pb-stage { background: none; padding: 32px; border-radius: 0; height: 100vh; }
+
+/* on the case page's grey band: the block takes the band colour and the stage panel disappears */
+html.pb-on-band, html.pb-on-band body { background: var(--pb-page-bg) !important; }
+html.pb-on-band .pb-stage { background: transparent; }
+
+/* inside the case page the block can be a few pixels taller than its iframe: no scrollbar of its own */
+html.pb-embed { scrollbar-width: none; }
+html.pb-embed::-webkit-scrollbar, html.pb-embed body::-webkit-scrollbar { display: none; }
+html.pb-embed .pb-screen .phone, html.pb-embed .pb-screen .web-main, html.pb-embed .pb-screen .fr-web__main { overscroll-behavior-y: contain; }   /* the screen, at its end, never hands the scroll to the page */
+
+/* the case page in its dark theme: same chrome, dark colours */
+html.pb-site-dark .pb { --pb-ink: #e6e9e7; --pb-muted: #9aa19d; --pb-line: #2e3330; --pb-stage: #202523; --pb-accent: #5fd38a; --pb-seg-on: #2f3532; --pb-bar: #262b28; --pb-bar-dot: #3d433f; color-scheme: dark; }
+html.pb-site-dark .pb-seg { background: #1f2421; }

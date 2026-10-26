@@ -1,0 +1,422 @@
+/* ==========================================================================
+   Njorda design tokens — aligned to the app's Tier-2 vocabulary
+   (matches the dev's design-tokens.css / tokens.ts; JSON twin in tokens.json).
+
+   Structure (a token may only reference the layer above it):
+   0) PRIMITIVES — raw palette  --palette-{hue}-{step}. Theme-independent, no meaning.
+   B) BRAND      — --brand-primary(-pressed) / --brand-accent / --brand-tint / --brand-on-primary / --brand-bg (light + dark).
+                   The only layer a brand or an organization overrides.
+   1) CORE   — semantic tokens --color-{group}-{role}[-{state}] (light + dark) → primitives or brand.
+   2) COMPONENT (extension) — --{component}-{part}[-{state}] → core
+      (Figma component tokens; raw values only where Figma has no core match). Mapped onto CORE via var(); genuinely-new raw values
+      are marked  NEW → flag for the dev to adopt.
+   3) SCALES — spacing, radius, shadows / elevation, motion (dev scale names).
+
+   Every token has a light and a dark value. Light = :root, dark =
+   [data-theme="dark"] and prefers-color-scheme.
+   ========================================================================== */
+
+:root,
+[data-theme] {   /* also on an element: a frame with data-theme renders in that theme */
+  color-scheme: light;
+
+  /* ===== 0) PRIMITIVES — raw palette (theme-independent). Only semantic tokens may reference these. ===== */
+  --palette-neutral-0: #ffffff;  --palette-neutral-25: #f9f9f9;  --palette-neutral-50: #f5f5f5;  --palette-neutral-100: #eaeaea;  --palette-neutral-300: #dbdbdb;  --palette-neutral-400: #b7b7b7;  --palette-neutral-450: #8b8b8b;  --palette-neutral-500: #7f7f7f;  --palette-neutral-600: #707070;
+  --palette-ink-600: #535654;  --palette-ink-700: #2e322f;  --palette-ink-800: #252926;  --palette-ink-850: #1d211e;  --palette-ink-900: #191d1a;
+  --palette-green-25: #f8fffa;  --palette-green-50: #e2ffea;  --palette-green-400: #6fff95;  --palette-green-500: #4cff7b;  --palette-green-600: #43d46a;  --palette-green-700: #3aae57;  --palette-green-800: #2b8040;  --palette-green-900: #21412a;  --palette-green-920: #1e3122;  --palette-green-950: #1b261e;
+  --palette-red-50: #ffedeb;  --palette-red-200: #fbc7c1;  --palette-red-300: #ff8989;  --palette-red-350: #ff4d4d;  --palette-red-400: #ff4747;  --palette-red-500: #ff3131;  --palette-red-600: #de0000;  --palette-red-800: #711f1f;  --palette-red-950: #3e1f1f;
+  --palette-amber-50: #fff3dd;  --palette-amber-300: #feb741;  --palette-amber-400: #f5a623;  --palette-amber-500: #ff9500;  --palette-amber-600: #c57e09;  --palette-amber-700: #a35f00;  --palette-amber-950: #332d1b;
+  --palette-cyan-50: #e6fcfd;  --palette-cyan-400: #00ebf3;  --palette-cyan-500: #01e1e9;  --palette-cyan-600: #00bada;  --palette-cyan-700: #007b91;  --palette-cyan-950: #17302e;
+
+  /* ===== B) BRAND — the only layer a brand / organization swaps (brand.json + org theme) ===== */
+  --brand-primary: var(--palette-green-500);           /* brandLight #4cff7b — primary actions, selection, highlights */
+  --brand-primary-pressed: color-mix(in srgb, var(--brand-primary) 80%, var(--palette-ink-900));   /* derived: brand + 20% ink (light) */
+  --brand-accent: var(--palette-cyan-500);             /* second brand colour — gradient end, chart accent */
+  --brand-tint: color-mix(in srgb, var(--brand-primary) 16%, var(--palette-neutral-0));          /* derived: 16% brand on white — AI highlight surface */
+  --brand-on-primary: var(--palette-ink-900);   /* text / icons on the brand colour — ink or white, whichever has more contrast (set per brand) */
+  --brand-bg: var(--palette-neutral-50);        /* bgLight #f5f5f5 — page background */
+  --brand-on-dark: var(--brand-primary);        /* brand colour used ON the dark tab bar — lightened per brand until 4.5:1 on the tab bar (--tabbar-bg per theme; Njorda: = primary) */
+
+  /* ===== 1) CORE — Njorda Tier-2 (light) ===== */
+  /* surface */
+  --color-surface-primary: var(--brand-bg);   /* page background — set by the brand */
+  --color-surface-secondary: var(--palette-neutral-0);
+  --color-surface-tertiary: var(--palette-neutral-100);
+  --color-surface-success: var(--palette-green-25);
+  --color-surface-warning: var(--palette-amber-50);
+  --color-surface-negative: var(--palette-red-50);
+  --color-surface-info: var(--palette-cyan-50);           /* FLAG: in Figma (surface/info), not in lean tokens.ts */
+  --color-surface-ai-highlight: var(--brand-tint);   /* FLAG: in Figma (surface/AI-highlight), not in lean tokens.ts — brand tint */
+  /* fg (foreground / text + icon) */
+  --color-fg-primary: var(--palette-ink-900);
+  --color-fg-secondary: var(--palette-neutral-600);   /* AA: Figma #7f7f7f → #707070 (4.95 on white, 4.54 on page) */
+  --color-fg-tertiary: var(--palette-neutral-450);    /* icons only (3:1): Figma #b7b7b7 → #8b8b8b */
+  --color-fg-positive: var(--palette-green-800);      /* AA: Figma #3aae57 → #2b8040 */
+  --color-fg-negative: var(--palette-red-600);        /* AA: Figma #ff3131 → #de0000 */
+  --color-fg-warning: var(--palette-amber-700);       /* AA: Figma #ff9500 → #a35f00 */
+  --color-fg-static-black: var(--palette-ink-900);   /* on-primary / on-warning */
+  --color-fg-info: var(--palette-cyan-700);           /* FLAG: in Figma (text/info), not in lean tokens.ts — AA: #00bada → #007b91 */
+  --color-icon-info: var(--palette-cyan-500);         /* FLAG: in Figma (icon/info), differs from fg-info */
+  --color-icon-warning: var(--palette-amber-600);      /* FLAG: in Figma (icon/warning), differs from fg-warning — 3:1: #f5a623 → #c57e09 */
+  /* border */
+  --color-border-primary: var(--palette-neutral-100);
+  --color-border-primary-hover: var(--palette-neutral-300);   /* Figma border/primary-hover (replaces invented border-primary-light) */
+  --color-border-secondary: var(--palette-neutral-400);       /* FLAG: in Figma (border/secondary), not in lean tokens.ts */
+  --color-border-green: var(--brand-primary);           /* action colour — Figma name border/green (dev "primary") */
+  --color-border-green-hover: var(--brand-primary-pressed);
+  --color-border-error: var(--palette-red-300);           /* FLAG: in Figma (border/error), not in lean tokens.ts */
+  /* accent */
+  --color-accent: var(--brand-accent);
+
+  /* brand gradient (theme-independent) */
+  --gradient-brand: linear-gradient(144deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  --gradient-brand-hover: linear-gradient(144deg, var(--brand-accent) 0%, var(--brand-primary) 100%);
+  --overlay-pressed: rgba(0, 0, 0, 0.14);   /* darken layer for pressed state (gradient/colour) */
+  --overlay-scrim: rgba(25, 29, 26, 0.4);  /* modal backdrop — not in Figma, decided (dark: rgba(0,0,0,0.6)) */
+
+  /* ===== 1b) Static & neutral — theme-independent + neutral fill ===== */
+  --color-neutral-disabled: var(--palette-neutral-300);  /* FLAG: Figma neutral/300 — toggle-off, chart-area, disabled */
+  --color-static-dark: var(--palette-ink-900);       /* theme-independent (dark tab bar, toasts) */
+  --color-on-static: var(--palette-neutral-50);         /* theme-independent (text on static-dark) */
+
+  /* ===== 2) EXTENSION — component tokens, mapped onto CORE ===== */
+  /* buttons */
+  --btn-primary-bg: var(--color-border-green);
+  --btn-primary-fg: var(--brand-on-primary);
+  --btn-primary-bg-pressed: var(--color-border-green-hover);
+  --btn-primary-bg-disabled: var(--palette-neutral-300);   /* Figma buttons/primary/bg-disabled (dark #535654, see dark block) */
+  --btn-primary-fg-disabled: var(--color-fg-secondary);
+  --btn-secondary-bg: var(--color-surface-secondary);
+  --btn-secondary-fg: var(--color-fg-primary);
+  --btn-secondary-border: var(--color-border-green);
+  --btn-secondary-border-pressed: var(--color-border-green-hover);
+  --btn-secondary-bg-pressed: var(--palette-neutral-25);   /* Figma buttons/secondary/bg-hover (dark #1d211e) */
+  /* neutral (two levels) */
+  --btn-neutral-bg: var(--color-surface-secondary);
+  --btn-neutral-bg-pressed: var(--color-surface-primary);
+  --btn-neutral-2-bg: var(--color-surface-primary);
+  --btn-neutral-2-bg-pressed: var(--palette-neutral-100);   /* Figma buttons/neutral/bg-hover-2 (dark #2e322f) */
+  --btn-neutral-fg: var(--color-fg-primary);
+  /* negative */
+  --btn-negative-bg: var(--color-surface-negative);
+  --btn-negative-bg-pressed: var(--palette-red-200);    /* Figma buttons/negative/bg-hover (dark #711f1f) */
+  --btn-negative-fg: var(--color-fg-negative);
+  /* menu (row button) */
+  --btn-menu-bg: var(--palette-neutral-0);                /* Figma buttons/menu/bg (dark #2e322f) */
+  --btn-menu-bg-pressed: var(--palette-neutral-300);        /* Figma buttons/menu/bg-hover (dark #535654) */
+  --btn-menu-fg: var(--color-fg-primary);
+  /* send / icon button */
+  --btn-send-bg: var(--palette-neutral-100);                /* Figma buttons/send/bg (dark #252926) */
+  --btn-send-bg-pressed: var(--palette-neutral-300);        /* Figma buttons/send/bg-hover (dark #2e322f) */
+  --btn-send-fg: var(--color-fg-primary);
+  /* AI (gradient bg types) */
+  --btn-ai-fg: var(--color-fg-static-black);
+
+  /* inputs (field states: default/hover/focus/filled/error/disabled/warning) */
+  --input-bg: var(--color-surface-secondary);
+  --input-bg-disabled: var(--color-surface-tertiary);
+  --input-border: var(--color-border-primary);
+  --input-border-hover: var(--color-border-primary-hover);
+  --input-border-focus: var(--color-fg-primary);   /* ink, not the brand colour — a 1px line needs 3:1 (green was 1.3) */
+  --input-border-error: var(--color-border-error);
+  --input-fg: var(--color-fg-primary);
+  --input-fg-disabled: var(--color-fg-secondary);
+  --input-placeholder: var(--color-fg-secondary);   /* text needs 4.5 — tertiary is for icons only */
+  --input-placeholder-search: var(--color-fg-secondary);   /* Figma inputs/fg/placeholder 2 (#7f7f7f) — search field only */
+  --input-icon: var(--color-fg-tertiary);
+  --input-currency: var(--color-fg-secondary);
+  --input-label: var(--color-fg-primary);
+  --input-helper: var(--color-fg-secondary);
+  --input-error-text: var(--color-fg-negative);
+
+  /* menu / dropdown (context menu tabs) */
+  --menu-bg: var(--color-surface-secondary);
+  --menu-bg-pressed: var(--color-surface-tertiary);
+  --menu-fg: var(--color-fg-primary);
+  --menu-icon: var(--color-fg-tertiary);
+
+  /* tabs (chart period pills) */
+  --tab-bg-active: var(--color-border-green);
+  --tab-bg-default: var(--color-surface-secondary);
+  --tab-fg: var(--color-fg-primary);
+
+  /* page tabs (default/hover→pressed/active + number badge) */
+  --tab-page-bg: var(--color-surface-secondary);
+  --tab-page-bg-pressed: var(--palette-neutral-100);            /* Figma tabs/bg-default-hover (dark #2e322f) */
+  --tab-page-bg-active: var(--color-border-green);
+  --tab-page-fg: var(--color-fg-primary);
+  --tab-page-fg-active: var(--brand-on-primary);
+  --tab-number-bg: var(--color-surface-primary);   /* Figma tabs/bg-number (#f5f5f5/#252926) */
+  --tab-number-fg: var(--color-fg-primary);
+
+  /* toggle */
+  --toggle-bg-on: var(--color-border-green);
+  --toggle-bg-off: var(--color-neutral-disabled);
+  --toggle-handle: var(--color-surface-secondary);
+
+  /* checkbox (24×24: empty / checked / error) */
+  --checkbox-bg: var(--color-surface-secondary);
+  --checkbox-border: var(--color-border-secondary);
+  --checkbox-bg-checked: var(--color-border-green);
+  --checkbox-check: var(--brand-on-primary);
+  --checkbox-border-error: var(--color-border-error);
+
+  /* tables */
+  --table-bg: var(--color-surface-secondary);
+  --table-border: var(--color-border-primary);
+
+  /* chart */
+  --chart-line-stroke: var(--color-fg-primary);
+  --chart-trend: var(--palette-green-600);            /* performance line + its fade (#43d46a reads on white) */
+  --chart-area-fill: var(--color-neutral-disabled);   /* NEW #dbdbdb */
+  --chart-axis-label: var(--color-fg-secondary);
+  --chart-fill-positive: var(--palette-green-500);   /* chart palette is its own — never follows the brand colour */
+  --chart-pie-bg: var(--color-surface-primary);             /* Figma chart/pie/bg (dark → border-primary, decided) */
+  --chart-pie-fill-positive: var(--color-border-green);     /* in progress / completed */
+  --chart-pie-fill-warning: var(--palette-amber-400);       /* expired — #f5a623 in both themes (graphic; the % label carries the value) */
+  --chart-pie-text: var(--color-fg-primary);
+  --tabbar-bg: var(--color-static-dark);       /* light: the dark pill */
+  --tabbar-shadow: none;
+  --chart-accent: var(--color-accent);
+  --chart-crosshair: var(--color-fg-tertiary);            /* dashed guide line while inspecting */
+  --chart-marker: var(--chart-fill-positive);             /* inspected point */
+  --chart-marker-ring: var(--color-surface-secondary);    /* ring around the point, = card */
+  --chart-bar-bg: var(--color-surface-primary);          /* track behind the fill — light grey on the white card (Figma chart/bar/bg = surface-secondary, invisible on a card; changed 8 Oct 2026) */
+  --chart-bar-fill: var(--chart-fill-positive);          /* Figma chart/bar/fill */
+  --chart-bar-fg: var(--color-fg-primary);               /* text on the empty part */
+  --chart-bar-fg-on-fill: var(--color-fg-static-black);  /* text on the fill — dark in both themes */
+  /* share ramp — Figma chart/treemap · chart/sankey · chart/heatmap group-green-1…10 (same 10 steps in all three);
+     1 = smallest share, 10 = largest. Chart palette: never follows the brand colour. */
+  --chart-ramp-1: #fefffe;
+  --chart-ramp-2: #f8fffa;
+  --chart-ramp-3: #f0fff4;
+  --chart-ramp-4: #e2ffea;
+  --chart-ramp-5: #d3ffde;
+  --chart-ramp-6: #bfffd0;
+  --chart-ramp-7: #a8ffbf;
+  --chart-ramp-8: #8dffaa;
+  --chart-ramp-9: #6fff95;
+  --chart-ramp-10: #4cff7b;
+  --chart-ramp-fg: var(--color-fg-static-black);   /* Figma chart/treemap/text-static — label on a ramp fill */
+  --chart-sankey-node: var(--color-fg-primary);    /* Figma chart/sankey/groupe-black (#191d1a / #f5f5f5) */
+  --chart-axis-line: var(--color-border-secondary);   /* Figma chart/(heatmap, benchmark, area)/axis-lines = border/secondary */
+  /* risk bubble chart — Figma chart/benchmark/* */
+  --chart-bench-holding: var(--chart-fill-positive);   /* icon.positive-static-green */
+  --chart-bench-benchmark: var(--color-icon-info);     /* icon.info — not the brand accent */
+  --chart-bench-portfolio: var(--color-fg-primary);    /* icon.primary */
+  --chart-bar-accent: var(--palette-cyan-500);         /* Figma chart/bar/accent — reference-range marker */
+
+  /* confirmation pill ("Saved"): dark in light theme, inverted (light) in dark theme so it stands off dark cards */
+  --confirm-bg: var(--color-static-dark);
+  --confirm-fg: var(--color-on-static);
+
+  /* badges */
+  --badge-negative-bg: var(--color-surface-negative);
+  --badge-negative-fg: var(--color-fg-negative);
+  --badge-warning-bg: var(--color-surface-warning);
+  --badge-warning-fg: var(--color-fg-warning);
+  --badge-positive-bg: var(--palette-green-50);   /* Figma badges/bg-positive (≠ surface-success; dark #1b261e, see dark block) */
+  --badge-positive-fg: var(--color-fg-positive);
+  --badge-info-bg: var(--color-surface-info);
+  --badge-info-fg: var(--color-fg-info);
+  --badge-neutral-bg: var(--color-surface-tertiary);
+  --badge-neutral-fg: var(--color-fg-primary);
+  --badge-paused-bg: var(--color-surface-primary);
+  --badge-paused-fg: var(--color-fg-secondary);   /* text needs 4.5 */
+
+  /* ===== 3) TYPOGRAPHY primitives (roles live in typography.css) ===== */
+  --font-family-base: 'Geologica', system-ui, -apple-system, sans-serif;   /* portfolio: At Hauss replaced, see fonts.css */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* ===== 3) SPACING (dev scale) ===== */
+  --space-none: 0;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* ===== 3) RADIUS (dev scale: 16=xl, 12=lg, 8=md) ===== */
+  --radius-none: 0;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-chip: 10px;   /* chart period pills (Figma) — decided */
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* ===== 3) SHADOWS (FLAG: RN shadows are limited — keep simple) ===== */
+  --shadow-menu: 0 1px 10px 0 rgba(183, 183, 183, 0.5);
+  --shadow-hover: 0 1px 10px 0 rgba(183, 183, 183, 0.2);
+  /* elevation roles (same in RN: iOS shadow* / Android elevation) */
+  --elevation-flat: none;                     /* level 0 — cards, rows, fields: colour only, no shadow */
+  --elevation-float: var(--shadow-menu);      /* level 1 — menus, dropdown panels, tooltips, toasts */
+  --elevation-overlay: none;                  /* level 2 — dialogs (modals): sit on --overlay-scrim, no shadow */
+
+  /* ===== 4) MOTION — durations + easing (RN: Reanimated withTiming) ===== */
+  --motion-fast: 150ms;                       /* press feedback, colour / border changes, toggles, chevrons */
+  --motion-base: 250ms;                       /* open / close: menus, dropdowns, toasts, expanding cards */
+  --motion-slow: 400ms;                       /* screen-level: dialogs (modals), number count-up */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);    /* state changes on screen */
+  --ease-enter: cubic-bezier(0, 0, 0, 1);         /* things appearing (decelerate) */
+  --ease-exit: cubic-bezier(0.3, 0, 1, 1);        /* things leaving (accelerate) */
+}
+
+/* ========================== DARK THEME ========================== */
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* brand (dark) */
+  --brand-primary: var(--palette-green-500);           /* brandDark #4cff7b */
+  --chart-trend: var(--palette-green-500);             /* performance line on dark, as in the side menu */
+  --brand-primary-pressed: color-mix(in srgb, var(--brand-primary) 80%, var(--palette-neutral-0));   /* derived: brand + 20% white (dark) */
+  --brand-accent: var(--palette-cyan-500);
+  --brand-tint: color-mix(in srgb, var(--brand-primary) 15%, var(--palette-ink-900));   /* derived: 15% brand on ink (dark) */
+  --brand-bg: var(--palette-ink-800);           /* bgDark #252926 */
+  --color-surface-primary: var(--brand-bg);
+  --color-surface-secondary: var(--palette-ink-900);
+  --color-surface-tertiary: var(--palette-ink-850);
+  --color-surface-success: var(--palette-green-920);
+  --color-surface-warning: var(--palette-amber-950);
+  --color-surface-negative: var(--palette-red-950);
+
+  --color-fg-primary: var(--palette-neutral-50);
+  --color-fg-secondary: var(--palette-neutral-400);
+  --color-fg-tertiary: var(--palette-neutral-500);
+  --color-fg-positive: var(--palette-green-500);
+  --color-fg-negative: var(--palette-red-350);   /* AA on dark tints: #ff4747 → #ff4d4d */
+  --color-fg-warning: var(--palette-amber-400);
+  --color-fg-static-black: var(--palette-ink-900);
+
+  --color-border-primary: var(--palette-ink-700);
+  --color-border-primary-hover: var(--palette-neutral-500);
+  --color-border-green: var(--brand-primary);
+  --color-border-green-hover: var(--brand-primary-pressed);
+
+  --color-accent: var(--brand-accent);
+
+  --color-neutral-disabled: var(--palette-neutral-500);
+  --color-fg-info: var(--palette-cyan-500);
+  --color-surface-info: var(--palette-cyan-950);
+  --color-surface-ai-highlight: var(--brand-tint);
+  --color-border-secondary: var(--palette-ink-600);
+  --color-border-error: var(--palette-red-400);
+  --color-icon-info: var(--palette-cyan-400);
+  --color-icon-warning: var(--palette-amber-300);
+
+  /* extension overrides that differ from their light alias in Figma */
+  --btn-primary-bg-disabled: var(--palette-ink-600);
+  --btn-secondary-bg-pressed: var(--palette-ink-850);
+  --btn-neutral-2-bg-pressed: var(--palette-ink-700);
+  --btn-negative-bg-pressed: var(--palette-red-800);
+  --btn-menu-bg: var(--palette-ink-700);
+  --btn-menu-bg-pressed: var(--palette-ink-600);
+  --btn-send-bg: var(--palette-ink-800);
+  --btn-send-bg-pressed: var(--palette-ink-700);
+  --badge-positive-bg: var(--palette-green-950);
+  --tab-page-bg-pressed: var(--palette-ink-700);
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+  --chart-pie-bg: var(--color-border-primary);   /* dark: #2e322f — Figma used surface-secondary (= card, invisible); decided */
+  --chart-ramp-1: #1a1f1a;
+  --chart-ramp-2: #1b261e;
+  --chart-ramp-3: #1e3122;
+  --chart-ramp-4: #21412a;
+  --chart-ramp-5: #265632;
+  --chart-ramp-6: #2c6f3c;
+  --chart-ramp-7: #338c4a;
+  --chart-ramp-8: #3aae57;
+  --chart-ramp-9: #43d46a;
+  --chart-ramp-10: #4cff7b;
+  --tabbar-bg: var(--palette-ink-700);         /* dark: one step lighter than cards (#191d1a) — an elevated surface, so it never merges with them */
+  --tabbar-shadow: 0 8px 24px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.24);   /* dark: soft drop below + a tight contact shadow */
+  --confirm-bg: var(--palette-neutral-50);
+  --confirm-fg: var(--palette-ink-900);
+
+  --shadow-menu: 0 8px 28px 0 rgba(0, 0, 0, 0.28), 0 2px 6px 0 rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.06);   /* dark: a wide soft shadow and a faint light edge, not a black halo */
+
+  --menu-bg: var(--palette-ink-700);   /* dark: one step lighter than the cards, as the tab bar — it floats above them */
+  --shadow-hover: 0 1px 10px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    /* brand (dark) */
+    --brand-primary: var(--palette-green-500);           /* brandDark #4cff7b */
+  --chart-trend: var(--palette-green-500);             /* performance line on dark, as in the side menu */
+    --brand-primary-pressed: color-mix(in srgb, var(--brand-primary) 80%, var(--palette-neutral-0));   /* derived: brand + 20% white (dark) */
+    --brand-accent: var(--palette-cyan-500);
+    --brand-tint: color-mix(in srgb, var(--brand-primary) 15%, var(--palette-ink-900));   /* derived: 15% brand on ink (dark) */
+    --brand-bg: var(--palette-ink-800);           /* bgDark #252926 */
+    --color-surface-primary: var(--brand-bg);
+    --color-surface-secondary: var(--palette-ink-900);
+    --color-surface-tertiary: var(--palette-ink-850);
+    --color-surface-success: var(--palette-green-920);
+    --color-surface-warning: var(--palette-amber-950);
+    --color-surface-negative: var(--palette-red-950);
+
+    --color-fg-primary: var(--palette-neutral-50);
+    --color-fg-secondary: var(--palette-neutral-400);
+    --color-fg-tertiary: var(--palette-neutral-500);
+    --color-fg-positive: var(--palette-green-500);
+    --color-fg-negative: var(--palette-red-350);   /* AA on dark tints: #ff4747 → #ff4d4d */
+    --color-fg-warning: var(--palette-amber-400);
+    --color-fg-static-black: var(--palette-ink-900);
+
+    --color-border-primary: var(--palette-ink-700);
+    --color-border-primary-hover: var(--palette-neutral-500);
+    --color-border-green: var(--brand-primary);
+    --color-border-green-hover: var(--brand-primary-pressed);
+
+    --color-accent: var(--brand-accent);
+
+    --color-neutral-disabled: var(--palette-neutral-500);
+    --color-fg-info: var(--palette-cyan-500);
+    --color-surface-info: var(--palette-cyan-950);
+    --color-surface-ai-highlight: var(--brand-tint);
+    --color-border-secondary: var(--palette-ink-600);
+    --color-border-error: var(--palette-red-400);
+    --color-icon-info: var(--palette-cyan-400);
+    --color-icon-warning: var(--palette-amber-300);
+
+    /* extension overrides that differ from their light alias in Figma */
+    --btn-primary-bg-disabled: var(--palette-ink-600);
+    --btn-secondary-bg-pressed: var(--palette-ink-850);
+    --btn-neutral-2-bg-pressed: var(--palette-ink-700);
+    --btn-negative-bg-pressed: var(--palette-red-800);
+    --btn-menu-bg: var(--palette-ink-700);
+    --btn-menu-bg-pressed: var(--palette-ink-600);
+    --btn-send-bg: var(--palette-ink-800);
+    --btn-send-bg-pressed: var(--palette-ink-700);
+    --badge-positive-bg: var(--palette-green-950);
+    --tab-page-bg-pressed: var(--palette-ink-700);
+    --overlay-scrim: rgba(0, 0, 0, 0.6);
+    --chart-pie-bg: var(--color-border-primary);
+    --chart-ramp-1: #1a1f1a;
+    --chart-ramp-2: #1b261e;
+    --chart-ramp-3: #1e3122;
+    --chart-ramp-4: #21412a;
+    --chart-ramp-5: #265632;
+    --chart-ramp-6: #2c6f3c;
+    --chart-ramp-7: #338c4a;
+    --chart-ramp-8: #3aae57;
+    --chart-ramp-9: #43d46a;
+    --chart-ramp-10: #4cff7b;
+    --tabbar-bg: var(--palette-ink-700);
+    --tabbar-shadow: 0 8px 24px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --confirm-bg: var(--palette-neutral-50);
+    --confirm-fg: var(--palette-ink-900);
+
+    --shadow-menu: 0 8px 28px 0 rgba(0, 0, 0, 0.28), 0 2px 6px 0 rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.06);   /* dark: a wide soft shadow and a faint light edge, not a black halo */
+
+    --menu-bg: var(--palette-ink-700);   /* dark: one step lighter than the cards, as the tab bar — it floats above them */
+    --shadow-hover: 0 1px 10px 0 rgba(0, 0, 0, 0.4);
+  }
+}

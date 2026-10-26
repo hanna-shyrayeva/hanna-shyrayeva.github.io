@@ -1,0 +1,37 @@
+/* ==========================================================================
+   Action menu — context menu opened from a row's kebab (Edit / Delete …)
+   Positioned via JS (fixed) so it escapes table/card clipping.
+   ========================================================================== */
+
+.action-menu {
+  position: fixed;
+  z-index: 60;
+  width: 160px;
+  padding: var(--space-xs);              /* 4px */
+  background: var(--menu-bg);
+  border-radius: var(--radius-lg);       /* 12px */
+  box-shadow: var(--shadow-menu);
+}
+.action-menu[hidden] { display: none; }
+.action-menu ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.action-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);                  /* 8px */
+  padding: var(--space-sm);              /* 8px */
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-md);       /* 8px */
+  color: var(--color-fg-primary);
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);
+  text-align: left;
+}
+.action-menu__item:active { background: var(--color-surface-tertiary); }   /* pressed = Figma context-menu/bg-hover (#eaeaea) */
+
+.action-menu__icon { width: 24px; height: 24px; flex: 0 0 auto; color: var(--color-fg-tertiary); }
+.action-menu__icon svg { width: 24px; height: 24px; display: block; }
+
+/* --- web: hover --- */
+@media (hover: hover) { .action-menu__item:hover { background: var(--color-surface-tertiary); } }

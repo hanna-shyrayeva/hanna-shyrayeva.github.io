@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Bank card (Figma "bank row mobile", 1936:3809) — a connected bank with its accounts.
+   Head: chevron 24 · logo 32 · name 14M / "n accounts" 12R · status badge · kebab 24 (gap 8).
+   States: connected (collapsed) · with menu (Refresh / Detach) · expanded (account rows) ·
+           not connected (+ Reconnect) · not connected, 0 accounts (no chevron — nothing to expand).
+   Expanded = [aria-expanded="true"] on the card; the chevron (set icon arrow-right) turns 90°.
+   ========================================================================== */
+
+.bank-card {
+  position: relative;                        /* anchors the kebab menu */
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-xl);           /* 16px */
+}
+
+.bank-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);                      /* 8px */
+  padding: var(--space-lg);                  /* 16px */
+}
+.bank-card[aria-expanded="true"] .bank-card__head { box-shadow: inset 0 -1px 0 var(--color-border-primary); }
+
+/* 24px icon buttons: chevron + kebab (icon/secondary) */
+.bank-card__toggle,
+.bank-card__more {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: inline-flex;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--color-fg-tertiary);
+  cursor: pointer;
+}
+.bank-card__toggle svg,
+.bank-card__more svg { width: 24px; height: 24px; display: block; }
+.bank-card__toggle svg { transition: transform var(--motion-fast) var(--ease-standard); }
+.bank-card[aria-expanded="true"] .bank-card__toggle svg { transform: rotate(90deg); }   /* → arrow-down */
+.bank-card__toggle:active,
+.bank-card__more:active { color: var(--color-fg-primary); }                             /* pressed */
+
+.bank-card__logo {
+  flex: 0 0 auto;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-surface-primary);  /* placeholder when the bank has no logo */
+}
+.bank-card__logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.bank-card__info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.bank-card__info > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* account rows (reuse .table-row) — only while expanded */
+.bank-card__accounts { display: none; overflow: hidden; border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.bank-card[aria-expanded="true"] .bank-card__accounts { display: block; }
+
+/* not connected: full-width secondary Reconnect button, 16 below the head */
+.bank-card__footer { padding: 0 var(--space-lg) var(--space-lg); }
+
+/* kebab menu: 120 wide, top 52 (Figma), right edge aligned with the kebab */
+.bank-card .action-menu { position: absolute; top: 52px; right: var(--space-lg); width: 120px; }
+
+/* --- bank option (Figma "bank card - mobile", Connect banks 1648:14823) — pick banks to connect ---
+   Row in a list card (.table look): padding 12/16, gap 16, 1px divider · 40×32 logo slot
+   (32 logo + 18px check badge, set icon "check-filled", bottom-right when selected) · name 14M.
+   States: default · selected (aria-pressed="true") · disabled (+ note 12R, content at 50%). */
+.bank-list { border-radius: var(--radius-xl); overflow: hidden; background: var(--color-surface-secondary); }
+.bank-option {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);                      /* 16 */
+  padding: var(--space-md) var(--space-lg);  /* 12 / 16 */
+  border: 0;
+  box-shadow: inset 0 -1px 0 var(--color-border-primary);   /* divider inside the row (Figma inside stroke) → h56 */
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.bank-option:last-child { box-shadow: none; }
+.bank-option:active:not(:disabled) { background: var(--color-surface-primary); }   /* pressed (not in Figma — decided) */
+
+.bank-option__logo { position: relative; flex: 0 0 auto; width: 40px; height: 32px; }
+.bank-option__logo .bank-card__logo { position: absolute; left: 0; top: 0; }
+.bank-option__check { position: absolute; left: 22px; top: 14px; width: 18px; height: 18px; display: none; }
+.bank-option__check svg { width: 18px; height: 18px; display: block; }
+.bank-option[aria-pressed="true"] .bank-option__check { display: block; }
+.bank-option__check rect { fill: var(--brand-primary); }      /* the set icon has fixed colours — follow the brand */
+.bank-option__check path { fill: var(--brand-on-primary); }
+
+.bank-option__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bank-option:disabled { cursor: default; }
+.bank-option:disabled .bank-option__text { opacity: .5; }

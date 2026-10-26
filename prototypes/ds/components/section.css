@@ -1,0 +1,30 @@
+/* ==========================================================================
+   Section — a titled block on a screen (header + optional "Show more")
+   Reused by Performance, Top 5 assets, Liabilities, Goals, Monitors.
+   ========================================================================== */
+
+.section { display: flex; flex-direction: column; gap: var(--space-lg); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 30px;                           /* Figma Subheader h30 (title 20SB lh28) */
+}
+.section-header > h2 { margin: 0; }
+
+.section-header__action {                     /* "Show more" — a .link (underlined on hover), sits right of the title */
+  border: 0;
+  background: transparent;
+  padding: var(--space-xs) 0;
+  color: var(--color-fg-primary);
+  font: var(--font-weight-medium) 14px/20px var(--font-family-base);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.section-header__action:hover { text-decoration: underline; }
+.section-header__action:active { color: var(--color-fg-secondary); }   /* pressed */

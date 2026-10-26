@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banks and assets — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/table.css">
+<link rel="stylesheet" href="ds/components/bank.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/menu.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/dropdown.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/spinner.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  body { background: #fff; padding: var(--pb-page-pad); }
+
+  /* page bits not in the design system (Figma "Assets & Banks" 972:4069) */
+  .web .web-main { bottom: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: var(--space-2xl); }
+  .web .web-main::-webkit-scrollbar { display: none; }
+  .a-lede { margin: 0; }
+  .a-hub { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+  .phone .a-hub { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+  .a-hub .link-card__text, .link-card__text > * { margin: 0; }
+
+  /* connect banks: web = a grid of cards, mobile = the DS bank list */
+  .a-banks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+  .a-banks .bank-option { border-radius: var(--radius-xl); box-shadow: none; min-height: 72px; }
+  .a-banks .bank-option[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--color-border-green); }
+  .a-connect { align-self: center; width: 336px; }
+
+  /* connection: progress row + the provider's sign-in card */
+  /* the BankID window over a dimmed page: our queue line on top, the provider's window under it */
+  .a-bid-stack { width: min(396px, 100%); display: flex; flex-direction: column; gap: var(--space-md); }
+  .a-bid-pill { border-radius: var(--radius-xl); background: var(--color-surface-secondary); box-shadow: none; }
+  .a-bid-stack .a-provider { border-radius: var(--radius-xl); box-shadow: 0 24px 70px rgba(0, 0, 0, .35); }
+  .a-flow__row { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg); box-shadow: inset 0 -1px 0 var(--color-border-primary); }
+  .a-flow__row .bank-card__info { flex: 1 1 auto; }
+  .a-provider { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); padding: var(--space-xl) var(--space-xl) var(--space-2xl); background: var(--color-surface-info); text-align: center; min-height: 420px; justify-content: space-between; }
+  .a-provider__logo { width: 88px; height: 88px; border-radius: 50%; overflow: hidden; background: var(--palette-neutral-0); }
+  .a-provider__logo img { width: 100%; height: 100%; object-fit: cover; }
+  .a-provider .qr { margin: 0 auto; }
+  .a-provider .btn { width: auto; }
+  /* the bank's own BankID window: its colours are the provider's, not Njorda's, in both themes */
+  .a-provider { background: #f4f6fb; color: #1b1f2a; }
+  .a-provider .tone-secondary { color: #3a4150; }
+  .a-bid { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border: 0; border-radius: 26px; background: #2f6bfd; color: #fff; font: 600 15px/20px var(--font-family-base); cursor: pointer; }
+  .a-bid svg { width: 22px; height: 22px; }
+  .a-bid:hover { background: #255de0; }
+  .a-bid[hidden] { display: none; }
+  .a-provider { position: relative; }
+  .a-bid-x { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #9aa1ad; display: grid; place-items: center; cursor: pointer; }
+  .a-bid-x svg { width: 20px; height: 20px; }
+  .a-bid-x:hover { color: #1b1f2a; }
+  .a-bid-wait { display: flex; flex-direction: column; align-items: center; gap: var(--space-md); margin: auto 0; }
+  .a-bid-wait .spinner { color: #2f6bfd; }
+  .a-center { min-height: 520px; display: flex; align-items: center; justify-content: center; }
+  .phone .a-center { min-height: 480px; }
+
+  /* banks tab */
+  .a-bank-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .bank-card__head .badge { flex: 0 0 auto; }
+  .a-bank-acts { display: flex; align-items: center; gap: var(--space-sm); flex: 0 0 auto; }
+  .a-bank-acts .btn { width: auto; }
+  .a-bank-acts .spinner { margin: 0 4px; }
+  .bank-card .wtable { border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+  .a-acc .wtable__row > span:first-child { flex: 1.3 1 0; }   /* accounts: name, number, type, value */
+
+  /* forms */
+  .a-form { display: flex; flex-direction: column; gap: var(--space-xl); }
+  .a-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg) var(--space-lg); }
+  .phone .a-grid { grid-template-columns: minmax(0, 1fr); }
+  .a-grid .is-wide { grid-column: 1 / -1; }
+  .field--area { height: 104px; align-items: flex-start; padding: 10px var(--space-lg); }
+  .field--area textarea { height: 100%; resize: none; }
+  .web .a-save { align-self: center; width: 336px; }
+  .a-tabs { display: flex; gap: var(--space-md); }
+  .a-search { position: relative; }
+  .a-search .dropdown-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; }
+  /* several listed securities at once: one row each, only the quantity is typed (and the value, when there is no market price) */
+  .a-sec { display: flex; flex-direction: column; }
+  .a-warn { color: var(--color-fg-warning); }
+  .a-secs .wtable__row { min-height: 64px; }
+  .a-secs .wtable__row > span:first-child { flex: 1.6 1 0; }
+  .a-secs .a-q { flex: 0 0 120px; }
+  .a-secs .a-x { flex: 0 0 32px; display: flex; justify-content: flex-end; }
+  .a-secs .num .field { width: 150px; margin-left: auto; }
+  .a-q .field, .a-secs .num .field, .a-secrow .field { height: 40px; }
+  .a-q, .a-secrow__tot { min-width: 0; }
+  .a-q .field__input, .a-secrow__tot .field__input { width: 100%; min-width: 0; }
+  .a-seclist { display: flex; flex-direction: column; gap: var(--space-md); }
+  .a-secrow { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-xl); background: var(--color-surface-secondary); }
+  .a-secrow__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }
+  .a-secrow__calc { display: flex; align-items: center; gap: var(--space-sm); }
+  .a-secrow__calc .a-q { flex: 0 0 88px; }
+  .a-secrow__tot { margin-left: auto; text-align: right; }
+  .a-secrow__tot .field { width: 128px; }
+  .field--warn { background: var(--color-surface-warning); border-color: transparent; }
+  .field--warn .field__input { color: var(--color-fg-warning); }
+  .back-btn { width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--color-fg-primary); }
+  .back-btn svg { width: 24px; height: 24px; }
+  .wtable__row.is-new, .table-row.is-new { background: var(--color-surface-ai-highlight); }
+  .wtable .num { white-space: nowrap; }
+
+  /* the first time through, right after sign-up: the same screens as in the app, without its navigation */
+  .fr-web { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--color-surface-primary); font-family: var(--font-family-base); color: var(--color-fg-primary); }
+  .fr-web__main { flex: 1 1 auto; overflow-y: auto; scrollbar-width: none; padding: var(--space-3xl) var(--space-2xl); }
+  .fr-web__main::-webkit-scrollbar { display: none; }
+  .fr-col { width: min(800px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-xl); }
+  .fr-head { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .fr-head > * { margin: 0; }
+  .fr-skip { text-decoration: none; }
+  .fr-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); }
+  .fr-title > * { margin: 0; }
+  /* review: what has been added so far (pattern from the Holdings Collection redesign) */
+  .rv { display: flex; flex-direction: column; gap: var(--space-xl); }
+  .rv-sec { display: flex; flex-direction: column; gap: var(--space-md); }
+  .rv-sec > p { margin: 0; }
+  .rv-ico { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; display: grid; place-items: center; background: var(--color-surface-primary); color: var(--color-fg-primary); }
+  .rv-ico svg { width: 20px; height: 20px; }
+  .rv-add { display: flex; align-items: center; gap: var(--space-sm); width: 100%; padding: 14px var(--space-lg); border: 1.5px dashed var(--color-border-secondary); border-radius: var(--radius-xl); background: transparent; color: var(--color-fg-primary); font: inherit; cursor: pointer; text-align: left; }
+  .rv-add svg { width: 20px; height: 20px; }
+  .rv-add:hover { border-color: var(--color-fg-primary); }
+  .fr-web .a-save, .fr-web .a-connect { align-self: center; width: 336px; }
+  .rv-empty { margin: 0; }
+  .fr-col .web-head { margin-bottom: 0; }
+  .phone .page-header.fr-bar { justify-content: space-between; }
+  .phone .fr-col { gap: var(--space-lg); }
+
+  /* the empty app: Overview says what will show up, the action sits under it (web) or in the dock (phone) */
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, B = window.BADGE_ICONS;
+  function price(x) { return x.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' kr'; }
+  function logo(id, name) {
+    return id ? '<span class="bank-card__logo"><img src="ds/assets/images/banks/' + id + '.svg" alt=""></span>'
+      : '<span class="bank-card__logo" style="display:grid;place-items:center" aria-hidden="true"><span class="type-label">' + esc(name[0]) + '</span></span>';
+  }
+
+  var BANKS = [['avanza', 'Avanza'], ['carnegie', 'Carnegie'], ['danske-bank', 'Danske Bank'], ['garantum', 'Garantum'], ['handelsbanken', 'Handelsbanken'], ['lansforsakringar', 'Länsförsäkringar'],
+    ['levler', 'Levler'], ['movestic', 'Movestic'], ['nordea', 'Nordea'], ['nordnet', 'Nordnet'], ['revolut', 'Revolut'], ['savr', 'Savr'], ['sbab', 'SBAB'], ['seb', 'SEB'],
+    ['skandia', 'Skandia'], ['sparbanken-syd', 'Sparbanken Syd'], ['swedbank', 'Swedbank']];
+  /* what a newly connected bank brings in: its accounts (name, type, value) */
+  var NEW_ACCOUNTS = {
+    avanza: [['ISK', 'ISK', 256100], ['Sparkonto', 'Savings', 43500]],
+    handelsbanken: [['Allkonto', 'Savings', 24300], ['Depå', 'Investment', 198200]],
+    nordea: [['Sparkonto Plus', 'Savings', 12900], ['ISK', 'ISK', 184300], ['Fondkonto', 'Fund account', 62000]],
+    nordnet: [['ISK Sparande', 'ISK', 317610], ['Kapitalförsäkring', 'KF', 88400]],
+    seb: [['Sparkonto', 'Savings', 85000], ['Fondkonto', 'Fund account', 47300]],
+    swedbank: [['e-sparkonto', 'Savings', 18750], ['ISK', 'ISK', 55000]],
+    sbab: [['Sparkonto', 'Savings', 40000]], lansforsakringar: [['Fondkonto', 'Fund account', 31200]], skandia: [['Tjänstepension', 'Pension', 152400]],
+    'danske-bank': [['Opsparing', 'Savings', 9800]], revolut: [['Savings Vault', 'Savings', 6400]], carnegie: [['Depå', 'Investment', 58700]],
+    movestic: [['Pensionsförsäkring', 'Pension', 88300]], savr: [['ISK', 'ISK', 21500]], 'sparbanken-syd': [['Sparkonto', 'Savings', 15600]]
+  };
+
+  var TYPES = [
+    ['connect', 'connect', 'Connect banks', 'Automatically import from your bank'], ['stocks', 'chart', 'Stocks & Funds', 'Add listed securities manually'],
+    ['cash', 'wallet', 'Cash & Savings', 'Manual bank accounts and savings'], ['pe', 'pie-chart', 'Private Equity & Startups', 'Private company investments'],
+    ['realestate', 'real-estate', 'Real Estate', 'Homes, holiday homes and land'], ['crypto', 'crypto', 'Cryptocurrency', 'Digital assets and tokens'],
+    ['vehicle', 'vehicle', 'Vehicles', 'Cars, boats and other'], ['metals', 'metals', 'Precious Metals', 'Gold, silver and other metals'],
+    ['collectibles', 'collectibles', 'Collectibles & Valuables', 'Art, wine, watches, jewellery'], ['liability', 'liabilities', 'Liabilities', 'Debts, loans and mortgages'],
+    ['other', 'box', 'Other (Value)', 'Any asset with total value'], ['otherqty', 'box', 'Other (Quantity & Price)', 'Any asset with quantity and price']
+  ];
+  var TYPE_NAME = { cash: 'Cash', pe: 'Private equity', realestate: 'Real estate', crypto: 'Crypto', vehicle: 'Vehicle', metals: 'Precious metals', collectibles: 'Collectible', liability: 'Liability', other: 'Other', otherqty: 'Other', stocks: 'Stock' };
+  var SECURITIES = [
+    { n: 'Volvo AB ser. B', tk: 'VOLV B', isin: 'SE0000115446', p: 268.40 }, { n: 'Ericsson ser. B', tk: 'ERIC B', isin: 'SE0000108656', p: 81.32 },
+    { n: 'Apple Inc.', tk: 'AAPL', isin: 'US0378331005', p: 2293.05 }, { n: 'Microsoft Corp.', tk: 'MSFT', isin: 'US5949181045', p: 4265.00 },
+    { n: 'Investor AB ser. B', tk: 'INVE B', isin: 'SE0015811963', p: 302.25 }, { n: 'Atlas Copco A', tk: 'ATCO A', isin: 'SE0017486889', p: 169.23 },
+    { n: 'Flat Capital AB ser. B', tk: 'FLAT B', isin: 'SE0018370546', p: null }, { n: 'Tesla Inc.', tk: 'TSLA', isin: 'US88160R1014', p: 4120.80 }
+  ];
+
+  /* kept across the tabs of the first time through: what has been added, and the message to show on arrival */
+  var added = [], pending = null;
+  var SAMPLE = [
+    { kind: 'bank', id: 'nordea', name: 'Nordea', open: true, accounts: [['Sparkonto Plus', '3300 48 210 77', 'Savings', 12900], ['ISK', '3300 51 774 02', 'ISK', 184300], ['Fondkonto', '3300 60 118 45', 'Fund account', 62000]] },
+    { kind: 'bank', id: 'avanza', name: 'Avanza', accounts: [['ISK', '9552 11 804 33', 'ISK', 256100], ['Sparkonto', '9552 20 551 90', 'Savings', 43500]] },
+    { kind: 'manual', type: 'realestate', n: 'Cottage in Dalarna', sub: 'Sälenvägen 12, Malung', v: 1250000 }
+  ];
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'Everything you own, in one place',
+    intro: 'After signing up, people add what they own: banks in one go with BankID, everything else by hand. The step can be skipped and finished later in the app.',
+    states: [
+      { id: 'start', label: 'Add what you own', note: 'Connecting banks is the quickest way to fill the app, so it comes first. Anything else can be added manually.' },
+      { id: 'connect', label: 'Connect banks', note: 'Pick several banks, confirm each with BankID. Read-only: Njorda never moves money.' },
+      { id: 'manual', label: 'Add manually', note: 'Real estate as an example. Basic is enough to save; Details and Advanced are optional.' },
+      { id: 'review', label: 'Review', note: 'Everything added so far, banks first. Add more goes back for another round.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    App.chatSide(ctx, 'assets');   // Njorda AI in the side menu (web) or the More menu (phone) opens the chat
+    var web = ctx.mode === 'web';
+    var full = ctx.state === 'connect' && /(^|&)view=banks(&|$)/.test(location.hash.slice(1));   // the Banks page on its own, for the store image (drafts/brand-shot.html)
+    var firstRun = !full;                                 // right after sign-up: no app navigation, nothing connected yet
+    var s = {
+      view: full ? 'banks' : { start: 'start', connect: 'pick', manual: 'form', review: 'review' }[ctx.state],
+      selected: [],
+      banks: !full ? [] : [
+        { id: 'nordnet', name: 'Nordnet', status: 'ok', open: true, accounts: [['ISK Sparande', '9960 12 345 67', 'ISK', 317610]] },
+        { id: 'avanza', name: 'Avanza', status: 'off', open: false, accounts: [['Kapitalförsäkring', '9552 00 487 12', 'KF', 247086]] },
+        { id: 'seb', name: 'SEB', status: 'ok', open: false, accounts: [['Sparkonto', '5357 10 042 88', 'Savings', 85000], ['Mortgage', '5357 80 113 04', 'Mortgage', -2180000]] }
+      ],
+      more: false, secs: [], manual: [], type: 'realestate', tab: 'basic', form: {}, err: {},
+      sec: null, q: '', menu: null, flow: null, newRow: null
+    };
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function bank(id) { return s.banks.filter(function (b) { return b.id === id; })[0]; }
+
+    /* ---------- views ---------- */
+    function hubView() {
+      return '<p class="a-lede type-body-lg tone-secondary">Select the type of asset you’d like to track</p>' + hubCards();
+    }
+    function hubCards() {
+      return '<div class="a-hub">' + TYPES.map(function (t) {
+        return '<button type="button" class="link-card" data-type="' + t[0] + '"><span class="link-card__icon">' + I(t[1]) + '</span><span class="link-card__text"><span class="type-body-strong">' + t[2] + '</span><span class="type-body tone-secondary">' + t[3] + '</span></span><span class="link-card__arrow">' + I('arrow-right') + '</span></button>';
+      }).join('') + '</div>';
+    }
+    function startView() {
+      var more = s.more;   // opened from Review with Add more: a way back to it; the tab itself always shows the first step
+      var skip = web && !more ? '<button type="button" class="link fr-skip type-body-strong" data-a="skip">Skip for now</button>' : '';   // on a phone it sits in the header
+      return '<div class="fr-col"><div class="fr-head">' + (more && web ? '<div class="web-head"><button type="button" class="back-btn" data-a="toreview" aria-label="Back to review">' + I('back') + '</button><h1 class="web-head__title type-page-title">Add more</h1></div>' : '<div class="fr-title"><h1 class="type-page-title">' + (more ? 'Add more' : 'Let’s add what you own') + '</h1>' + skip + '</div>') +
+        '<p class="type-body-lg tone-secondary">Connect your banks or add assets manually to see the whole picture.</p></div>' + hubCards() + '</div>';
+    }
+    /* Review: banks with their accounts, then what was added manually, then a way back to the options */
+    function accRows(list) {
+      return web
+        ? '<div class="wtable a-acc"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Account number</span><span>Type</span><span class="num">Value</span></div>' + list.map(function (a) {
+            return '<div class="wtable__row type-body"><span>' + esc(a[0]) + '</span><span class="tone-secondary">' + esc(a[1]) + '</span><span>' + esc(a[2]) + '</span><span class="num type-value">' + kr(a[3]) + '</span></div>';
+          }).join('') + '</div>'
+        : list.map(function (a) { return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(a[0]) + '</span><span class="type-caption tone-secondary">' + esc(a[1] + ', ' + a[2]) + '</span></div><span class="table-row__value type-value">' + kr(a[3]) + '</span></div>'; }).join('');
+    }
+    function reviewView() {
+      var banks = added.filter(function (a) { return a.kind === 'bank'; }), hand = added.filter(function (a) { return a.kind === 'manual'; });
+      var del = function (a) { return '<button type="button" class="icon-action" data-rdel="' + added.indexOf(a) + '" aria-label="Remove ' + esc(a.name || a.n) + '">' + I('close') + '</button>'; };
+      var bankHtml = banks.map(function (b) {
+        var n = b.accounts.length;
+        return '<div class="bank-card" aria-expanded="' + !!b.open + '"><div class="bank-card__head"><button type="button" class="bank-card__toggle" data-rtog="' + added.indexOf(b) + '" aria-label="Show accounts">' + I('arrow-right') + '</button>' +
+          logo(b.id, b.name) + '<span class="bank-card__info"><span class="type-value">' + esc(b.name) + '</span><span class="type-caption tone-secondary">' + n + (n === 1 ? ' account' : ' accounts') + '</span></span>' + del(b) + '</div>' +
+          '<div class="bank-card__accounts">' + accRows(b.accounts) + '</div></div>';
+      }).join('');
+      /* what was added manually is grouped by kind of asset, in the order of the options */
+      var handHtml = TYPES.filter(function (t) { return hand.some(function (a) { return a.type === t[0]; }); }).map(function (t) {
+        return '<div class="rv-sec"><p class="type-body-strong tone-secondary">' + esc(t[2]) + '</p><div class="a-bank-list">' + hand.filter(function (a) { return a.type === t[0]; }).map(function (a) {
+          return '<div class="bank-card"><div class="bank-card__head"><span class="rv-ico">' + I(t[1]) + '</span>' +
+            '<span class="bank-card__info"><span class="type-value">' + esc(a.n) + '</span><span class="type-caption tone-secondary">' + esc((a.sub ? a.sub + ', ' : '') + kr(a.v)) + '</span></span>' + del(a) + '</div></div>';
+        }).join('') + '</div></div>';
+      }).join('');
+      return '<div class="rv">' +
+        (banks.length ? '<div class="rv-sec"><p class="type-body-strong tone-secondary">Connected banks</p><div class="a-bank-list">' + bankHtml + '</div></div>' : '') +
+        handHtml +
+        (added.length ? '' : '<p class="rv-empty type-body-lg tone-secondary">Nothing added yet.</p>') +
+        '<button type="button" class="rv-add type-body-strong" data-a="more">' + I('plus') + 'Add more</button>' +
+        (web ? '<button type="button" class="btn btn--primary a-save" data-a="continue">Continue</button>' : '') + '</div>';
+    }
+    /* every bank can be picked, also one that is already connected (connecting it again refreshes its accounts) */
+    function pickView() {
+      var rows = BANKS.map(function (b) {
+        var sel = s.selected.indexOf(b[0]) > -1;
+        return '<button type="button" class="bank-option" data-bank="' + b[0] + '" aria-pressed="' + sel + '">' +
+          '<span class="bank-option__logo">' + logo(b[0], b[1]) + '<span class="bank-option__check">' + I('check-filled') + '</span></span>' +
+          '<span class="bank-option__text"><span class="type-value">' + b[1] + '</span></span></button>';
+      }).join('');
+      var n = s.selected.length;
+      return '<p class="a-lede type-body-lg tone-secondary">Select banks where you have savings, investments or loans for a total overview of your finances.</p>' +
+        (web ? '<div class="a-banks">' + rows + '</div>' : '<div class="bank-list">' + rows + '</div>') +
+        (web ? '<button type="button" class="btn btn--primary a-connect" data-a="connect"' + (n ? '' : ' disabled') + '>' + connectLabel() + '</button>' : '');
+    }
+    function connectLabel() { var n = s.selected.length; return n ? 'Connect ' + n + (n > 1 ? ' banks' : ' bank') : 'Connect'; }
+    function flowView() {
+      var f = s.flow;
+      if (f.step === 'collect') return '<div class="a-center"><div class="loader"><span class="spinner spinner--2xl"></span><p class="loader__text type-body-lg tone-secondary">Please wait, we are collecting your data…</p></div></div>';
+      var id = f.ids[f.i], name = BANKS.filter(function (b) { return b[0] === id; })[0][1];
+      /* the bank's BankID window opens over the page it was started from; our own line about the queue sits above it */
+      return (f.reconnect ? banksView() : pickView()) + '<div class="modal-backdrop a-bid-modal"><div class="a-bid-stack"><div class="a-flow__row a-bid-pill">' + logo(id, name) + '<span class="bank-card__info"><span class="type-value">Connecting ' + esc(name) + '</span><span class="type-caption tone-secondary">' + (f.i < f.ids.length - 1 ? 'Next: ' + esc(BANKS.filter(function (b) { return b[0] === f.ids[f.i + 1]; })[0][1]) : 'Last bank') + '</span></span><span class="type-body tone-secondary">' + (f.i + 1) + ' of ' + f.ids.length + '</span></div>' +
+        '<div class="a-provider"><button type="button" class="a-bid-x" data-a="bidclose" aria-label="Close and skip ' + esc(name) + '">' + I('close') + '</button><p class="type-section-title">' + (f.reconnect ? 'Reconnect bank' : 'Connect bank') + '</p>' +
+        (f.qr && !web ? '<div class="a-bid-wait"><span class="spinner spinner--xl"></span><p class="type-body tone-secondary">Waiting for BankID. Confirm in the BankID app.</p></div>'
+          : f.qr ? '<div class="qr" role="img" aria-label="QR code"><svg viewBox="0 0 29 29" shape-rendering="crispEdges">' + qr(f.i + 3) + '</svg></div><p class="type-body tone-secondary">Open the BankID app and scan the code.</p>'
+          : '<span class="a-provider__logo"><img src="ds/assets/images/banks/' + id + '.svg" alt=""></span><p class="type-body tone-secondary">Connect your bank accounts with BankID and find all account information.</p>') +
+        '<button type="button" class="a-bid" data-a="bankid"' + (f.qr ? ' hidden' : '') + '>' + I('bankid') + (web ? 'BankID on another device' : 'BankID on this device') + '</button></div></div></div>';
+    }
+    function qr(seed) {
+      var n = 29, out = ''; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+      function finder(x, y) { out += '<rect x="' + x + '" y="' + y + '" width="7" height="7"/><rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="5" height="5" style="fill:var(--palette-neutral-0)"/><rect x="' + (x + 2) + '" y="' + (y + 2) + '" width="3" height="3"/>'; }
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) { var inF = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9); if (!inF && rnd() > .52) out += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; }
+      finder(0, 0); finder(n - 7, 0); finder(0, n - 7); return out;
+    }
+    function banksView() {
+      return '<div class="a-bank-list">' + s.banks.map(function (b, i) {
+        var ok = b.status === 'ok', busy = b.status === 'busy';
+        var badge = busy ? '<span class="badge badge--neutral">' + B.checking + 'Updating…</span>' : ok ? '<span class="badge badge--positive">' + B.ok + 'Connected</span>' : '<span class="badge badge--negative">Not connected</span>';
+        var acts = web
+          ? '<span class="a-bank-acts">' + badge + (ok || busy ? '<button type="button" class="icon-action" data-refresh="' + i + '" aria-label="Refresh">' + I('refresh') + '</button>' : '<button type="button" class="btn btn--h36 btn--secondary" data-reconnect="' + i + '">Reconnect</button>') +
+            '<button type="button" class="icon-action" data-detach="' + i + '" aria-label="Disconnect">' + I('disconnect') + '</button></span>'
+          : badge + '<button type="button" class="bank-card__more" data-menu="' + i + '" aria-label="More">' + I('more-vert') + '</button>' +
+            (s.menu === i ? '<div class="action-menu"><ul><li><button type="button" class="action-menu__item" data-refresh="' + i + '"><span class="action-menu__icon">' + I('refresh') + '</span>Refresh</button></li><li><button type="button" class="action-menu__item" data-detach="' + i + '"><span class="action-menu__icon">' + I('disconnect') + '</span>Detach</button></li></ul></div>' : '');
+        var accounts = web
+          ? '<div class="wtable a-acc"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Account number</span><span>Type</span><span class="num">Value</span></div>' + b.accounts.map(function (a) {
+              return '<div class="wtable__row type-body' + (s.newRow === b.id ? ' is-new' : '') + '"><span>' + esc(a[0]) + '</span><span class="tone-secondary">' + esc(a[1]) + '</span><span>' + esc(a[2]) + '</span><span class="num type-value">' + kr(a[3]) + '</span></div>';
+            }).join('') + '</div>'
+          : b.accounts.map(function (a) { return '<div class="table-row' + (s.newRow === b.id ? ' is-new' : '') + '"><div class="table-row__main"><span class="type-body">' + esc(a[0]) + '</span><span class="type-caption tone-secondary">' + esc(a[1] + ', ' + a[2]) + '</span></div><span class="table-row__value type-value">' + kr(a[3]) + '</span></div>'; }).join('');
+        return '<div class="bank-card" aria-expanded="' + !!b.open + '"><div class="bank-card__head"><button type="button" class="bank-card__toggle" data-toggle="' + i + '" aria-label="Show accounts">' + I('arrow-right') + '</button>' +
+          logo(b.id, b.name) + '<span class="bank-card__info"><span class="type-value">' + esc(b.name) + '</span><span class="type-caption tone-secondary">' + b.accounts.length + (b.accounts.length === 1 ? ' account' : ' accounts') + '</span></span>' + acts + '</div>' +
+          '<div class="bank-card__accounts">' + accounts + '</div>' + (!web && !ok && !busy ? '<div class="bank-card__footer"><button type="button" class="btn btn--h40 btn--secondary" data-reconnect="' + i + '">Reconnect</button></div>' : '') + '</div>';
+      }).join('') + '</div>';
+    }
+    function assetsView() {
+      var rows = (D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings.map(function (h) { return [h.t === 'Cash' ? 'Sparkonto, ' + acc.bank : h.n, h.t, h.value, false]; })); }, []))
+        .concat(s.manual.map(function (m) { return [m.n, m.t, m.v, true]; })).sort(function (a, b) { return b[2] - a[2]; });
+      return web
+        ? '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span class="num">Value</span></div>' + rows.map(function (r) { return '<div class="wtable__row type-body' + (r[3] ? ' is-new' : '') + '"><span>' + esc(r[0]) + '</span><span>' + esc(r[1]) + '</span><span class="num type-value">' + kr(r[2]) + '</span></div>'; }).join('') + '</div>'
+        : '<div class="table">' + rows.map(function (r) { return '<div class="table-row' + (r[3] ? ' is-new' : '') + '"><div class="table-row__main"><span class="type-body">' + esc(r[0]) + '</span><span class="type-caption tone-secondary">' + esc(r[1]) + '</span></div><span class="table-row__value type-value">' + kr(r[2]) + '</span></div>'; }).join('') + '</div>';
+    }
+
+    /* ---------- forms ---------- */
+    function fld(id, label, opts) {
+      opts = opts || {};
+      var e = s.err[id], v = s.form[id] != null ? s.form[id] : (opts.value || '');
+      var inner = opts.area ? '<textarea class="field__input" id="f-' + id + '" placeholder="' + esc(opts.ph || '') + '">' + esc(v) + '</textarea>'
+        : '<input class="field__input" id="f-' + id + '" placeholder="' + esc(opts.ph || '') + '" value="' + esc(v) + '"' + (opts.readonly ? ' readonly' : '') + (opts.num ? ' inputmode="decimal"' : '') + ' autocomplete="off">';
+      return '<div class="input' + (opts.wide ? ' is-wide' : '') + '"><label class="input__label type-body tone-default" for="f-' + id + '">' + esc(label) + '</label>' +
+        '<div class="field' + (opts.area ? ' field--area' : '') + (opts.readonly ? ' field--readonly' : '') + (opts.warn ? ' field--warn' : '') + (e ? ' field--error' : '') + '">' + inner +
+        (opts.suffix ? '<span class="field__currency">' + opts.suffix + '</span>' : '') + (opts.icon ? '<span class="field__icon">' + I(opts.icon) + '</span>' : '') + '</div>' +
+        (e ? '<span class="input__error type-label">' + esc(e) + '</span>' : opts.help ? '<span class="input__helper type-caption">' + esc(opts.help) + '</span>' : '') + '</div>';
+    }
+    function select(id, label, options) {
+      var v = s.form[id] || options[0];
+      return '<div class="input"><span class="input__label type-body tone-default">' + label + '</span><button type="button" class="select" data-cycle="' + id + '" data-opts="' + esc(options.join('|')) + '"><span class="select__value">' + esc(v) + '</span><span class="select__chevron">' + I('arrow-down') + '</span></button></div>';
+    }
+    function formView() {
+      var t = s.type, tabs = '<div class="a-tabs">' + [['basic', 'Basic'], ['details', 'Details'], ['advanced', 'Advanced']].map(function (x) { return '<button type="button" class="tab' + (s.tab === x[0] ? ' tab--active' : '') + '" data-ftab="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
+      var body;
+      if (s.tab === 'basic') {
+        body = t === 'liability'
+          ? fld('name', 'Name', { ph: 'For example, Car loan' }) + fld('lender', 'Lender', { ph: 'For example, Santander' }) + fld('value', 'Amount', { ph: '0', num: true, suffix: 'kr' }) + fld('rate', 'Interest rate (%)', { ph: '0.00', num: true })
+          : fld('name', 'Name', { ph: t === 'realestate' ? 'For example, Apartment in Vasastan' : 'Name of the asset' }) + (t === 'realestate' ? fld('address', 'Address', { ph: 'For example, Odengatan 10, Stockholm' }) : '') +
+            select('currency', 'Currency', ['SEK', 'EUR', 'USD']) + fld('date', 'Valuation date', { value: '02.02.2026', icon: 'calendar' }) + fld('value', 'Total value', { ph: '0', num: true, suffix: 'kr', wide: t === 'realestate' });
+      } else if (s.tab === 'details') {
+        body = fld('cost', 'Cost basis', { ph: '0', num: true, suffix: 'kr', help: 'What you originally paid for this asset.' }) + fld('acq', 'Acquisition date', { ph: 'Choose a date', icon: 'calendar' }) +
+          fld('share', 'Ownership share (%)', { ph: '100', num: true, help: 'Your percentage ownership if shared.' }) + select('liq', 'Liquidity', ['High (easily converted to cash)', 'Medium (weeks to sell)', 'Low (months to sell)']) +
+          fld('notes', 'Notes', { area: true, wide: true, ph: 'Add any additional notes about this asset.' });
+      } else {
+        body = fld('ret', 'Expected return (%)', { ph: '8', num: true, help: 'Your estimated annual return for this asset.' }) + fld('vol', 'Volatility (%)', { ph: '15', num: true, help: 'Estimated annual volatility (standard deviation).' }) +
+          fld('proxy', 'Correlation proxy', { ph: 'For example, OMXS30, SPY', help: 'A listed security with similar risk characteristics.' }) + fld('tax', 'Estimated tax on sale (%)', { ph: '30', num: true, help: 'Estimated tax rate when selling this asset.' });
+      }
+      var ready = !!(s.form.name && s.form.value);
+      return '<form class="a-form" novalidate data-form="asset">' + tabs + '<div class="a-grid">' + body + '</div>' +
+        (web ? '<button type="submit" class="btn btn--primary a-save"' + (ready ? '' : ' disabled') + '>Save asset</button>' : '') + '</form>';
+    }
+    function stockLabel() { var n = s.secs.length; return n > 1 ? 'Save ' + n + ' assets' : 'Save asset'; }
+    function stocksView() {
+      var have = s.secs.map(function (r) { return r.sec; });
+      var matches = s.q ? SECURITIES.filter(function (x) { return have.indexOf(x) < 0 && (x.n + ' ' + x.tk + ' ' + x.isin).toLowerCase().indexOf(s.q.toLowerCase()) > -1; }) : [];
+      var search = '<div class="a-search"><div class="field field--search"><span class="field__search-icon">' + I('search') + '</span><input class="field__input" type="search" id="f-q" placeholder="Search by name, ticker or ISIN" value="' + esc(s.q) + '" autocomplete="off"></div>' +
+        (matches.length ? '<div class="dropdown-panel"><ul class="dropdown-list">' + matches.map(function (x) {
+          return '<li><button type="button" class="dropdown-option" data-sec="' + SECURITIES.indexOf(x) + '"><span class="a-sec"><span>' + esc(x.n) + '</span><span class="type-caption tone-secondary">' + esc(x.tk + ', ' + x.isin) + '</span></span></button></li>';
+        }).join('') + '</ul></div>' : '') + '</div>';
+      var rows = s.secs.map(function (r, i) {
+        var e = s.err['row' + i], none = r.sec.p == null;
+        var qty = '<span class="a-q"><span class="field' + (e === 'qty' ? ' field--error' : '') + '"><input class="field__input" data-qty="' + i + '" inputmode="decimal" placeholder="0" value="' + esc(r.qty) + '" aria-label="Quantity of ' + esc(r.sec.n) + '" autocomplete="off"></span></span>';
+        var val = none ? '<span class="field' + (e === 'value' ? ' field--error' : '') + '"><input class="field__input" data-val="' + i + '" inputmode="decimal" placeholder="Value" value="' + esc(r.value) + '" aria-label="Value of ' + esc(r.sec.n) + '" autocomplete="off"><span class="field__currency">kr</span></span>'
+          : '<span data-total="' + i + '">' + price(num(r.qty) * r.sec.p) + '</span>';
+        var cost = none ? '<span class="a-warn">No market price</span>' : price(r.sec.p);
+        var name = '<span class="a-sec"><span class="type-body">' + esc(r.sec.n) + '</span><span class="type-caption tone-secondary">' + esc(r.sec.tk + ', ' + r.sec.isin) + '</span></span>';
+        var x = '<button type="button" class="icon-action" data-unsec="' + i + '" aria-label="Remove ' + esc(r.sec.n) + '">' + I('close') + '</button>';
+        return web
+          ? '<div class="wtable__row type-body">' + name + qty + '<span class="num">' + cost + '</span><span class="num type-value">' + val + '</span><span class="a-x">' + x + '</span></div>'
+          : '<div class="a-secrow"><div class="a-secrow__head">' + name + x + '</div><div class="a-secrow__calc type-body">' + qty + '<span class="tone-secondary">× ' + cost + '</span><span class="a-secrow__tot type-value">' + val + '</span></div></div>';
+      }).join('');
+      var list = !s.secs.length ? '' : web
+        ? '<div class="wtable a-secs"><div class="wtable__row wtable__row--head type-body"><span>Security</span><span class="a-q">Quantity</span><span class="num">Price</span><span class="num">Value</span><span class="a-x"></span></div>' + rows + '</div>'
+        : '<div class="a-seclist">' + rows + '</div>';
+      return '<form class="a-form" novalidate data-form="stock"><p class="a-lede type-body-lg tone-secondary">Search for listed stocks and funds, and add as many as you own.</p>' + search + list +
+        (web ? '<button type="submit" class="btn btn--primary a-save"' + (s.secs.length ? '' : ' disabled') + '>' + stockLabel() + '</button>' : '') + '</form>';
+    }
+
+    /* ---------- draw ---------- */
+    var TITLES = { hub: 'Add asset', pick: 'Connect banks', banks: 'Banks', assets: 'Assets', stocks: 'Add Stocks & Funds', review: 'Your assets' };
+    function title() {
+      if (s.view === 'flow') return s.flow && s.flow.reconnect ? 'Banks' : 'Connect banks';   // the page under the BankID window
+      if (s.view === 'form') return 'Add ' + TYPES.filter(function (t) { return t[0] === s.type; })[0][2];
+      return TITLES[s.view];
+    }
+    function drawStart() {
+      if (web) {
+        ctx.screen.innerHTML = '<div class="fr-web"><main class="fr-web__main">' + startView() + '</main></div>';
+      } else {
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + '<header class="page-header fr-bar">' + (s.more ? '<button type="button" class="page-header__back" data-a="toreview" aria-label="Back to review">' + I('back') + '</button>' : '<span class="page-header__spacer"></span><button type="button" class="link fr-skip type-body-strong" data-a="skip">Skip for now</button>') + '</header>' +
+          '<main class="screen-content" style="padding-bottom:60px">' + startView() + '</main></div>' + A.tabbar(null, '');
+      }
+      bind();
+      if (pending) { A.confirmPill(ctx.screen, pending, web ? 40 : 200); pending = null; }
+    }
+    function draw() {
+      if (s.view === 'start') return drawStart();
+      var sc = ctx.screen.querySelector(web ? '.web-main, .fr-web__main' : '.phone'), top = sc ? sc.scrollTop : 0;
+      var V = { hub: hubView, pick: pickView, flow: flowView, banks: banksView, assets: assetsView, form: formView, stocks: stocksView, review: reviewView }[s.view]();
+      var root = s.view === 'banks' || s.view === 'assets' || s.view === 'review';
+      var action = s.view === 'banks' ? '<button type="button" class="btn btn--h40 btn--primary btn--auto" data-go="pick">Connect banks</button>' : s.view === 'assets' ? '<button type="button" class="btn btn--h40 btn--primary btn--auto" data-go="hub">Add asset</button>' : '';
+      var active = s.view === 'banks' || s.view === 'pick' || s.view === 'flow' ? 'banks' : 'assets';
+      if (web && firstRun) {
+        ctx.screen.innerHTML = '<div class="fr-web"><main class="fr-web__main"><div class="fr-col"><div class="web-head">' + (root ? '' : '<button type="button" class="back-btn" data-back aria-label="Back">' + I('back') + '</button>') +
+          '<h1 class="web-head__title type-page-title">' + title() + '</h1></div>' + V + '</div></main></div>';
+      } else if (web) {
+        ctx.screen.innerHTML = '<div class="web">' + A.webSide(active) + '<main class="web-main"><div class="web-head">' + (root ? '' : '<button type="button" class="back-btn" data-back aria-label="Back">' + I('back') + '</button>') +
+          '<h1 class="web-head__title type-page-title">' + title() + '</h1>' + action + '</div>' + V + '</main></div>';
+      } else {
+        var dock = s.view === 'pick' ? A.tabbar(null, '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-a="connect"' + (s.selected.length ? '' : ' disabled') + '>' + connectLabel() + '</button></div>')
+          : s.view === 'review' ? A.tabbar(null, '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-a="continue">Continue</button></div>')
+          : s.view === 'form' || s.view === 'stocks' ? A.tabbar(null, '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-a="save">' + (s.view === 'stocks' ? stockLabel() : 'Save asset') + '</button></div>')
+          : s.view === 'flow' ? A.tabbar(null, '')
+          : A.tabbar(s.view === 'assets' ? 'assets' : 'more', action ? '<div class="tabbar__action">' + action.replace('btn--h40 ', '').replace(' btn--auto', '') + '</div>' : '');
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + '<header class="page-header">' + (root ? '' : '<button type="button" class="page-header__back" data-back aria-label="Back">' + I('back') + '</button>') +
+          '<h1 class="page-header__title type-page-title">' + title() + '</h1></header><main class="screen-content">' + V + '</main></div>' + dock;
+        // room at the bottom for exactly what sits there (a button, the tab bar, or both), plus a gap
+        var tb = ctx.screen.querySelector('.tabbar'), mn = ctx.screen.querySelector('.screen-content');
+        if (tb && mn) mn.style.paddingBottom = (tb.offsetHeight + 24) + 'px';
+      }
+      var sc2 = ctx.screen.querySelector(web ? '.web-main, .fr-web__main' : '.phone'); if (sc2) sc2.scrollTop = top;
+      bind();
+    }
+    function go(v) { s.view = v; s.err = {}; s.menu = null; draw(); var sc = ctx.screen.querySelector(web ? '.web-main, .fr-web__main' : '.phone'); if (sc) sc.scrollTop = 0; }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(b); }; }); }
+      on('[data-type]', function (b) {
+        var t = b.getAttribute('data-type');
+        if (s.view === 'start' && t === 'connect') { ctx.go('connect'); return; }   // the first step: banks open their own tab, the rest opens in place
+        if (t === 'connect') { s.selected = []; go('pick'); }
+        else if (t === 'stocks') { s.secs = []; s.q = ''; s.err = {}; go('stocks'); }
+        else { s.type = t; s.tab = 'basic'; s.form = {}; go('form'); }
+      });
+      on('[data-go]', function (b) { go(b.getAttribute('data-go')); });
+      on('[data-a="skip"]', function () { ctx.note('Skip for now opens the app with nothing in it yet; everything here can be added later from Add assets.'); });
+      on('[data-a="more"]', function () { s.more = true; go('start'); });
+      on('[data-a="toreview"]', function () { ctx.go('review'); });
+      on('[data-rtog]', function (b) { var x = added[+b.getAttribute('data-rtog')]; x.open = !x.open; draw(); });
+      on('[data-rdel]', function (b) {
+        var x = added[+b.getAttribute('data-rdel')], name = x.name || x.n;
+        A.confirmModal(ctx.screen, 'Remove ' + name + '?', x.kind === 'bank' ? 'Its accounts won’t be added to Njorda. You can connect it again later.' : 'It won’t be added to Njorda. You can add it again later.', 'Remove', function () {
+          added.splice(added.indexOf(x), 1); draw(); A.confirmPill(ctx.screen, name + ' removed', web ? 40 : 200);
+        });
+      });
+      on('[data-a="continue"]', function () { ctx.note('Continue opens the app with what was added: Overview, risk and goals start from these numbers.'); });
+      on('[data-act="add"]', function () { go('hub'); });
+      on('[data-back]', function () { if (s.flow) timers.forEach(clearTimeout); s.flow = null; if (firstRun) { if (s.view === 'pick' || s.view === 'flow') ctx.go(added.length ? 'review' : 'start'); else if (ctx.state === 'start') go('start'); else ctx.go('start'); return; } go(s.view === 'hub' ? 'assets' : s.view === 'pick' || s.view === 'flow' ? (s.from || 'hub') : 'hub'); });
+      on('[data-bank]', function (b) { var id = b.getAttribute('data-bank'), k = s.selected.indexOf(id); if (k > -1) s.selected.splice(k, 1); else s.selected.push(id); draw(); });
+      on('[data-a="connect"]', function () { if (s.selected.length) startFlow(s.selected.slice(), false); });
+      on('[data-a="bankid"]', function () { s.flow.qr = true; draw(); later(nextBank, 1500); });
+      on('[data-a="bidclose"]', skipBank);
+      on('[data-toggle]', function (b) { var x = s.banks[+b.getAttribute('data-toggle')]; x.open = !x.open; draw(); });
+      on('[data-menu]', function (b) { var i = +b.getAttribute('data-menu'); s.menu = s.menu === i ? null : i; draw(); });
+      on('[data-refresh]', function (b) { var x = s.banks[+b.getAttribute('data-refresh')]; s.menu = null; x.status = 'busy'; draw(); later(function () { x.status = 'ok'; draw(); A.confirmPill(ctx.screen, x.name + ' updated', web ? 40 : 200); }, 1400); });
+      on('[data-reconnect]', function (b) { var x = s.banks[+b.getAttribute('data-reconnect')]; s.from = 'banks'; startFlow([x.id], true); });
+      on('[data-detach]', function (b) {
+        var i = +b.getAttribute('data-detach'), x = s.banks[i]; s.menu = null; draw();
+        A.confirmModal(ctx.screen, 'Disconnect ' + x.name + '?', 'Its accounts and holdings will be removed from Njorda. Your account at ' + x.name + ' is not affected.', 'Disconnect', function () {
+          s.banks.splice(i, 1); draw(); A.confirmPill(ctx.screen, x.name + ' disconnected', web ? 40 : 200);
+        });
+      });
+      on('[data-ftab]', function (b) { keep(); s.tab = b.getAttribute('data-ftab'); draw(); });
+      on('[data-cycle]', function (b) { keep(); var id = b.getAttribute('data-cycle'), o = b.getAttribute('data-opts').split('|'), cur = o.indexOf(s.form[id] || o[0]); s.form[id] = o[(cur + 1) % o.length]; draw(); });
+      on('[data-sec]', function (b) {
+        s.secs.push({ sec: SECURITIES[+b.getAttribute('data-sec')], qty: '', value: '' }); s.q = ''; draw();
+        var n = ctx.screen.querySelector('[data-qty="' + (s.secs.length - 1) + '"]'); if (n) n.focus();   // straight on to the quantity
+      });
+      on('[data-unsec]', function (b) { s.secs.splice(+b.getAttribute('data-unsec'), 1); s.err = {}; draw(); });
+      on('[data-a="save"]', save);
+      var form = root.querySelector('[data-form]'); if (form) form.onsubmit = function (e) { e.preventDefault(); save(); };
+      root.querySelectorAll('.field__input').forEach(function (f) {
+        f.oninput = function () {
+          if (f.id === 'f-q') { s.q = f.value; var pos = f.selectionStart; draw(); var n = ctx.screen.querySelector('#f-q'); n.focus(); n.setSelectionRange(pos, pos); return; }
+          keep(); var w = f.closest('.field'); w.classList.remove('field--error');
+          if (f.id === 'f-name' || f.id === 'f-value') { var pos2 = f.selectionStart, id = f.id; draw(); var n2 = ctx.screen.querySelector('#' + id); if (n2) { n2.focus(); n2.setSelectionRange(pos2, pos2); } }
+        };
+      });
+      bindSecs();   // after the generic field handlers, so these win
+    }
+    function bindSecs() {
+      ctx.screen.querySelectorAll('[data-qty], [data-val]').forEach(function (f) {
+        f.oninput = function () {
+          var q = f.hasAttribute('data-qty'), i = +f.getAttribute(q ? 'data-qty' : 'data-val'), r = s.secs[i];
+          r[q ? 'qty' : 'value'] = f.value; f.closest('.field').classList.remove('field--error');
+          var t = ctx.screen.querySelector('[data-total="' + i + '"]'); if (t) t.textContent = price(num(r.qty) * r.sec.p);
+        };
+      });
+    }
+    function keep() { ctx.screen.querySelectorAll('.field__input').forEach(function (f) { if (f.id && f.id !== 'f-q' && !f.readOnly) s.form[f.id.slice(2)] = f.value; }); }
+
+    /* ---------- connecting ---------- */
+    function startFlow(ids, reconnect) {
+      s.flow = { ids: ids, i: 0, qr: false, reconnect: reconnect, step: 'bank' };
+      go('flow');
+      later(autoConfirm, 2600);
+    }
+    function autoConfirm() { if (s.flow && s.flow.step === 'bank' && !s.flow.qr) { s.flow.qr = true; draw(); later(nextBank, 1500); } }
+    function nextBank() {
+      var f = s.flow; if (!f) return;
+      if (f.i < f.ids.length - 1) { f.i++; f.qr = false; draw(); later(autoConfirm, 2600); return; }
+      finish();
+    }
+    function skipBank() {
+      var f = s.flow; if (!f || f.step !== 'bank') return;
+      timers.forEach(clearTimeout); timers = [];
+      f.skip = (f.skip || []).concat(f.ids[f.i]);
+      nextBank();
+    }
+    function finish() {
+      var f = s.flow;
+      f.ids = f.ids.filter(function (id) { return !f.skip || f.skip.indexOf(id) < 0; });
+      if (!f.ids.length) { s.flow = null; go(f.reconnect ? 'banks' : 'pick'); return; }   // every window was closed: back to the banks, still picked
+      f.step = 'collect'; draw();
+      later(function () {
+        f.ids.forEach(function (id) {
+          var x = bank(id);
+          if (x) { x.status = 'ok'; x.open = true; }
+          else { var list = NEW_ACCOUNTS[id] || [['Sparkonto', 'Savings', 10000]], name = BANKS.filter(function (b) { return b[0] === id; })[0][1]; s.banks.push({ id: id, name: name, status: 'ok', open: true, accounts: list.map(function (x, k) { return [x[0], '•••• ' + (1000 + (id.length + k) * 397 % 9000), x[1], x[2]]; }) }); }
+        });
+        if (firstRun) {
+          f.ids.forEach(function (id) { var x = bank(id), had = added.filter(function (a) { return a.id === id; })[0]; if (had) had.accounts = x.accounts; else added.push({ kind: 'bank', id: id, name: x.name, accounts: x.accounts }); });
+          pending = f.ids.length + (f.ids.length > 1 ? ' banks connected' : ' bank connected'); s.flow = null; ctx.go('review'); return;
+        }
+        s.newRow = f.ids.length === 1 && f.reconnect ? null : f.ids[f.ids.length - 1];
+        var msg = f.reconnect ? bank(f.ids[0]).name + ' reconnected' : f.ids.length + (f.ids.length > 1 ? ' banks connected' : ' bank connected');
+        s.flow = null; s.from = null; go('banks'); A.confirmPill(ctx.screen, msg, web ? 40 : 200);
+        ctx.note(f.reconnect ? 'Reconnected: the badge turns green and the accounts load again, without leaving the page.' : 'Connected: the new accounts appear straight away, expanded, so you can check them.');
+      }, 1800);
+    }
+
+    /* ---------- saving ---------- */
+    function num(x) { return parseFloat(String(x || '').replace(/\s/g, '').replace(',', '.')) || 0; }
+    function save() {
+      keep();
+      if (s.view === 'form') {
+        s.err = {};
+        if (!s.form.name) s.err.name = 'Give the asset a name';
+        if (!num(s.form.value)) s.err.value = s.type === 'liability' ? 'Enter the amount' : 'Enter the value';
+        if (Object.keys(s.err).length) { s.tab = 'basic'; draw(); return; }
+        var v = num(s.form.value) * (s.type === 'liability' ? -1 : 1);
+        if (firstRun) { added.push({ kind: 'manual', type: s.type, n: s.form.name, sub: s.type === 'realestate' ? (s.form.address || '') : s.type === 'liability' ? (s.form.lender || '') : '', v: v }); pending = s.form.name + ' added'; ctx.go('review'); return; }
+        s.manual.push({ n: s.form.name, t: TYPE_NAME[s.type], v: v });
+        go('assets'); A.confirmPill(ctx.screen, s.form.name + ' added', web ? 40 : 200);
+        ctx.note('Saved with only the basics. The new asset is highlighted in the list and counts in every total straight away.');
+      } else if (s.view === 'stocks') {
+        s.err = {};
+        s.secs.forEach(function (r, i) { if (!num(r.qty)) s.err['row' + i] = 'qty'; else if (r.sec.p == null && !num(r.value)) s.err['row' + i] = 'value'; });
+        if (!s.secs.length || Object.keys(s.err).length) { draw(); return; }
+        var list = s.secs.map(function (r) { return { n: r.sec.n, tk: r.sec.tk + ', ' + r.qty + (num(r.qty) === 1 ? ' share' : ' shares'), v: Math.round(r.sec.p == null ? num(r.value) : num(r.qty) * r.sec.p) }; });
+        var msg = list.length > 1 ? list.length + ' assets added' : list[0].n + ' added';
+        if (firstRun) { list.forEach(function (a) { added.push({ kind: 'manual', type: 'stocks', n: a.n, sub: a.tk, v: a.v }); }); pending = msg; ctx.go('review'); return; }
+        list.forEach(function (a) { s.manual.push({ n: a.n, t: 'Stock', v: a.v }); });
+        go('assets'); A.confirmPill(ctx.screen, msg, web ? 40 : 200);
+      }
+    }
+
+    /* typed example, so the form can be watched without typing */
+    function typeInto(id, text, done) {
+      var el = ctx.screen.querySelector('#f-' + id), i = 0;
+      var t = setInterval(function () {
+        if (!el || !el.isConnected) return clearInterval(t);
+        el.value = text.slice(0, ++i);
+        if (i >= text.length) { clearInterval(t); el.dispatchEvent(new Event('input')); if (done) later(done, 250); }
+      }, 32);
+      timers.push(t);
+    }
+
+    /* ---------- start ---------- */
+    if (ctx.state === 'review' && !added.length) added = SAMPLE.map(function (a) { return Object.assign({}, a); });
+    draw();
+    if (ctx.state === 'manual') typeInto('name', 'Cottage in Dalarna', function () { typeInto('address', 'Sälenvägen 12, Malung', function () { typeInto('value', '1 250 000'); }); });
+    if (ctx.state === 'review' && pending) { A.confirmPill(ctx.screen, pending, web ? 40 : 200); pending = null; }
+  }
+})();
+</script>
+</body>
+</html>

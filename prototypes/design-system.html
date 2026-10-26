@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design system — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/section.css">
+<link rel="stylesheet" href="ds/components/table.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/goal.css">
+<link rel="stylesheet" href="ds/components/bank.css">
+<link rel="stylesheet" href="ds/components/chart.css">
+<link rel="stylesheet" href="ds/components/state.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/spinner.css">
+<link rel="stylesheet" href="ds/components/skeleton.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/dropdown.css">
+<link rel="stylesheet" href="ds/components/checkbox.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  /* the design system on the case page: no device around it, the groups lie in frames at their real size.
+     The page behind is the case page's band; the frames are the app's own page colour */
+  html, body { background: #fff; height: auto; min-height: 0; overflow: visible; }
+  body { margin: 0; padding: 32px; }
+  @media (max-width: 600px) { body { padding: 16px; } }
+  .ds { color: var(--color-fg-primary); font-family: var(--font-family-base); }
+  .ds h1, .ds h2, .ds h3, .ds p { margin: 0; }
+  .pb > .ds { min-width: 0; }
+  html.ds-fit .pb > .ds { height: calc(var(--pb-vh) - 64px); overflow-y: auto; scrollbar-width: none; border-radius: 24px; }
+  html.ds-fit .pb > .ds::-webkit-scrollbar { display: none; }
+  html.ds-fit .ds-frame { min-height: 100%; }
+  .ds-frames { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  .ds-frame { grid-column: span 1; display: flex; flex-direction: column; gap: var(--space-xl); padding: 32px; border-radius: 24px; background: var(--color-surface-primary); min-width: 0; box-shadow: inset 0 0 0 1px var(--color-border-primary); }   /* the app page colour is close to the band: a hairline keeps the frame visible */
+  .ds-frame--wide { grid-column: 1 / -1; }
+  .ds[data-theme="light"] .ds-frame { background: var(--palette-neutral-100); }   /* light: the app page grey is the band colour, so the frame takes one step darker (dark already reads) */
+  .ds--mob .ds-frames { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .ds--mob .ds-frame { padding: 20px; gap: var(--space-lg); }
+  .ds-sub { margin: 0 0 calc(-1 * var(--space-sm)); }
+  .ds-sub:not(:first-child) { margin-top: var(--space-lg); }
+  .ds-head { display: flex; flex-direction: column; gap: var(--space-xs); }
+
+  /* a matrix: a variant per row, a state per column */
+  .ds-mx { display: grid; align-items: center; gap: var(--space-lg) var(--space-xl); padding: var(--space-xl); border-radius: var(--radius-xl); background: var(--color-surface-secondary); }
+  .ds-mx__col { color: var(--color-fg-secondary); }
+  .ds-mx__row { color: var(--color-fg-secondary); }
+  .ds-mx .btn { width: auto; }
+  .ds-mx > .btn, .ds-mx > .tab, .ds-mx > .chart-tab, .ds-mx > .toggle, .ds-mx > .checkbox { justify-self: start; }   /* at their own size, not stretched to the column */
+  .ds-mx .input, .ds-mx .select { width: 100%; }
+  .ds--mob .ds-mx { display: flex; flex-direction: column; align-items: flex-start; }
+  .ds--mob .ds-mx__col { display: none; }
+
+  /* specimens grouped in boxes */
+  .ds-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); align-items: start; }
+  .ds-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds--mob .ds-grid { grid-template-columns: minmax(0, 1fr); }
+  .ds-box { display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-lg); border-radius: var(--radius-xl); background: var(--color-surface-secondary); min-width: 0; }
+  .ds-box--plain { background: var(--color-surface-primary); box-shadow: inset 0 0 0 1px var(--color-border-primary); }
+  .ds-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); }
+  .ds-spec { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+  .ds-spec--wide { align-self: stretch; }
+  .ds-cap { color: var(--color-fg-secondary); }
+  .ds-on-page { padding: var(--space-lg); border-radius: var(--radius-lg); background: var(--color-surface-primary); align-self: stretch; }
+
+  /* pressed, shown still (on a phone it lasts as long as the finger) */
+  .btn--primary.is-pressed { background: var(--btn-primary-bg-pressed); }
+  .btn--secondary.is-pressed { border-color: var(--btn-secondary-border-pressed); background: var(--btn-secondary-bg-pressed); }
+  .btn--neutral-2.is-pressed { background: var(--btn-neutral-2-bg-pressed); }
+  .btn--ai.is-pressed, .btn--ai-menu.is-pressed { background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand); }
+  .tab.is-pressed { background: var(--tab-page-bg-pressed); }
+  .link.is-pressed { color: var(--color-fg-secondary); }
+  .link.is-hover { text-decoration: underline; }
+  .ds .card.goal-card, .ds .card.monitor-card, .ds .bank-card, .ds .stat-card { width: 100%; }
+  .ds .bank-card__logo img { width: 100%; height: 100%; display: block; }
+  .ds-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-lg) var(--space-xl); }
+  .ds-grid .ds-states { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .ds-states .ds-spec { gap: var(--space-sm); }
+  .ds-states .input, .ds-states .field, .ds-states .select { width: 100%; }
+  .ds-skel-row { display: flex; align-items: center; gap: var(--space-md); }
+
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/typo.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, B = window.BADGE_ICONS;
+
+  /* the page: all groups at once, a light / dark switch above them. On the case page it follows the
+     site's theme and reports its height, as the prototype blocks do */
+  var EMBED = window.parent !== window, root = document.getElementById('block');
+  var st = { theme: 'light' };
+  try { var q = new URLSearchParams(location.hash.slice(1)); if (q.get('theme') === 'dark') st.theme = 'dark'; } catch (e) {}
+  // the groups, as the states of the prototype blocks: a label and a note
+  var STATES = [
+    { label: 'Actions', note: 'Buttons, links, tabs, toggles and checkboxes: everything people press.' },
+    { label: 'Inputs', note: 'Text, amount, search and select, with hover, focus, error and disabled.' },
+    { label: 'Status and messages', note: 'Badges, banners, notices and confirmations: how the app says what is going on.' },
+    { label: 'Cards and lists', note: 'The cards, rows and tables the screens are made of.' },
+    { label: 'Loading', note: 'A skeleton when nothing is saved yet, a spinner for a short action, a loader with text for a long one.' }
+  ];
+  function boot() {
+    root.className = 'pb';
+    if (EMBED) document.documentElement.classList.add('pb-embed');
+    root.innerHTML = '<div class="pb-story"><div class="pb-head"><p class="pb-eyebrow">Njorda app</p><h2 class="pb-title">The design system, live</h2>' +
+      '<p class="pb-intro">The parts the prototypes above are built from, each with its states. Switch the theme: everything reads the same tokens.</p></div>' +
+      '<ol class="pb-steps" aria-label="Components"></ol><div class="pb-controls"><div class="pb-seg" role="group" aria-label="Theme"><button type="button" data-theme-pick="light">Light</button><button type="button" data-theme-pick="dark">Dark</button></div></div>' +
+      '</div><div class="ds" id="ds-screen"></div>';
+    var screen = document.getElementById('ds-screen'), steps = root.querySelector('.pb-steps'), api;
+    function paintSwitch() { root.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-pick') === st.theme)); }); }
+    function paintSteps(g) {
+      steps.innerHTML = STATES.map(function (x, i) {
+        return '<li><button type="button" class="pb-step" data-step="' + i + '"' + (i === g ? ' aria-current="step"' : '') + '><span class="pb-step__t">' + x.label + '</span><span class="pb-step__d">' + x.note + '</span></button></li>';
+      }).join('');
+      steps.querySelectorAll('[data-step]').forEach(function (b) { b.onclick = function () {
+        api.go(+b.getAttribute('data-step'));
+      }; });
+    }
+    root.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.onclick = function () { st.theme = b.getAttribute('data-theme-pick'); screen.setAttribute('data-theme', st.theme); paintSwitch(); }; });
+    screen.setAttribute('data-theme', st.theme); paintSwitch();
+    api = render({ screen: screen, onGroup: paintSteps });
+    function layout() { root.classList.toggle('is-stacked', root.clientWidth < 860); }
+    layout(); window.addEventListener('resize', layout);
+    function report() { if (EMBED && !document.documentElement.classList.contains('ds-fit')) parent.postMessage({ type: 'pb-height', h: document.body.scrollHeight }, '*'); }
+    if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
+    if (EMBED) {
+      window.addEventListener('message', function (e) {
+        var m = e.data; if (!m) return;
+        if (m.type !== 'pb-vh') return;
+        document.documentElement.classList.toggle('ds-fit', !!m.pin);
+        document.documentElement.style.setProperty('--pb-vh', m.h + 'px');
+        if (m.bg) { document.documentElement.style.setProperty('--pb-page-bg', m.bg); document.documentElement.classList.add('pb-on-band'); }
+        if (m.site) { document.documentElement.classList.toggle('pb-site-dark', m.site === 'dark'); if (m.site !== st.theme) { st.theme = m.site; screen.setAttribute('data-theme', st.theme); paintSwitch(); } }
+        report();
+      });
+      parent.postMessage({ type: 'pb-ready', n: STATES.length, index: 0 }, '*');
+    }
+  }
+
+  function render(ctx) {
+    var web = true;
+    var s = {};
+
+    function head(title) { return '<h3 class="ds-sub type-subheading">' + title + '</h3>'; }   // a part's name inside its group; the group's own name and note are in the list on the left
+    function cap(t) { return '<span class="ds-cap type-caption">' + t + '</span>'; }
+    function spec(html, label, wide) { return '<div class="ds-spec' + (wide ? ' ds-spec--wide' : '') + '">' + html + cap(label) + '</div>'; }
+    function box(title, body, plain) { return '<div class="ds-box' + (plain ? ' ds-box--plain' : '') + '"><h2 class="type-body-strong">' + title + '</h2>' + body + '</div>'; }
+    // a matrix: cols = state names, rows = [variant, [cells]]
+    function matrix(cols, rows, first) {
+      var tpl = (first || '140px') + ' repeat(' + cols.length + ', minmax(0, 1fr))';
+      return '<div class="ds-mx" style="grid-template-columns:' + tpl + '"><span></span>' + cols.map(function (c) { return '<span class="ds-mx__col type-caption">' + c + '</span>'; }).join('') +
+        rows.map(function (r) { return '<span class="ds-mx__row type-body">' + r[0] + '</span>' + r[1].map(function (c, i) { return !c ? '<span></span>' : web ? c : spec(c, r[0] + ', ' + cols[i].toLowerCase()); }).join(''); }).join('') + '</div>';
+    }
+
+    /* ---------- the parts ---------- */
+    var SPIN = '<span class="spinner spinner--btn btn__spinner" aria-hidden="true"></span>';
+    function btn(cls, label, st) {
+      var extra = st === 'pressed' ? ' is-pressed' : st === 'loading' ? ' is-loading' : '';
+      return '<button type="button" class="btn ' + cls + extra + '"' + (st === 'disabled' ? ' disabled' : '') + (st === 'loading' ? ' aria-busy="true"' : '') + '>' + label + (st === 'loading' ? SPIN : '') + '</button>';
+    }
+    function buttons() {
+      var st = ['default', 'pressed', 'disabled', 'loading'], C = ['Default', 'Hover, pressed', 'Disabled', 'Loading'];   // a pointer gets the colour a finger gets while pressing
+      function row(name, cls, label) { return [name, st.map(function (x) { return btn(cls, label, x); })]; }
+      return head('Buttons', 'On the web the pointer gets the colour a finger gets while pressing.') +
+        matrix(C, [row('Primary', 'btn--primary btn--h40', 'Save'), row('Secondary', 'btn--secondary btn--h40', 'Change'), row('Neutral', 'btn--neutral-2 btn--h40', 'Cancel'), row('Njorda AI', 'btn--ai btn--h40', I('ai-triangle', 'btn__icon') + 'Njorda AI')]) +
+        '<div class="ds-grid">' +
+          box('Sizes', '<div class="ds-row">' + spec(btn('btn--primary btn--auto', 'Connect banks'), '48, a page action') + spec(btn('btn--primary btn--h40 btn--auto', 'Create goal'), '40, in a header') + spec(btn('btn--primary btn--h36 btn--auto', 'Save'), '36, on a card') + '</div>') +
+          box('Links', '<div class="ds-row">' + spec('<button type="button" class="link">Forgot your password?</button>', 'Default') + spec('<button type="button" class="link is-hover">Forgot your password?</button>', 'Hover') + spec('<button type="button" class="link is-pressed">Forgot your password?</button>', 'Pressed') + spec('<button type="button" class="section-header__action">Show more</button>', 'Section action') + '</div>') +
+        '</div>';
+    }
+    function field(label, inner, mod, err, value) {
+      return '<div class="input"><span class="input__label type-body tone-default">' + label + '</span><div class="field' + (mod ? ' field--' + mod : '') + '">' + inner + '</div>' + (err ? '<span class="input__error type-label">' + err + '</span>' : '') + '</div>';
+    }
+    // one row per kind of field, its states side by side and wide enough for the placeholder
+    function states(cols, cells) {
+      return '<div class="ds-states">' + cells.map(function (c, i) { return c ? '<div class="ds-spec ds-spec--wide">' + cap(cols[i]) + c + '</div>' : ''; }).join('') + '</div>';
+    }
+    function inputs() {
+      var inp = function (v, ph) { return '<input class="field__input" ' + (v ? 'value="' + v + '"' : 'placeholder="' + ph + '"') + ' tabindex="-1">'; };
+      var kr_ = '<span class="field__currency type-body tone-secondary">kr</span>';
+      var C = ['Default', 'Hover', 'Focus', 'Filled', 'Error', 'Disabled'];
+      var srch = function (mod, v) { return '<div class="field field--search' + (mod ? ' field--' + mod : '') + '"><span class="field__search-icon">' + I('search') + '</span>' + inp(v, 'Search banks') + '</div>'; };
+      var sel = function (v, mod) { return '<button type="button" class="select' + (mod ? ' select--' + mod : '') + '" tabindex="-1"><span class="select__value' + (v ? '' : ' select__value--placeholder') + '">' + (v || 'Choose an account') + '</span><span class="select__chevron">' + I('arrow-down') + '</span></button>'; };
+      return head('Inputs', 'Default, hover, focus, filled, error and disabled.') +
+        box('Text field', states(C, [field('Goal name', inp('', 'Summer house')), field('Goal name', inp('', 'Summer house'), 'hover'), field('Goal name', inp('', 'Summer house'), 'focus'), field('Goal name', inp('Sailing boat')), field('Email', inp('elsa@'), 'error', 'Enter your email, like name@example.com'), field('Goal name', inp('Sailing boat'), 'disabled')])) +
+        box('Amount', states(C, [field('Amount', inp('', '0') + kr_), field('Amount', inp('', '0') + kr_, 'hover'), field('Amount', inp('', '0') + kr_, 'focus'), field('Amount', inp('500 000') + kr_), field('Amount', inp('', '0') + kr_, 'error', 'Enter how much you need'), field('Amount', inp('500 000') + kr_, 'disabled')])) +
+        '<div class="ds-grid">' +
+          box('Search', states(['Default', 'Hover', 'Focus', 'Filled'], [srch(''), srch('hover'), srch('focus'), srch('', 'Nordea')])) +
+          box('Select', states(['Default', 'Hover', 'Focus', 'Filled', 'Error'], [sel(''), sel('', 'hover'), sel('', 'focus'), sel('Avanza ISK'), sel('', 'error')])) +
+        '</div>';
+    }
+    function badges() {
+      return head('Badges', 'A status is never colour alone: icon, word and colour.') + '<div class="ds-grid">' +
+        box('Monitor status', '<div class="ds-row">' + spec('<span class="badge badge--negative">' + B.triggered + 'Triggered</span>', 'Needs attention') + spec('<span class="badge badge--warning">' + B.failed + 'Check failed</span>', 'Could not check') + spec('<span class="badge badge--positive">' + B.ok + 'OK</span>', 'All good') + spec('<span class="badge badge--neutral">' + B.checking + 'Checking…</span>', 'Running') + spec('<span class="badge badge--paused">' + B.paused + 'Paused</span>', 'Not checking') + '</div>') +
+        box('Bank connection', '<div class="ds-row">' + spec('<span class="badge badge--positive">Connected</span>', 'Up to date') + spec('<span class="badge badge--warning">Reconnect</span>', 'Consent ran out') + spec('<span class="badge badge--neutral">Connecting…</span>', 'BankID open') + spec('<span class="badge badge--info">New</span>', 'Just added') + '</div>') +
+        '</div>';
+    }
+    function tabs() {
+      var page = function (cls) { return '<div class="ds-row" style="gap:var(--space-sm)">' + cls + '</div>'; };
+      return head('Tabs', 'Filled and heavier when active, so it reads without colour.') +
+        matrix(['Default', 'Hover, pressed', 'Active'], [
+          ['Page tab', ['<button type="button" class="tab">Ideas</button>', '<button type="button" class="tab is-pressed">Ideas</button>', '<button type="button" class="tab tab--active">Ideas</button>']],
+          ['With a count', ['<button type="button" class="tab">Completed <span class="tab__badge">1</span></button>', '<button type="button" class="tab is-pressed">Completed <span class="tab__badge">1</span></button>', '<button type="button" class="tab tab--active">Active <span class="tab__badge">3</span></button>']],
+          ['Chart period', ['<span class="chart-tab">1M</span>', '<span class="chart-tab" style="background:var(--tab-page-bg-pressed)">1M</span>', '<span class="chart-tab chart-tab--active">1W</span>']]
+        ]) +
+        box('Tab bar', '<div style="position:relative;max-width:393px">' + A.tabbar('overview').replace('class="tabbar"', 'class="tabbar" style="position:static;transform:none;max-width:none;padding:0"') + '</div>');
+    }
+    function toggles() {
+      var tg = function (on, dis) { return '<button type="button" class="toggle" role="switch" aria-checked="' + on + '"' + (dis ? ' disabled' : ' data-flip') + '><span class="toggle__handle"></span></button>'; };
+      var cb = function (on, mod) { return '<span class="checkbox' + (mod === 'error' ? ' checkbox--error' : '') + '" role="checkbox" aria-checked="' + on + '"' + (mod === 'disabled' ? ' aria-disabled="true"' : ' data-flip') + ' tabindex="0"><span class="checkbox__check">' + I('checkmark') + '</span></span>'; };
+      return head('Toggles and checkboxes', 'Try them: both switch.') +
+        matrix(['Off', 'On', 'Disabled off', 'Disabled on', 'Error'], [
+          ['Toggle', [tg(false), tg(true), tg(false, true), tg(true, true), '']],
+          ['Checkbox', [cb(false), cb(true), cb(false, 'disabled'), cb(true, 'disabled'), cb(false, 'error')]]
+        ]);
+    }
+    function cards() {
+      var G = D.goals[0] || { n: 'Summer house', current: 247086, target: 900000, date: '31 Dec 2031' };
+      var pc = Math.min(100, Math.round(G.current / G.target * 100));
+      var ring = '<div class="goal-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="goal-ring__track" cx="40" cy="40" r="36"/><circle class="goal-ring__value" cx="40" cy="40" r="36" pathLength="100" stroke-dasharray="' + pc + ' 100"/></svg><span class="goal-ring__label">' + pc + '%</span></div>';
+      return head('Cards', 'What the screens are made of.') + '<div class="ds-grid">' +
+        box('Figure', '<div class="card stat-card ds-on-page" style="box-shadow:none"><span class="stat-card__label type-body tone-secondary">Perf. YTD</span><span class="stat-card__value-row"><span class="type-subheading">' + kr(D.totals.ytdSek) + '</span><span class="stat-card__delta type-value tone-positive">▲ ' + D.totals.ytdPct.toFixed(2) + '%</span></span></div>') +
+        box('Link', '<button type="button" class="link-card ds-on-page" style="padding:var(--space-lg)"><span class="link-card__text"><span class="type-body-strong tone-default">Connect banks</span><span class="type-body tone-secondary">Import from your bank with BankID</span></span><span class="link-card__arrow">' + I('arrow-right') + '</span></button>') +
+        box('Goal', '<div class="card goal-card ds-on-page"><div class="goal-card__body"><p class="type-body-strong">' + esc(G.n) + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(G.current) + '</span><span class="type-body of"> of ' + kr(G.target) + '</span></p><p class="type-body tone-secondary">' + esc(G.date) + '</p></div>' + ring + '</div>') +
+        box('Monitor', '<article class="card monitor-card ds-on-page"><div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--negative">' + B.triggered + 'Triggered</span><span class="type-caption tone-secondary">Today, 08:00</span></div><button type="button" class="toggle" role="switch" aria-checked="true" data-flip><span class="toggle__handle"></span></button></div>' +
+          '<div class="monitor-card__body"><p class="type-body-strong">Holding drop alert</p><p class="type-body tone-secondary">Notify me if Spotify Technology falls more than 8% in 7 days.</p></div><div class="monitor-message monitor-message--negative type-body">Spotify Technology fell −9.2% over the last 7 days.</div></article>') +
+        box('Bank', '<div class="bank-card ds-on-page" style="padding:0"><div class="bank-card__head"><span class="bank-card__logo"><img src="ds/assets/images/banks/nordnet.svg" alt=""></span><div class="bank-card__info"><span class="type-value tone-default">Nordnet</span><span class="type-caption tone-secondary">2 accounts</span></div><span class="badge badge--positive">Connected</span><button type="button" class="bank-card__more" aria-label="Bank actions">' + I('more-vert') + '</button></div></div>') +
+        '</div>';
+    }
+    function rows() {
+      var H = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings.map(function (h) { return { n: h.t === 'Cash' ? 'Sparkonto, ' + acc.bank : h.n, t: h.t, bank: acc.bank || 'Added manually', v: h.value }; })); }, []).sort(function (a, b) { return b.v - a.v; }).slice(0, 4);
+      var mob = '<div class="table">' + H.map(function (h) { return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(h.n) + '</span><span class="type-caption tone-secondary">' + esc(h.t) + '</span></div><span class="table-row__value type-value">' + kr(h.v) + '</span></div>'; }).join('') +
+        '<button type="button" class="table-row row-btn"><div class="table-row__main"><span class="type-body">Show all holdings</span></div><span class="table-row__action">' + I('arrow-right') + '</span></button></div>';
+      var webT = '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span>Bank</span><span class="num">Value</span></div>' + H.map(function (h) { return '<div class="wtable__row type-body"><span>' + esc(h.n) + '</span><span>' + esc(h.t) + '</span><span>' + esc(h.bank) + '</span><span class="num type-value">' + kr(h.v) + '</span></div>'; }).join('') + '</div>';
+      return head('Rows and tables', 'The same data on a phone and on the web.') + '<div class="ds-grid" style="grid-template-columns:minmax(0,393px) minmax(0,1fr)">' + box('Rows, phone', mob) + box('Table, web', webT) + '</div>';
+    }
+    function messages() {
+      var x = '<button type="button" class="toast__close" aria-label="Dismiss" data-x>' + I('close') + '</button>';
+      var nx = '<button type="button" class="notice__close" aria-label="Dismiss" data-x>' + I('close') + '</button>';
+      var ico = '<span class="notice__icon">' + I('exclamation-mark') + '</span>', info = '<span class="notice__icon">' + I('tooltip') + '</span>';
+      return head('Banners and confirmations', 'Which message, when.') + '<div class="ds-grid">' +
+        box('Info banner: an action failed', '<div class="toast toast--negative" role="status"><p class="toast__text type-value">Couldn’t connect Nordea. Try again in a moment.</p>' + x + '</div><div class="toast toast--warning" role="status"><p class="toast__text type-value">BankID timed out. Start it again to connect.</p>' + x + '</div><div class="toast" role="status"><p class="toast__text type-value">Your email is not verified yet.</p>' + x + '</div>') +
+        box('Notice: the data is in a state', '<div class="notice notice--negative" role="status">' + ico + '<div class="notice__body"><p class="type-body">Couldn’t refresh your accounts. Showing figures from 09:41.</p><button type="button" class="link notice__action">Try again</button></div></div>' +
+          '<div class="notice notice--warning" role="status">' + ico + '<div class="notice__body"><p class="type-body">Avanza needs a new BankID consent to keep updating.</p><button type="button" class="link notice__action">Reconnect</button></div></div>' +
+          '<div class="notice notice--info" role="status">' + info + '<div class="notice__body"><p class="type-body">Risk is calculated from the last 3 years of prices.</p></div>' + nx + '</div>') +
+        box('Confirmation: it worked', '<div class="ds-row">' + spec('<div class="confirm" role="status">' + I('checkmark') + 'Goal saved</div>', 'Hides after 2.5 s') + spec('<button type="button" class="btn btn--secondary btn--h40 btn--auto" data-confirm>Show it</button>', 'Try it') + '</div>') +
+        box('Error under a field', field('Email', '<input class="field__input" value="elsa@" tabindex="-1">', 'error', 'Enter your email, like name@example.com')) +
+        '</div>';
+    }
+    function loading() {
+      var sk = function (w, cls) { return '<div class="skeleton sk-line' + (cls ? ' ' + cls : '') + '" style="width:' + w + '"></div>'; };
+      var rowsSk = '<div class="table">' + [70, 55, 62].map(function (w) { return '<div class="table-row"><div class="table-row__main sk-card" style="flex:1">' + sk(w + '%') + sk('30%', 'sk-line--sm') + '</div>' + sk('84px') + '</div>'; }).join('') + '</div>';
+      return head('Skeletons and spinners', 'Something is always moving, and it looks like what is coming.') + '<div class="ds-grid">' +
+        box('Skeleton: a figure card', '<div class="card stat-card ds-on-page sk-card" style="box-shadow:none">' + sk('45%', 'sk-line--sm') + sk('70%', 'sk-line--lg') + '</div>') +
+        box('Skeleton: rows', rowsSk) +
+        box('Spinners', '<div class="ds-row" style="gap:var(--space-xl)">' + spec('<span class="spinner spinner--sm"></span>', '16') + spec('<span class="spinner"></span>', '24') + spec('<span class="spinner spinner--lg"></span>', '32') + spec('<span class="spinner spinner--xl"></span>', '48') + spec(btn('btn--primary btn--h40', 'Save', 'loading'), 'In a button') + '</div>') +
+        box('Loader with a line of text', '<div class="loader" role="status" style="padding:var(--space-lg) 0"><span class="spinner spinner--2xl"></span><p class="loader__text type-body-lg tone-secondary">Calculating your risk. It takes up to a minute.</p></div>') +
+        '</div>';
+    }
+    /* ---------- draw ---------- */
+    // [group, wide]: the wide ones take the whole row
+    // one group at a time, picked from the row of tabs above it
+    // five groups of related parts, each named by a small title inside its frame
+    var GROUPS = [
+      ['Actions', function () { return buttons() + tabs() + toggles(); }],
+      ['Inputs', inputs],
+      ['Status and messages', function () { return badges() + messages(); }],
+      ['Cards and lists', function () { return cards() + rows(); }],
+      ['Loading', loading]
+    ];
+    s.g = 0;
+    function draw() {
+      web = ctx.screen.clientWidth >= 640 || !ctx.screen.clientWidth;
+      ctx.screen.className = 'ds' + (web ? '' : ' ds--mob');
+      ctx.screen.innerHTML = '<section class="ds-frame">' + GROUPS[s.g][1]() + '</section>';
+      ctx.onGroup(s.g);
+      bind();
+    }
+    var lastWide = null;
+    window.addEventListener('resize', function () { var w = ctx.screen.clientWidth >= 640; if (w !== lastWide) { lastWide = w; draw(); } });
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); fn(b); }; }); }
+      // the tab bar switches as on a phone
+      on('.tabbar__tab', function (b) { b.parentNode.querySelectorAll('.tabbar__tab').forEach(function (t) { t.classList.toggle('tabbar__tab--active', t === b); }); });
+      on('[data-flip]', function (b) { b.setAttribute('aria-checked', String(b.getAttribute('aria-checked') !== 'true')); });
+      on('.tab:not([disabled])', function (b) { var row = b.closest('.ds-mx') ? null : b.parentNode; if (row) row.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('tab--active', t === b); }); });
+      on('[data-x]', function (b) { var m = b.closest('.toast, .notice'); if (m) m.style.visibility = 'hidden'; setTimeout(function () { if (m && m.isConnected) m.style.visibility = ''; }, 1500); });
+      on('[data-confirm]', function () { A.confirmPill(root, 'Goal saved', 40); });
+    }
+    draw(); lastWide = web;
+    return { go: function (g) { if (g === s.g) return; s.g = g; draw(); ctx.screen.scrollTop = 0; } };
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

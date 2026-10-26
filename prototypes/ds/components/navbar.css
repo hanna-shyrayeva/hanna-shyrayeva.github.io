@@ -1,0 +1,82 @@
+/* ==========================================================================
+   Navbar — onboarding top bar (logo + language switcher)
+   ========================================================================== */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-xl) var(--space-4xl);   /* 24 / 96 (desktop welcome) */
+  background: var(--color-surface-secondary);
+}
+
+.navbar__logo { width: 121px; height: 26px; color: var(--color-fg-primary); }
+.navbar__logo svg,
+.navbar__logo img { width: 100%; height: 100%; }
+
+/* --- language switcher (context menu tabs) --- */
+.lang { position: relative; }
+
+.lang__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xl);   /* 16px */
+  background: var(--color-surface-primary);
+  color: var(--color-fg-primary);
+}
+.lang__trigger svg,
+.lang__trigger img { width: 24px; height: 24px; }
+
+.lang__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 107px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--menu-bg);
+  border-radius: var(--radius-lg);   /* 12px */
+  box-shadow: var(--shadow-menu);
+  z-index: 20;
+}
+.lang__menu[hidden] { display: none; }
+
+.lang__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 0;
+  background: transparent;
+  color: var(--menu-fg);
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);
+  text-align: left;
+  white-space: nowrap;
+}
+.lang__item:active { background: var(--menu-bg-pressed); }   /* pressed (no hover on mobile) */
+
+/* 20px check slot — keeps items aligned regardless of selection */
+.lang__check { width: 20px; height: 20px; flex: 0 0 auto; color: var(--color-fg-primary); visibility: hidden; }
+.lang__item[aria-selected="true"] .lang__check { visibility: visible; }
+
+/* --- globe icon button (language switcher trigger in page headers) ---
+   32×32, transparent; grey circle only while pressed (no hover on mobile) */
+.lang-globe {
+  flex: 0 0 auto;
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--color-fg-primary);   /* icon/primary */
+  cursor: pointer;
+}
+.lang-globe svg { width: 24px; height: 24px; display: block; }
+.lang-globe:active { background: var(--color-surface-primary); }

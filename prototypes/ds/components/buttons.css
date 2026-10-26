@@ -1,0 +1,174 @@
+/* ==========================================================================
+   Button — Njorda button component
+   Figma matrix: type (primary / secondary / neutral / negative / menu /
+   AI primary / AI secondary / AI menu) × size (h48 / h40 / h36 / h32)
+   × state (Default / hover / disabled).
+
+   MOBILE STATE MODEL: hover does NOT exist on touch. Figma's "hover" values
+   are used as the PRESSED state (:active). So each type has:
+     default · pressed (= Figma hover) · disabled
+   Text: h48 = 16M (16/24/500); h40/h36/h32 = 14M-Buttons (14/24/500).
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  /* padding comes from the size vars minus the border width, so outlined types keep the
+     same height as filled ones (Figma strokes are inside and don't add height) */
+  --btn-py: var(--space-md);                  /* h48: 12 + lh24 + 12 */
+  --btn-px: var(--space-lg);
+  --btn-bw: 0px;
+  padding: calc(var(--btn-py) - var(--btn-bw)) calc(var(--btn-px) - var(--btn-bw));
+  border: 0;
+  border-radius: var(--radius-lg);            /* 12px */
+  font: var(--font-weight-medium) 16px/24px var(--font-family-base);  /* 16M */
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+}
+.btn:focus-visible { outline: 2px solid var(--color-fg-primary); outline-offset: 2px; }
+.btn__icon { width: 20px; height: 20px; flex: 0 0 auto; }
+
+/* --- type: primary --- */
+.btn--primary { background: var(--btn-primary-bg); color: var(--btn-primary-fg); }
+.btn--primary:active { background: var(--btn-primary-bg-pressed); }          /* pressed */
+
+/* --- type: secondary (2px green outline) --- */
+.btn--secondary {
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-fg);
+  --btn-bw: 2px;
+  border: var(--btn-bw) solid var(--btn-secondary-border);
+}
+.btn--secondary:active {                                                     /* pressed */
+  border-color: var(--btn-secondary-border-pressed);
+  background: var(--btn-secondary-bg-pressed);
+}
+
+/* --- type: neutral (level 1: on white surfaces) --- */
+.btn--neutral { background: var(--btn-neutral-bg); color: var(--btn-neutral-fg); }
+.btn--neutral:active { background: var(--btn-neutral-bg-pressed); }          /* pressed */
+
+/* --- type: neutral 2 (level 2: on gray surfaces) --- */
+.btn--neutral-2 { background: var(--btn-neutral-2-bg); color: var(--btn-neutral-fg); }
+.btn--neutral-2:active { background: var(--btn-neutral-2-bg-pressed); }      /* pressed */
+
+/* --- type: negative --- */
+.btn--negative { background: var(--btn-negative-bg); color: var(--btn-negative-fg); }
+.btn--negative:active { background: var(--btn-negative-bg-pressed); }        /* pressed */
+
+/* --- type: menu (row button; left-aligned label + 24px icon) --- */
+.btn--menu { background: var(--btn-menu-bg); color: var(--btn-menu-fg); justify-content: flex-start; }
+.btn--menu:active { background: var(--btn-menu-bg-pressed); }                /* pressed */
+.btn--menu .btn__icon { width: 24px; height: 24px; }
+
+/* Gradient buttons: pressed = DARKEN the same gradient (never reverse direction).
+   Overlay a translucent dark layer on top of the same --gradient-brand. */
+
+/* --- type: AI primary (brand gradient) --- */
+.btn--ai { background: var(--gradient-brand); color: var(--btn-ai-fg); }
+.btn--ai:active {                                                            /* pressed = darken */
+  background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand);
+}
+
+/* --- type: AI menu (gradient + ai-triangle icon) --- */
+.btn--ai-menu { background: var(--gradient-brand); color: var(--btn-ai-fg); }
+.btn--ai-menu:active {                                                       /* pressed = darken */
+  background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand);
+}
+
+/* --- type: AI secondary (gradient border on white) ---
+   Double-background trick paints a gradient ring (direction never changes).
+   RN note: a gradient border needs a wrapper/MaskedView (expo-linear-gradient). */
+.btn--ai-secondary {
+  color: var(--color-fg-primary);
+  --btn-bw: 2px;
+  border: var(--btn-bw) solid transparent;
+  background:
+    linear-gradient(var(--btn-secondary-bg), var(--btn-secondary-bg)) padding-box,
+    var(--gradient-brand) border-box;
+}
+.btn--ai-secondary:active {                                                  /* pressed = darker fill, same gradient ring */
+  background:
+    linear-gradient(var(--btn-secondary-bg-pressed), var(--btn-secondary-bg-pressed)) padding-box,
+    var(--gradient-brand) border-box;
+}
+
+/* --- disabled (all types; Figma specs it on primary, applied consistently) --- */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  background: var(--btn-primary-bg-disabled);
+  color: var(--btn-primary-fg-disabled);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+/* --- sizes — class = real height (h48 default = 16M; smaller = 14M-Buttons 14/24/500) --- */
+.btn--h40 { --btn-py: var(--space-sm); --btn-px: var(--space-lg); font-size: 14px; }   /* 8 + 24 + 8 = 40 */
+.btn--h36 { --btn-py: 6px; --btn-px: var(--space-md); font-size: 14px; }             /* 6 + 24 + 6 = 36 (Figma names this size "h32") */
+
+/* auto-width when the button shouldn't fill its row */
+.btn--auto { width: auto; }
+
+/* ==========================================================================
+   Icon button (Figma type=button, h36) — square icon-only action.
+   States: default · pressed (= Figma active) · is-active (green, e.g. Send).
+   ========================================================================== */
+.btn-icon {
+  width: 36px; height: 36px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-lg);           /* 12px */
+  background: var(--btn-send-bg);
+  color: var(--btn-send-fg);
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+.btn-icon:active { background: var(--btn-send-bg-pressed); }                 /* pressed */
+.btn-icon.is-active {                                                        /* active (Send ready) */
+  background: var(--color-border-green);
+  color: var(--brand-on-primary);            /* glyph on the brand colour */
+}
+.btn-icon svg { width: 24px; height: 24px; }
+
+/* ==========================================================================
+   Link / text button — underlined on hover only. 14M (or 16M with .link--lg), fg-primary.
+   Pressed → fg-secondary. Use for secondary actions inside text or next to a title
+   ("Forgot your password?", "View terms", "Show more").
+   ========================================================================== */
+.link {
+  display: inline;
+  padding: 0; border: 0; background: none;
+  color: var(--color-fg-primary);
+  font: var(--font-weight-medium) 14px/20px var(--font-family-base);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+.link:hover { text-decoration: underline; }   /* the underline shows the link under the pointer */
+.link--lg { font-size: 16px; line-height: 24px; }
+.link:active { color: var(--color-fg-secondary); }
+.link:disabled, .link[aria-disabled="true"] { color: var(--color-fg-tertiary); cursor: default; }
+
+/* --- loading: label hidden, spinner centred, width kept (aria-busy="true") --- */
+.btn { position: relative; }
+.btn.is-loading { color: transparent !important; pointer-events: none; }
+.btn.is-loading .btn__icon { visibility: hidden; }
+.btn .btn__spinner { display: none; }   /* .btn scope: wins over .spinner { display } whatever the stylesheet order */
+.btn.is-loading .btn__spinner { display: block; position: absolute; left: 50%; top: 50%; margin: -10px 0 0 -10px; }
+.btn--primary .btn__spinner, .btn--ai .btn__spinner { --spinner-arc: var(--btn-primary-fg); --spinner-track: rgba(25, 29, 26, 0.2); }
+
+/* --- web: hover (a pointer only; on a phone the same colour shows while pressing) --- */
+@media (hover: hover) {
+  .btn--primary:hover:not(:disabled) { background: var(--btn-primary-bg-pressed); }
+  .btn--secondary:hover:not(:disabled) { border-color: var(--btn-secondary-border-pressed); background: var(--btn-secondary-bg-pressed); }
+  .btn--neutral:hover:not(:disabled) { background: var(--btn-neutral-bg-pressed); }
+  .btn--neutral-2:hover:not(:disabled) { background: var(--btn-neutral-2-bg-pressed); }
+  .btn--negative:hover:not(:disabled) { background: var(--btn-negative-bg-pressed); }
+  .btn--menu:hover:not(:disabled) { background: var(--btn-menu-bg-pressed); }
+  .btn--ai:hover:not(:disabled), .btn--ai-menu:hover:not(:disabled) { background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand); }
+}

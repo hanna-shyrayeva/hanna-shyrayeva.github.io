@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Monitor card — status badge + toggle + message; also defines badge & toggle
+   ========================================================================== */
+
+/* --- badge --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 6px;
+  border-radius: var(--radius-md);          /* 8px */
+  font: var(--font-weight-regular) 12px/16px var(--font-family-base);
+  white-space: nowrap;
+}
+.badge__icon { width: 16px; height: 16px; flex: 0 0 auto; }
+.badge--negative { background: var(--badge-negative-bg); color: var(--badge-negative-fg); }
+.badge--warning  { background: var(--badge-warning-bg);  color: var(--badge-warning-fg); }
+.badge--positive { background: var(--badge-positive-bg); color: var(--badge-positive-fg); }
+.badge--info     { background: var(--badge-info-bg);     color: var(--badge-info-fg); }
+.badge--neutral  { background: var(--badge-neutral-bg);  color: var(--badge-neutral-fg); }
+.badge--paused   { background: var(--badge-paused-bg);   color: var(--badge-paused-fg); }
+
+/* --- toggle (no hover; toggles on tap) --- */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--toggle-bg-off);
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+.toggle[aria-checked="true"] { background: var(--toggle-bg-on); }
+.toggle__handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;                 /* Figma knob 16×16, 4px inset */
+  height: 16px;
+  border-radius: 50%;
+  background: var(--toggle-handle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+.toggle[aria-checked="true"] .toggle__handle { transform: translateX(16px); }   /* off x4 → on x20 */
+.toggle:disabled, .toggle[aria-disabled="true"] { opacity: .4; cursor: default; }   /* disabled: 40% — position still readable */
+
+/* --- monitor card --- */
+.monitor-card { display: flex; flex-direction: column; gap: var(--space-lg); }
+.monitor-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }
+.monitor-card__meta { display: flex; align-items: center; gap: var(--space-md); min-width: 0; }
+.monitor-card__meta > .badge { flex: 0 0 auto; white-space: nowrap; }   /* the status always stays on one line */
+.monitor-card__meta > :not(.badge) { min-width: 0; white-space: nowrap; }   /* the time is short ("Today, 08:00"), so it stays on one line too */
+.monitor-card__controls { display: flex; align-items: center; gap: var(--space-lg); flex: 0 0 auto; }
+.monitor-card__menu {
+  width: 24px; height: 24px; flex: 0 0 auto;
+  padding: 0; border: 0; background: transparent;
+  color: var(--color-fg-tertiary);
+}
+.monitor-card__menu svg { width: 24px; height: 24px; }
+.monitor-card__body { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+/* --- message plate --- */
+.monitor-message {
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);          /* 12px */
+}
+.monitor-message--negative { background: var(--badge-negative-bg); color: var(--badge-negative-fg); }
+.monitor-message--warning  { background: var(--badge-warning-bg);  color: var(--badge-warning-fg); }

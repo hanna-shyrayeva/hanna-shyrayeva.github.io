@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI home — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/table.css">
+<link rel="stylesheet" href="ds/components/section.css">
+<link rel="stylesheet" href="ds/components/chart.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/goal.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  body { background: #fff; padding: var(--pb-page-pad); }
+
+  /* home (Figma 2268:25032 web, 2268:35741 mobile) */
+  .h-home { display: flex; flex-direction: column; gap: var(--space-xl); }
+  .web:has(.web-side.is-collapsed) .h-home { left: 120px; }
+  .web .h-home { position: absolute; left: 368px; right: 32px; top: 0; bottom: 0; justify-content: center; align-items: center; transition: opacity var(--motion-base) var(--ease-standard); }
+  .web .h-home__inner { width: min(800px, 100%); display: flex; flex-direction: column; gap: var(--space-xl); }
+  .web.has-panel .h-home { opacity: 0; pointer-events: none; }
+  .phone .h-home { min-height: 685px; justify-content: center; }   /* the room between the status bar and the tab bar (66 to 751): the greeting sits in its middle */
+  .phone .h-home .quick-actions { gap: var(--space-sm); }
+  .h-greet { margin: 0; }
+  /* Overview next to the chat: the totals, this year's line and the investments (from the Overview prototype) */
+  .web .web-main { gap: var(--space-xl); }
+  .ov-tiles { display: flex; gap: var(--space-lg); }
+  .web .ov-tiles .stat-card { flex: 1 1 0; width: auto; min-width: 0; }
+  .web.has-panel .ov-tiles .stat-card { padding-left: var(--space-md); padding-right: var(--space-md); }
+  .ov-tiles .stat-card__value-row { flex-wrap: wrap; }
+  .stat-card p { margin: 0; }
+  .chart-canvas svg path { vector-effect: non-scaling-stroke; }
+
+  /* Monitors and Goals next to the chat; what the assistant drafts waits there, outlined (shared/ai-chat.css) */
+  .h-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .goal-card p, .monitor-card p { margin: 0; }
+
+  /* the investments with AI highlights (Figma "Highlighted UI by AI" 2937:2314) */
+  .wtable__row.is-ai, .table-row.is-ai { background: var(--color-surface-ai-highlight); box-shadow: inset 0 0 0 1px var(--color-border-green); }
+  .web .web-main { bottom: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: var(--space-2xl); }
+  .wtable .num { white-space: nowrap; }
+  .web .wtable__row > span:first-child { flex: 2 1 0; }   /* the name takes the room, so Value always fits */
+  /* while the chat is open the page is narrow: names take the room, the account column goes */
+  .web.has-panel .wtable__row > span:first-child { flex: 2 1 0; }
+  .web.has-panel .wtable__row > span:nth-child(3):not(.num) { display: none; }
+  .web.has-panel .web-head .btn { display: none; }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, T = D.totals;
+  var invest = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings); }, []).filter(function (h) { return ['Fund', 'Stock', 'ETF'].indexOf(h.t) > -1; });
+  var GAINS = invest.slice().sort(function (a, b) { return (b.value - b.value / (1 + b.ytd / 100)) - (a.value - a.value / (1 + a.ytd / 100)); }).slice(0, 2);
+  var MENTIONED = GAINS.map(function (h) { return h.n; }).concat('Spotify Technology');
+  var DRAFT = A.chatDraft;
+  var B = window.BADGE_ICONS;
+  var PLACEHOLDER = 'I’m your Njorda Assistant! Ask me anything about your finances';
+
+  var QUICK = A.chatQuick.list;
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'A home that starts with a question',
+    intro: 'After a dashboard and a mixed home, the home became just a greeting and a question. The chat opens beside the page the answer is about.',
+    states: [
+      { id: 'home', label: 'AI-first home', note: 'Quick actions send a ready-made question, so nobody faces an empty box.' },
+      { id: 'quick', label: 'A quick question', note: 'Monitors open beside the chat, with the suggested monitor already there to save or change.' },
+      { id: 'data', label: 'An answer next to the data', note: 'Overview opens beside the chat, with the funds from the answer highlighted. On a phone the answer links to the page.' },
+      { id: 'history', label: 'Chats history', note: 'Past chats with search and pinning, from every page of the app.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    var web = ctx.mode === 'web';
+    // view: home, or the page the question is about (overview | monitors | goals); on the web the chat always sits beside it
+    var s = { view: 'home', open: false, hl: null, draft: null, saved: {} };
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    var topic = A.chatTopic;   // the page an answer belongs next to
+    var PAGE = { overview: 'Overview', monitors: 'Monitors', goals: 'Goals' };
+
+    /* ---------- pieces ---------- */
+    var quick = A.chatQuick.html;
+    function homeBlock() {
+      var inner = '<p class="h-greet type-display">Good morning, ' + esc(D.customer.first) + '</p>' + A.composer('home', PLACEHOLDER) + quick();
+      return '<div class="h-home">' + (web ? '<div class="h-home__inner">' + inner + '</div>' : inner) + '</div>';
+    }
+
+    /* Overview, as the page next to the chat */
+    var CARET = '<svg class="delta-caret" viewBox="0 0 10 8" aria-hidden="true"><path d="M5 0 10 8H0Z" fill="currentColor"/></svg>';
+    function lit(h) { return s.hl === 'year' ? MENTIONED.indexOf(h.n) > -1 : s.hl === 'tech' ? h.sector === 'Technology' : false; }
+    function tiles() {
+      var tile = function (label, value) { return '<div class="card stat-card"><span class="stat-card__label type-body tone-secondary">' + label + '</span>' + value + '</div>'; };
+      return '<div class="' + (web ? 'ov-tiles' : 'stat-scroller') + '">' +
+        tile('Net worth', '<span class="type-subheading">' + kr(T.netWorth) + '</span>') +
+        tile('Total assets', '<span class="type-subheading">' + kr(T.totalAssets) + '</span>') +
+        tile('Perf. YTD', '<span class="stat-card__value-row"><span class="type-subheading">' + kr(T.ytdSek) + '</span><span class="stat-card__delta type-value tone-positive">' + CARET + T.ytdPct.toFixed(2) + '%</span></span>') + '</div>';
+    }
+    function chart() {
+      var n = 33, pts = A.walk({ n: n, step: 1, start: T.investments - T.ytdSek, end: T.investments, seed: 9, dips: [[0.55, 0.7, -0.014]] });
+      var lo = Math.min.apply(0, pts), hi = Math.max.apply(0, pts), pad = (hi - lo) * 0.3; lo -= pad; hi += pad * 0.4;
+      var line = A.curve(pts.map(function (x, k) { return [k / (n - 1) * 1000, 12 + (1 - (x - lo) / (hi - lo)) * 136]; })).d;
+      return '<section class="section"><div class="section-header"><h2 class="type-section-title">Performance</h2></div><div class="card chart-card"><div class="chart-tabs" role="tablist">' +
+        ['1W', '1M', '6M', '1Y', 'YTD'].map(function (k) { return '<span class="chart-tab' + (k === 'YTD' ? ' chart-tab--active' : '') + '">' + k + '</span>'; }).join('') + '</div>' +
+        '<div class="chart-canvas"><svg viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">' + A.chartFill + '<path class="chart-area" d="' + line + ' L1000 160 L0 160 Z"/><path class="chart-line" d="' + line + '"/></svg></div>' +
+        '<div class="chart-dates"><span>1 Jan</span><span>9 Jan</span><span>17 Jan</span><span>25 Jan</span><span>2 Feb</span></div></div></section>';
+    }
+    function investments() {
+      var rows = invest.slice().sort(function (a, b) { return b.value - a.value; });
+      var table = web
+        ? '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span>Account</span><span class="num">Value</span></div>' +
+          rows.map(function (h) { return '<div class="wtable__row type-body' + (lit(h) ? ' is-ai' : '') + '"><span>' + esc(h.n) + '</span><span>' + esc(h.t) + '</span><span>' + esc(h.bank) + '</span><span class="num type-value">' + kr(h.value) + '</span></div>'; }).join('') + '</div>'
+        : '<div class="table">' + rows.map(function (h) { return '<div class="table-row' + (lit(h) ? ' is-ai' : '') + '"><div class="table-row__main"><span class="type-body">' + esc(h.n) + '</span><span class="type-caption tone-secondary">' + esc(h.t + ', ' + h.bank) + '</span></div><span class="table-row__value type-value">' + kr(h.value) + '</span></div>'; }).join('') + '</div>';
+      return '<section class="section"><div class="section-header"><h2 class="type-section-title">Investments</h2></div>' + table + '</section>';
+    }
+    var STATUS = { 'Triggered': ['negative', 'triggered', 'Triggered'], 'Check failed': ['warning', 'failed', 'Check failed'], 'OK': ['positive', 'ok', 'OK'], 'Paused': ['paused', 'paused', 'Paused'] };
+    function draftActs(kind) { return s.saved[kind] ? '' : '<div class="ac-draft-acts"><button type="button" class="btn btn--h36 btn--primary" data-save="' + kind + '">Save</button><button type="button" class="btn btn--h36 btn--neutral-2" data-discard="' + kind + '">Discard</button></div>'; }
+    function monitorsPage() {
+      var list = D.monitors.map(function (m) {
+        var st = STATUS[m.state] || STATUS.OK;
+        var msg = m.message && (m.state === 'Triggered' || m.state === 'Check failed') ? '<div class="monitor-message monitor-message--' + st[0] + ' type-body">' + esc(m.message) + '</div>' : '';
+        return '<article class="card monitor-card"><div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--' + st[0] + '">' + B[st[1]] + st[2] + '</span><span class="type-caption tone-secondary">' + esc(m.checked) + '</span></div></div>' +
+          '<div class="monitor-card__body"><p class="type-body-strong">' + esc(m.n) + '</p><p class="type-body tone-secondary">' + esc(m.rule) + '</p></div>' + msg + '</article>';
+      });
+      if (s.draft === 'monitor') {
+        var ok = s.saved.monitor;
+        list.unshift('<article class="card monitor-card' + (ok ? '' : ' is-ai') + '">' +
+          (ok ? '<div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--positive">' + B.ok + 'OK</span><span class="type-caption tone-secondary">Just now</span></div></div>' : '') +   // no status until it is saved
+          '<div class="monitor-card__body">' + (ok ? '' : A.aiTag()) + '<p class="type-body-strong">' + DRAFT.monitor.n + '</p><p class="type-body tone-secondary">' + DRAFT.monitor.rule + '</p></div>' + draftActs('monitor') + '</article>');
+      }
+      return pageShell('Monitors', '<div class="h-list">' + list.join('') + '</div>');
+    }
+    function ring(cur, target) {
+      var pc = Math.min(100, Math.round(cur / target * 100));
+      return '<div class="goal-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="goal-ring__track" cx="40" cy="40" r="36"/><circle class="goal-ring__value" cx="40" cy="40" r="36" pathLength="100" stroke-dasharray="' + pc + ' 100"/></svg><span class="goal-ring__label">' + pc + '%</span></div>';
+    }
+    function goalsPage() {
+      var list = D.goals.filter(function (g) { return g.status !== 'Completed'; }).map(function (g) {
+        return '<div class="card goal-card"><div class="goal-card__body"><p class="type-body-strong">' + esc(g.n) + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(g.target) + '</span></p><p class="type-body tone-secondary">' + esc(g.date) + '</p></div>' + ring(g.current, g.target) + '</div>';
+      });
+      if (s.draft === 'goal') {
+        var ok = s.saved.goal, d = DRAFT.goal;
+        list.unshift('<div class="card goal-card' + (ok ? '' : ' is-ai') + '"><div class="goal-card__body">' + (ok ? '' : A.aiTag()) +
+          '<p class="type-body-strong">' + d.n + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(0) + '</span><span class="type-body of"> of ' + kr(d.target) + '</span></p><p class="type-body tone-secondary">' + d.date + ', about ' + kr(d.monthly) + ' a month</p>' + draftActs('goal') + '</div>' + ring(0, d.target) + '</div>');
+      }
+      return pageShell('Goals', '<div class="h-list">' + list.join('') + '</div>');
+    }
+    function pageShell(title, body) {
+      return web ? '<main class="web-main"><div class="web-head"><h1 class="web-head__title type-page-title">' + title + '</h1></div>' + body + '</main>' : body;
+    }
+    function overviewPage() {
+      var body = tiles() + chart() + investments();
+      return web
+        ? '<main class="web-main"><div class="web-head"><h1 class="web-head__title type-page-title">Overview</h1></div>' + body + '</main>'
+        : '<div style="display:flex;flex-direction:column;gap:var(--space-xl)">' + body + '</div>';
+    }
+
+    var chat = A.chat({
+      web: web, screen: function () { return ctx.screen; }, draw: function () { draw(); }, later: later,
+      answer: reply, pages: PAGE, onAsk: function (q) { ask(q); },
+      onShow: function (page) { s.open = false; s.view = page; draw(); },
+      onClose: function () { s.open = false; draw(); }   // the page stays; the chat folds away
+    });
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var sc = ctx.screen.querySelector(web ? '.web-main' : '.phone'), top = sc ? sc.scrollTop : 0;
+      var pg = s.view !== 'home', body = s.view === 'monitors' ? monitorsPage() : s.view === 'goals' ? goalsPage() : s.view === 'overview' ? overviewPage() : homeBlock();
+      if (web) {
+        ctx.screen.innerHTML = '<div class="web' + (s.open ? ' has-panel' : '') + '">' + A.webSide(pg ? s.view : 'home') + body +
+          chat.panel() + '</div>';
+      } else {
+        var tab = s.view === 'overview' ? 'overview' : pg ? 'more' : 'home';
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + (pg ? '<header class="page-header"><h1 class="page-header__title type-page-title">' + PAGE[s.view] + '</h1></header>' : '') +
+          '<main class="screen-content" style="padding-bottom:' + (pg ? 120 : 0) + 'px">' + body + '</main></div>' + A.tabbar(tab) +
+          chat.panel(s.open);
+      }
+      var sc2 = ctx.screen.querySelector(web ? '.web-main' : '.phone'); if (sc2) sc2.scrollTop = top;
+      bind();
+    }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); fn(b); }; }); }
+      chat.bind(root);
+      // Njorda AI in the side menu: on the home it is the field right there; next to a page it opens or closes the chat beside it
+      on('[data-act="ai"]', function () {
+        if (s.view === 'home') { var f = root.querySelector('[data-field="home"]'); if (f) f.focus(); return; }
+        s.open = !s.open; if (s.open) chat.s.tab = 'chat'; draw();
+      });
+      on('[data-save]', function (b) { var k = b.getAttribute('data-save'); s.saved[k] = true; draw(); A.confirmPill(root, (k === 'goal' ? 'Goal' : 'Monitor') + ' saved', web ? 40 : 110); });
+      on('[data-discard]', function (b) { s.draft = null; draw(); A.confirmPill(root, 'Draft discarded', web ? 40 : 110); });
+    }
+
+    /* ---------- conversation ---------- */
+    function ask(q) {
+      s.open = true;
+      if (web) s.view = topic(q);
+      chat.ask(q);
+    }
+    function reply(q) {
+      var page = topic(q), r = A.chatAnswer(q, true);   // the page it is about opens beside the chat
+      r.before = function () {
+        s.hl = page !== 'overview' || /5 years|forecast/i.test(q) ? null : /technology|tech/i.test(q) ? 'tech' : 'year';
+        if (page === 'monitors') { s.draft = 'monitor'; s.saved.monitor = false; }
+        if (page === 'goals') { s.draft = 'goal'; s.saved.goal = false; }
+      };
+      return r;
+    }
+    /* typed question, so the flow can be watched without typing */
+    function typeAndAsk(q) { chat.type(q); }
+
+    /* ---------- start ---------- */
+    A.moreMenu(ctx, function () { s.open = true; chat.s.tab = 'chat'; draw(); }, function () { return s.view; });   // phone: the More tab opens the menu, and Njorda AI there opens this page's chat
+    draw();
+    if (ctx.state === 'quick') later(function () { typeAndAsk(QUICK[1][2]); }, 500);
+    if (ctx.state === 'data') later(function () { typeAndAsk('How is my portfolio doing this year?'); }, 500);
+    if (ctx.state === 'history') { s.open = true; chat.s.tab = 'chats'; if (web) s.view = 'overview'; draw(); }
+  }
+})();
+</script>
+</body>
+</html>

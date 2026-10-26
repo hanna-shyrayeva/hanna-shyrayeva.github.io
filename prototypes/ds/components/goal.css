@@ -1,0 +1,50 @@
+/* ==========================================================================
+   Goal card (Figma 1985:41932) — name / amount "of" target / date + pie ring
+   Variants: default (date, 14R secondary) · expired (20px warning icon + "Expired at …").
+   Pie chart (Figma 1985:41282): in progress · completed · expired.
+   ========================================================================== */
+
+.goal-card {
+  width: 100%;                          /* fluid: screen width − 2×16 gutter (361 on 393pt) */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);                 /* 12px */
+}
+.goal-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);                 /* 8px */
+}
+.goal-card__amount { display: block; }                        /* 18SB value + 14R "of …" inline */
+.goal-card__amount .of { color: var(--color-fg-secondary); }
+
+/* expired row: warning icon + text */
+.goal-card__expired {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);                 /* 8px */
+  color: var(--color-fg-warning);       /* text/warning */
+}
+.goal-card__expired-icon { flex: 0 0 auto; width: 20px; height: 20px; color: var(--color-icon-warning); }
+.goal-card__expired-icon svg { width: 20px; height: 20px; display: block; }
+
+/* --- pie ring: 80px, stroke 8, round caps, starts at 12 o'clock, clockwise ---
+   circles use pathLength="100" → progress = stroke-dasharray="<pct> 100" */
+.goal-ring { position: relative; width: 80px; height: 80px; flex: 0 0 auto; }
+.goal-ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+.goal-ring__track { fill: none; stroke: var(--chart-pie-bg); stroke-width: 8; }
+.goal-ring__value { fill: none; stroke: var(--chart-pie-fill-positive); stroke-width: 8; stroke-linecap: round; }
+.goal-ring--expired .goal-ring__value { stroke: var(--chart-pie-fill-warning); }
+.goal-ring--completed .goal-ring__value { stroke-linecap: butt; }       /* full circle, no cap seam */
+.goal-ring__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chart-pie-text);
+  font: var(--font-weight-medium) 16px/24px var(--font-family-base);   /* 16M */
+}

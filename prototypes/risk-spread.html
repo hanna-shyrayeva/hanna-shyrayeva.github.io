@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk and spread — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/section.css">
+<link rel="stylesheet" href="ds/components/table.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/chart.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/spinner.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  body { background: #fff; padding: var(--pb-page-pad); }
+
+  /* one page for Risk + Diversification: four tiles, then three sections */
+  .web .web-main { bottom: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: var(--space-2xl); }
+  .web .web-main::-webkit-scrollbar { display: none; }
+  .s-page { display: flex; flex-direction: column; gap: var(--space-xl); }
+  .phone .s-page { padding: var(--space-md) var(--space-lg) 140px; gap: var(--space-lg); }
+  .s-sub { margin: -16px 0 0; }
+  .phone .s-sub { margin: -8px 0 0; }
+  .section { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .section-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+  .notice__body > p { margin: 0; }
+
+  /* four tiles (as on Overview) */
+  .s-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
+  .s-tiles .s-tile { width: auto; min-width: 0; }
+  .ac-open .s-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* beside the chat: two by two, so each title stays on one line */
+  .s-tile { border: 0; color: inherit; font: inherit; text-align: left; cursor: default; }
+  .s-market { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .s-market > p { margin: 0; }
+
+  /* risk and return map: you and three standard portfolios */
+  /* risk scale 1 to 7: every class has its colour, yours is lit, the others are tinted */
+  :root { --sri-1: #4cff7b; --sri-2: #9dff4c; --sri-3: #d8ff3c; --sri-4: #ffd23c; --sri-5: #ff9500; --sri-6: #ff6a2a; --sri-7: #ff3131; }
+  .s-sri { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-sm); }
+  .s-sri .chart-tip { z-index: 2; pointer-events: none; }   /* under the block, over the names: the title above stays readable */
+  .s-sri .chart-tip[hidden] { display: none; }
+  .phone .s-sri { gap: var(--space-xs); }
+  .s-sri__col { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); min-width: 0; }
+  .s-sri__you { padding: 2px 8px; border-radius: 11px; background: var(--color-fg-primary); color: var(--color-surface-secondary); font: var(--font-weight-semibold) 12px/18px var(--font-family-base); visibility: hidden; }   /* an ink tag, as bold as the lit block */
+  .s-sri__you.is-on { visibility: visible; }
+  .s-sri__block { align-self: stretch; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-lg);
+    font: var(--font-weight-semibold) 18px/24px var(--font-family-base); color: var(--color-fg-secondary);
+    background: color-mix(in srgb, var(--c) 26%, var(--color-surface-secondary)); }
+  .phone .s-sri__block { height: 40px; font-size: 16px; }
+  .s-sri__block.is-on { background: var(--c); color: #141414; }   /* the bright classes take dark text in both themes */
+  .s-sri__col:hover .s-sri__block { background: var(--c); color: #141414; }   /* the class under the cursor lights up with its hint */
+  .s-sri__block { transition: background var(--motion-fast, .15s) var(--ease-standard), color var(--motion-fast, .15s) var(--ease-standard); }
+  .s-sri__names { min-height: 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .s-sri__name { padding: 0; border: 0; background: none; color: var(--color-fg-secondary); font: 400 12px/16px var(--font-family-base); cursor: pointer; }
+  .s-sri__name.is-sel { color: var(--color-fg-primary); font-weight: var(--font-weight-medium); }
+  .s-sri__ends { display: flex; justify-content: space-between; margin-top: calc(-1 * var(--space-sm)); }
+  .s-say { margin: 0; }
+
+  /* where your money is */
+  .s-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); align-items: stretch; }   /* one row, one height: the shorter lists keep their rows at the top */
+  .web.has-panel .s-cols, .ac-open .s-cols { grid-template-columns: minmax(0, 1fr); }   /* beside the chat the page is 528 wide: one card per row */
+  .phone .s-cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+
+  /* riskiest holdings */
+  .r-table .wtable__row > span:first-child { flex: 2 1 0; }   /* the name takes the room, as on Overview */
+  .table-row__value { white-space: nowrap; }
+  .is-fresh { animation: s-in .5s var(--ease-standard) both; }
+  @keyframes s-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .is-fresh { animation: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, R = D.risk;
+
+  /* one scope for the whole page: investments (cash and the apartment aren't spread across markets) */
+  var TYPE = { Fund: 'Mutual fund', Stock: 'Stock', ETF: 'ETF' };
+  var H = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings); }, []).filter(function (h) { return TYPE[h.t]; })
+    .map(function (h) { return { n: h.n, v: h.value, t: TYPE[h.t], region: h.region, type: TYPE[h.t], sector: h.sector === 'Mixed' ? 'Mixed (funds)' : h.sector, vol: h.vol, er: h.er }; });
+  H.forEach(function (h) { h.dn = Math.round((h.er - 1.65 * h.vol) * 100) / 100; h.loss = Math.round(h.v * h.dn / 100); });
+  var TOTAL = H.reduce(function (a, h) { return a + h.v; }, 0);
+  var pEr = H.reduce(function (a, h) { return a + h.er * h.v; }, 0) / TOTAL;
+  var pVol = H.reduce(function (a, h) { return a + h.vol * h.v; }, 0) / TOTAL * 0.78;          /* same spreading factor as the dataset */
+  var P = { n: 'Your investments', er: pEr, dn: pEr - 1.65 * pVol, vol: pVol };
+  function round100(x) { return Math.round(x / 100) * 100; }
+  var LOSS = round100(TOTAL * P.dn / 100), GAIN = round100(TOTAL * P.er / 100);
+  function sri(vol) { return [0.5, 5, 12, 20, 30, 80].filter(function (b) { return vol >= b; }).length + 1; }   // SRI bands, as on a fund's key information document
+  function level(n) { return n <= 2 ? 'Low' : n <= 4 ? 'Medium' : 'High'; }
+
+  var DIMS = [{ k: 'region', label: 'Regions' }, { k: 'type', label: 'Instrument type' }, { k: 'sector', label: 'Sectors' }];
+  function pct(x, d) { return (x < 0 ? '−' : '') + Math.abs(x).toFixed(d == null ? 1 : d) + '%'; }
+  function groups(d) {
+    var m = {};
+    H.forEach(function (h) { var c = h[d]; (m[c] = m[c] || { name: c, v: 0 }).v += h.v; });
+    return Object.keys(m).map(function (k) { m[k].p = m[k].v / TOTAL * 100; return m[k]; }).sort(function (a, b) { return b.v - a.v; });
+  }
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'Risk and spread, on one page',
+    intro: 'How much could I lose, and is my money spread out? Four numbers answer first, the details sit below.',
+    states: [
+      { id: 'page', label: 'Four numbers first', note: 'Risk level, the loss in a bad year, the expected return and the biggest share.' },
+      { id: 'market', label: 'Compared with the market', note: 'The 1 to 7 risk scale from fund sheets, with your level next to three standard portfolios.' },
+      { id: 'spread', label: 'Where your money is', note: 'Regions, instrument types and sectors, the largest share first.' },
+      { id: 'holdings', label: 'Riskiest holdings', note: 'The five holdings that could fall the most in a bad year.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    App.chatSide(ctx, 'spread');   // Njorda AI in the side menu (web) or the More menu (phone) opens the chat
+    var web = ctx.mode === 'web';
+    var s = {
+      all: false, pick: null
+    };
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    var CMP = [P].concat(R.benchmarks).slice().sort(function (a, b) { return a.dn - b.dn; });
+    var RISKY = H.slice().sort(function (a, b) { return a.dn - b.dn; });
+    var BIG = groups('region')[0];
+
+    var MINE = sri(P.vol), SHORT = { 'Swedish bonds': 'Bonds', 'Balanced 60/40': '60/40', 'Global equities': 'Global' };   // short names on a phone
+    function scaleHtml() {
+      var pick = CMP.filter(function (c) { return c.n === s.pick; })[0] || P, cols = '';
+      for (var k = 1; k <= 7; k++) {
+        var here = R.benchmarks.filter(function (b) { return sri(b.vol) === k; }), on = k === MINE || k === sri(pick.vol);
+        cols += '<div class="s-sri__col" data-k="' + k + '"><span class="s-sri__you' + (k === MINE ? ' is-on' : '') + '">You</span>' +
+          '<span class="s-sri__block' + (on ? ' is-on' : '') + '" style="--c:var(--sri-' + k + ')">' + k + '</span>' +
+          '<span class="s-sri__names">' + here.map(function (b) { return '<button type="button" class="s-sri__name' + (pick === b ? ' is-sel' : '') + '" data-pick="' + esc(b.n) + '">' + esc(web ? b.n : SHORT[b.n]) + '</button>'; }).join('') + '</span></div>';
+      }
+      return '<div class="s-sri" role="img" aria-label="Risk level ' + MINE + ' of 7. Swedish bonds ' + sri(R.benchmarks[2].vol) + ', Balanced 60/40 ' + sri(R.benchmarks[1].vol) + ', Global equities ' + sri(R.benchmarks[0].vol) + '">' + cols + '<div class="chart-tip type-caption" hidden></div></div>' +
+        '<div class="s-sri__ends type-caption tone-secondary"><span>Lower risk</span><span>Higher risk</span></div>' +
+        '<p class="s-say type-body"><b>' + esc(pick === P ? 'Your investments' : pick.n) + '</b> could lose ' + Math.abs(pick.dn).toFixed(1) + '% in a bad year and earn ' + pick.er.toFixed(1) + '% in a normal one.</p>';
+    }
+    /* the hint over a class: its name, how much it can move up or down in a year, and who is in it */
+    var SWING = ['under 0.5%', '0.5 to 5%', '5 to 12%', '12 to 20%', '20 to 30%', '30 to 80%', 'over 80%'];
+    function tipHtml(k) {
+      var who = (k === MINE ? ['You'] : []).concat(R.benchmarks.filter(function (b) { return sri(b.vol) === k; }).map(function (b) { return b.n; }));
+      return '<span class="type-body-strong">Risk level ' + k + ', ' + level(k) + '</span><span class="tone-secondary">Can move up or down ' + SWING[k - 1] + ' in a year</span>' +
+        (who.length ? '<span>' + esc(who.join(', ')) + '</span>' : '');
+    }
+    function alloc(d) {
+      var rows = groups(d.k).map(function (g) {
+        return '<div class="alloc-row" style="--pct:' + g.p.toFixed(1) + '%"><div class="alloc-row__layer alloc-row__layer--base"><span>' + esc(g.name) + '</span><span>' + pct(g.p) + '</span></div><div class="alloc-row__layer alloc-row__layer--fill" aria-hidden="true"><span>' + esc(g.name) + '</span><span>' + pct(g.p) + '</span></div></div>';
+      }).join('');
+      return '<div class="card"><div class="alloc"><h3 class="alloc__title type-body-strong tone-default">' + d.label + '</h3><div class="alloc__rows">' + rows + '</div></div></div>';   // on a card: the grey track shows against white
+    }
+    /* ---------- tiles ---------- */
+    // a tile is a title and one value, nothing else
+    function tile(go, label, value) {
+      return '<button type="button" class="card stat-card s-tile" data-go="' + go + '"><span class="stat-card__label type-body tone-secondary">' + label + '</span><span class="type-subheading">' + value + '</span></button>';
+    }
+    function tiles() {
+      return '<div class="' + (web ? 's-tiles' : 'stat-scroller') + '">' +   // a phone: one row that scrolls, as on Overview
+        tile('market', 'Risk level (1–7)', MINE + ', ' + level(MINE)) +
+        tile('market', 'Could lose in a bad year', kr(LOSS)) +
+        tile('market', 'Expected return a year', '+' + kr(GAIN)) +
+        tile('spread', 'Biggest share', esc(BIG.name) + ', ' + pct(BIG.p, 0)) +
+        '</div>';
+    }
+
+    /* ---------- folded sections ---------- */
+    function section(id, title, extra, body) {
+      return '<section class="section" id="' + id + '"><div class="section-header"><h2 class="type-section-title tone-default">' + title + '</h2>' + (extra || '') + '</div>' + body + '</section>';
+    }
+    function marketBody() { return scaleHtml(); }
+    function spreadBody() {
+      return '<div class="s-cols">' + DIMS.map(alloc).join('') + '</div>';
+    }
+    function holdingsBody() {
+      var shown = s.all ? RISKY : RISKY.slice(0, 5);
+      return web
+        ? '<div class="wtable r-table"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span class="num">Value</span><span class="num">In a bad year</span></div>' + shown.map(function (h) {
+            return '<div class="wtable__row type-body"><span>' + esc(h.n) + '</span><span>' + esc(h.t) + '</span><span class="num type-value">' + kr(h.v) + '</span><span class="num type-value tone-negative">' + pct(h.dn, 1) + '</span></div>';
+          }).join('') + '</div>'
+        : '<div class="table">' + shown.map(function (h) {
+            return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(h.n) + '</span><span class="type-caption tone-secondary">' + esc(h.t) + ', ' + kr(h.v) + '</span></div><span class="table-row__value type-value tone-negative">' + pct(h.dn, 1) + '</span></div>';
+          }).join('') + '</div>';
+    }
+    function holdingsMore() { return '<button type="button" class="section-header__action" data-a="all">' + (s.all ? 'Show less' : 'Show all') + '</button>'; }
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var sc = ctx.screen.querySelector(web ? '.web-main' : '.phone'), top = sc ? sc.scrollTop : 0;
+      var body = tiles() +
+        section('market', 'Compared with the market', '', '<div class="card s-market">' + marketBody() + '</div>') +
+        section('spread', 'Where your money is', '', spreadBody()) +
+        section('holdings', 'Riskiest holdings', holdingsMore(), holdingsBody());
+      if (web) ctx.screen.innerHTML = '<div class="web">' + A.webSide('spread') + '<main class="web-main"><div class="s-page"><div class="web-head"><h1 class="web-head__title type-page-title">Risk and spread</h1></div>' + body + '</div></main></div>';
+      else ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + '<header class="page-header"><h1 class="page-header__title type-page-title">Risk and spread</h1></header><main class="s-page">' + body + '</main></div>' + A.tabbar('more', '');
+      var sc2 = ctx.screen.querySelector(web ? '.web-main' : '.phone'); if (sc2) sc2.scrollTop = top;
+      bind();
+    }
+    function scrollTo(sel) { var el = ctx.screen.querySelector(sel), sc = ctx.screen.querySelector(web ? '.web-main' : '.phone'); if (el && sc) sc.scrollTop = el.offsetTop - (web ? 24 : 110); }
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(b); }; }); }
+      on('[data-go]', function (b) { scrollTo('#' + b.getAttribute('data-go')); });
+      on('[data-pick]', function (b) { var n = b.getAttribute('data-pick'); s.pick = s.pick === n ? null : n; draw(); });
+      on('[data-a="all"]', function () { s.all = !s.all; draw(); });
+      var sc = root.querySelector('.s-sri'), tip = sc && sc.querySelector('.chart-tip');
+      if (sc) sc.querySelectorAll('.s-sri__col').forEach(function (c) {
+        c.onmouseenter = function () {
+          tip.innerHTML = tipHtml(+c.getAttribute('data-k')); tip.hidden = false;
+          var x = c.offsetLeft + c.offsetWidth / 2 - tip.offsetWidth / 2;   // centred on the column, kept inside the card
+          tip.style.left = Math.max(0, Math.min(sc.clientWidth - tip.offsetWidth, x)) + 'px';
+          var b = c.querySelector('.s-sri__block'); tip.style.top = (b.offsetTop + b.offsetHeight + 6) + 'px';
+        };
+        c.onmouseleave = function () { tip.hidden = true; };
+      });
+    }
+
+
+    draw();
+    if (ctx.state !== 'page') scrollTo('#' + ctx.state);
+  }
+})();
+</script>
+</body>
+</html>

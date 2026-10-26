@@ -1,0 +1,26 @@
+# Kept on this computer only, never published
+
+# working files: image exports, notes, the old screens, the sample data generator
+drafts/
+data/
+
+# licensed brand fonts (the prototypes use Geologica from Google Fonts instead)
+prototypes/ds/assets/fonts/
+prototypes/ds/styles/fonts-at-hauss.css
+
+# brand icons used only by the drafts
+images/brand/
+
+# images and prototypes the pages don't use
+images/case-design-system.png
+images/case-design-system-dark.png
+images/case-launch.png
+images/case-launch-dark.png
+prototypes/diversification.html
+prototypes/risk.html
+prototypes/profile.html
+
+# system files
+Thumbs.db
+desktop.ini
+.DS_Store

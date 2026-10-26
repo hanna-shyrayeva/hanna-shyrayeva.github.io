@@ -1,0 +1,52 @@
+/* ==========================================================================
+   Typography — named roles (Figma phone spec) + tones.
+   Matches the dev's <Text> role names (camelCase in code → kebab here).
+   A text node gets ONE role class + ONE tone class:
+     <span class="type-body tone-secondary">…</span>
+   Colour is always a tone, never a hex (mirrors the RN text component).
+
+   Role         size / line-height / weight    Notes
+   page-title   24 / 30 / 600
+   section-title20 / 28 / 600                   (section headers, e.g. "Performance")
+   kpi-value    20 / 28 / 600
+   subheading   18 / 26 / 600                   (card titles, e.g. "Good morning")
+   body-strong  16 / 24 / 500
+   body-emphasis16 / 24 / 600
+   body         14 / 20 / 400
+   label        12 / 18 / 500
+   caption      12 / 16 / 400                   (dev app uses 11 — Figma has no 11)
+   dense        RETIRED — Figma has no 13px
+   ========================================================================== */
+
+/* display: 36/50/600 — Figma style 36SB (hero greeting on Home). Real Figma style, not in the dev's lean 10-role ladder → FLAG: adopt. */
+.type-display       { font: var(--font-weight-semibold) 36px/50px var(--font-family-base); letter-spacing: 0; margin: 0; font-variant-numeric: tabular-nums; }
+.type-page-title    { font: var(--font-weight-semibold) 24px/30px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-section-title { font: var(--font-weight-semibold) 20px/28px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-kpi-value     { font: var(--font-weight-semibold) 20px/28px var(--font-family-base); letter-spacing: 0; margin: 0; font-variant-numeric: tabular-nums; }
+.type-subheading    { font: var(--font-weight-semibold) 18px/26px var(--font-family-base); letter-spacing: 0; margin: 0; font-variant-numeric: tabular-nums; }
+.type-body-strong   { font: var(--font-weight-medium)   16px/24px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-body-emphasis { font: var(--font-weight-semibold) 16px/24px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-body          { font: var(--font-weight-regular)  14px/20px var(--font-family-base); letter-spacing: 0; margin: 0; }
+/* body-lg: 16/24/400 — Figma style 16R (AI chat text & input placeholder). Real Figma style, not in the dev's lean 10-role ladder → FLAG: adopt. */
+.type-body-lg       { font: var(--font-weight-regular)  16px/24px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-label         { font: var(--font-weight-medium)   12px/18px var(--font-family-base); letter-spacing: 0; margin: 0; }
+.type-caption       { font: var(--font-weight-regular)  12px/16px var(--font-family-base); letter-spacing: 0; margin: 0; }
+/* micro: 11/14/400 — tooltip text. Figma draws tooltips at 10R; bumped to 11 for legibility (decided). */
+.type-micro         { font: var(--font-weight-regular)  11px/14px var(--font-family-base); letter-spacing: 0; margin: 0; }
+/* value: 14/20/500 — Figma style 14M (table values). Real Figma style, not in the dev's
+   lean 10-role ladder (their body is 14R/400) → FLAG: adopt "value" or fold into body. */
+.type-value         { font: var(--font-weight-medium)   14px/20px var(--font-family-base); letter-spacing: 0; margin: 0; font-variant-numeric: tabular-nums; }
+
+/* figures: roles that carry amounts use tabular numerals so columns line up (RN: fontVariant: ['tabular-nums']).
+   .tabular adds them to any other text that shows numbers. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* --- tones (text colour by role, resolves to a CORE fg token) --- */
+.tone-default    { color: var(--color-fg-primary); }
+.tone-secondary  { color: var(--color-fg-secondary); }
+.tone-tertiary   { color: var(--color-fg-tertiary); }
+.tone-positive   { color: var(--color-fg-positive); }
+.tone-negative   { color: var(--color-fg-negative); }
+.tone-warning    { color: var(--color-fg-warning); }
+.tone-on-primary { color: var(--color-fg-static-black); }
+.tone-on-warning { color: var(--color-fg-static-black); }

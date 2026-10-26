@@ -1,0 +1,97 @@
+/* ==========================================================================
+   Table — list card of rows (Top 5 assets, Liabilities, …)
+   Rounded card; each row is a padded flex line with a bottom divider.
+   ========================================================================== */
+
+.table {
+  border-radius: var(--radius-xl);         /* 16px */
+  background: var(--table-bg);             /* no overflow: hidden, so a row's action menu can open past the card */
+}
+.table > :first-child { border-radius: var(--radius-xl) var(--radius-xl) 0 0; }   /* the rows round the outer corners themselves */
+.table > :last-child { border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.table > :only-child { border-radius: var(--radius-xl); }
+
+.table-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);                    /* 12px */
+  padding: var(--space-md) var(--space-lg);/* 12 / 16 */
+  background: var(--table-bg);
+  box-shadow: inset 0 -1px 0 var(--table-border);   /* divider inside the row (Figma inside stroke) → h62 */
+}
+.table-row:last-child { box-shadow: none; }
+
+.table-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* names wrap to two lines (then …) so large text never clips them — RN: numberOfLines={2}; values stay on one line */
+.table-row__main > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.table-row__value {
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}
+/* right-aligned stacked cell (e.g. amount + interest on Liabilities) */
+.table-row__end {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+/* 24px trailing slot — kebab menu on actionable rows, empty spacer otherwise
+   (keeps the value column aligned across all rows) */
+.table-row__action {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-tertiary);         /* muted kebab */
+}
+.table-row__action svg { width: 24px; height: 24px; }
+.table-row__action:active { color: var(--color-fg-primary); }   /* pressed */
+
+/* --- asset row variants (Figma "asset row mobile", 1939:6641), 361 wide on mobile ---
+   bank account      : name 14R + value 14M on one __line, "Account number - Type" 12R below
+   asset             : name 14R / type 12R, value 14M centred; empty 24px __action spacer keeps
+                       the value column aligned with rows that have a kebab (Figma pr 52 = 16+12+24)
+   asset + actions   : trailing kebab (set icon more-vert, icon/secondary)
+   liabilities       : name / "Type, Bank"; right: amount 14M over % 14R, both fg-primary */
+.table-row__meta { display: flex; gap: var(--space-xs); }           /* "Account number - Type" · "Type, Bank" (gap 4) */
+span.table-row__action { display: block; }                          /* non-interactive spacer */
+.table-row__line { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }   /* name … value on one line */
+.table-row__main > .table-row__line { overflow: visible; display: flex; }
+.table-row__line > :first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.table-row__line > :first-child:is(.pos-name, .row-name) { display: inline-flex; }   /* name + badge: the name inside wraps */
+.table-row__line > :not(:first-child) { flex: 0 0 auto; white-space: nowrap; text-align: right; }   /* the value never wraps — the name gives way */
+
+/* group subheader inside a table (Figma "subheader", Assets → By account): tables/bg/secondary, 14M */
+.table-subheader {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface-tertiary);
+  color: var(--color-fg-primary);
+  box-shadow: inset 0 -1px 0 var(--table-border);
+}
+
+/* --- tappable rows — added from the Phase 1 screens ---
+   .row-btn : a whole row that opens something (transaction → modal). A <button> styled as the row,
+              trailing arrow-right 24 (icon/secondary) in the __action slot; pressed = surface-tertiary.
+   .table-subheader--link : a group header that opens the group (Assets → By account → Account detail):
+              name 14M + "Bank · Type" 12R secondary, arrow-right 20; pressed = border-primary. */
+.row-btn { width: 100%; border: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; transition: background-color var(--motion-fast) var(--ease-standard); }
+.row-btn:active, .row-btn.is-pressed { background: var(--color-surface-tertiary); }
+.table-subheader--link { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); border: 0; text-align: left; font: inherit; cursor: pointer; }
+.table-subheader--link:active { background: var(--color-border-primary); }
+.table-subheader__text { display: flex; flex-direction: column; min-width: 0; }
+.table-subheader__arrow { width: 20px; height: 20px; flex: 0 0 auto; color: var(--color-fg-secondary); }   /* on surface-tertiary: fg-tertiary is 2.8:1, secondary passes 3:1 */
+.table-subheader__text .type-caption { color: var(--color-fg-primary); }   /* secondary on surface-tertiary is 4.1:1 — primary keeps AA */
+.row-btn:active .table-row__action, .row-btn.is-pressed .table-row__action { color: var(--color-fg-secondary); }
+.table-subheader__arrow svg { width: 20px; height: 20px; display: block; }

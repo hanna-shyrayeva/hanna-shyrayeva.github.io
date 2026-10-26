@@ -1,0 +1,112 @@
+/* ==========================================================================
+   Input — text field (Figma node 1745). h40, radius lg (12), text 14R.
+   States: default · hover · focus · filled · error · disabled.
+   Modifiers: currency (trailing "SEK") · icon (trailing 20px icon).
+   Field wrapper carries the state; on real inputs, :focus-within = focus.
+   The label + helper/error block (Figma node 1744) wraps the field.
+   ========================================================================== */
+
+/* --- field-block: label + field + helper/error --- */
+.input { display: flex; flex-direction: column; gap: var(--space-sm); }   /* 8px */
+.input__label { color: var(--input-label); }                              /* role: body-strong */
+.input__helper { color: var(--input-helper); }                           /* role: caption */
+.input__error  { color: var(--input-error-text); }                       /* role: label; shown on error */
+
+/* header row: label on the left + trailing link (e.g. "Forgot your password?") */
+.input__header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.input__link {
+  flex: 0 0 auto;
+  color: var(--color-fg-primary);
+  font: var(--font-weight-medium) 14px/20px var(--font-family-base);   /* 14M — a .link (underlined on hover) */
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+}
+.input__link:hover { text-decoration: underline; }
+.input__link:active { color: var(--color-fg-secondary); }               /* pressed (no hover) */
+
+/* --- field wrapper (the bordered box) --- */
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);                     /* 8px between text and suffix/icon */
+  height: 40px;
+  padding: 0 var(--space-lg);               /* 16px */
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-lg);          /* 12px */
+  transition: border-color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard);
+}
+
+.field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--input-fg);
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);   /* 14R */
+}
+.field__input::placeholder { color: var(--input-placeholder); }
+
+/* trailing "SEK" currency suffix */
+.field__currency {
+  flex: 0 0 auto;
+  color: var(--input-currency);
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);
+}
+/* trailing icon (e.g. eye) */
+.field__icon { flex: 0 0 auto; width: 20px; height: 20px; color: var(--input-icon); }
+.field__icon svg { width: 20px; height: 20px; display: block; }
+
+/* --- states (real) --- */
+.field:focus-within { border-color: var(--input-border-focus); }
+
+/* --- states (explicit modifiers, also used to showcase) --- */
+.field--hover  { border-color: var(--input-border-hover); }
+.field--focus  { border-color: var(--input-border-focus); }
+.field--error  { border-color: var(--input-border-error); }
+.field--disabled {
+  background: var(--input-bg-disabled);
+  border-color: var(--input-border);
+}
+.field--disabled .field__input,
+.field--disabled .field__currency { color: var(--input-fg-disabled); }
+.field--disabled .field__input::placeholder { color: var(--input-fg-disabled); }
+
+/* --- search field (Figma "search 40px", 2644:54465) ---
+   leading 24px search icon (fg-tertiary), gap 10, placeholder is darker (fg-secondary).
+   States: default · pressed (border-primary-hover) · focus empty · focus filled (border-green).
+   Active + has text → trailing 20px × (set icon "close") clears the query; not in Figma. */
+.field--search { gap: 10px; }
+.field--search .field__search-icon { flex: 0 0 auto; width: 24px; height: 24px; color: var(--input-icon); }
+.field--search .field__search-icon svg { width: 24px; height: 24px; display: block; }
+.field--search .field__input::placeholder { color: var(--input-placeholder-search); }
+.field--search .field__input { -webkit-appearance: none; appearance: none; }             /* web only: strip native search styling */
+.field--search .field__input::-webkit-search-cancel-button { -webkit-appearance: none; } /* no clear (×) in Figma */
+.field--search:active:not(:focus-within) { border-color: var(--input-border-hover); }       /* pressed (Figma hover; no hover on mobile) */
+
+/* clear (×): hidden until the field is focused AND has a value (needs a placeholder attr) */
+.field__clear {
+  display: none;
+  flex: 0 0 auto;
+  width: 20px; height: 20px;
+  align-items: center; justify-content: center;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--input-icon);
+  cursor: pointer;
+}
+.field__clear svg { width: 20px; height: 20px; display: block; }
+.field__clear:active { color: var(--color-fg-secondary); }
+.field:focus-within .field__input:not(:placeholder-shown) ~ .field__clear,
+.field--focus .field__input:not(:placeholder-shown) ~ .field__clear { display: inline-flex; }   /* showcase: static active */
+
+/* --- readonly: value can be read and copied, not edited — no focus border, text stays primary --- */
+.field--readonly { background: var(--color-surface-primary); border-color: transparent; }
+.field--readonly:focus-within { border-color: transparent; }
+.field--readonly .field__input { color: var(--input-fg); cursor: default; }
+
+/* --- web: hover (the border darkens; never over focus, an error or a disabled field) --- */
+@media (hover: hover) { .field:hover:not(:focus-within):not(.field--error):not(.field--disabled):not(.field--focus) { border-color: var(--input-border-hover); } }

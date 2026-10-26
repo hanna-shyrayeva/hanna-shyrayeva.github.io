@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Shell — mobile screen frame (reusable across all Njorda screens)
+   Phone width 393pt (fluid 375–440). Status bar + page header + scroll body.
+   ========================================================================== */
+
+/* backdrop only visible on desktop, around the phone frame */
+body.mobile { background: #c9ccca; }
+:root[data-theme="dark"] body.mobile,
+body.mobile:where(:root:not([data-theme="light"])) { background: #000; }
+
+.phone {
+  width: 100%;
+  max-width: 393px;              /* iPhone 15/16 width; fluid down to 375 */
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* --- iOS status bar --- */
+.statusbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 54px;
+  flex: 0 0 auto;                  /* never squeezed by the content below */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xl) 0 34px;   /* iOS optical: time nudged from edge */
+  background: var(--color-surface-primary);
+  color: var(--color-fg-primary);
+}
+.statusbar__time {
+  font-family: system-ui, -apple-system, "SF Pro", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.statusbar__icons { display: flex; align-items: center; gap: 7px; }
+.statusbar__icons svg { display: block; }
+
+/* --- page header (sticky title row) — Figma "Page header mobile" 1923:13861 ---
+   default        : title 24SB (page-title)
+   with navigation: back · 16 · title 24SB
+   centered       : back · title 20SB centred (section-title) · kebab — or an empty 24 spacer
+   navigation+icon: back … globe 32 (h44)      icon right: … globe 32 (h44)
+   padding 8 / 16 / 4 → h42 (h44 with the 32px globe) */
+.page-header {
+  position: sticky;
+  top: 54px;                       /* sits under the status bar */
+  z-index: 29;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);            /* 16 between back and title */
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: var(--space-sm) var(--space-lg) var(--space-xs);
+  background: var(--color-surface-primary);
+}
+.page-header__title { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-header--center .page-header__title { flex: 1 1 auto; text-align: center; }
+
+/* 24px icon slots: back (icon/primary) · kebab (icon/secondary) · empty spacer keeps the title centred */
+.page-header__back,
+.page-header__more,
+.page-header__spacer {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: inline-flex;
+  padding: 0; border: 0;
+  background: transparent;
+}
+.page-header__back { color: var(--color-fg-primary); cursor: pointer; }
+.page-header__more { color: var(--color-fg-tertiary); cursor: pointer; }
+.page-header__back svg,
+.page-header__more svg { width: 24px; height: 24px; display: block; }
+.page-header__back:active { color: var(--color-fg-secondary); }   /* pressed */
+.page-header__more:active { color: var(--color-fg-primary); }
+
+/* trailing globe (language) — pushed to the right edge */
+.page-header .lang-globe { margin-left: auto; }
+.page-header .lang-globe:active { background: var(--color-surface-tertiary); }   /* header sits on surface-primary → darker press */
+
+/* --- scrollable content area --- */
+.screen-content {
+  flex: 1;
+  padding: var(--space-md) var(--space-lg) 120px;   /* top gap after header; bottom clears tab bar */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* --- time of the page's figures — under the page header, only when they are old (> 1 h) ---
+   one caption for everything on the screen (tiles, lists, charts); a failed refresh says the time in its notice instead */
+.page-updated { margin: 0; padding: 0 var(--space-lg); flex: 0 0 auto; }

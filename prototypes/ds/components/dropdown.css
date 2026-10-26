@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Dropdown — trigger (Figma 1908:11549) + panel (Figma 1908:12475).
+   Trigger looks like an input field + chevron. States: default/hover/focus;
+   open = green border + chevron up.
+   Panel (surface-secondary + shadow-menu): an option list (e.g. currency
+   with a check on the selected row). Dates use the platform date picker.
+   ========================================================================== */
+
+/* --- trigger --- */
+.select {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 40px;
+  padding: 0 var(--space-lg);                /* 16px */
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-lg);           /* 12px */
+  color: var(--input-fg);
+  font: var(--font-weight-regular) 14px/20px var(--font-family-base);   /* 14R */
+  text-align: left;
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+.select__value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select__value--placeholder { color: var(--input-placeholder); }
+.select__chevron { flex: 0 0 auto; width: 20px; height: 20px; color: var(--input-icon); transition: transform var(--motion-fast) var(--ease-standard); }
+.select__chevron svg { width: 20px; height: 20px; display: block; }
+
+.select:focus-visible { outline: 2px solid var(--color-fg-primary); outline-offset: 2px; }
+.select--hover { border-color: var(--input-border-hover); }
+.select--focus,
+.select[aria-expanded="true"] { border-color: var(--input-border-focus); }   /* focus / open = green */
+.select[aria-expanded="true"] .select__chevron { transform: rotate(180deg); }  /* chevron flips up */
+
+/* compact select (hug content): gap 16, chevron 24 — trailing control in a setting card (Figma 1734:14184) */
+.select--compact { width: auto; gap: var(--space-lg); }
+.select--compact .select__chevron,
+.select--compact .select__chevron svg { width: 24px; height: 24px; }
+
+/* --- panel --- */
+.dropdown-panel {
+  margin-top: var(--space-sm);               /* 8px below the trigger */
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-menu);
+  overflow: hidden;
+}
+
+/* --- option list (e.g. currency) --- */
+.dropdown-list { list-style: none; margin: 0; padding: var(--space-sm) 0; display: flex; flex-direction: column; }
+.dropdown-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);                      /* check slot → label */
+  padding: var(--space-md) var(--space-lg);  /* 12 / 16 */
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--color-fg-primary);
+  font: var(--font-weight-regular) 16px/24px var(--font-family-base);   /* 16R */
+}
+.dropdown-option:active { background: var(--color-surface-primary); }   /* pressed (no hover) */
+/* 20px leading check slot — keeps labels aligned; visible only when selected */
+.dropdown-option__check { width: 20px; height: 20px; flex: 0 0 auto; color: var(--color-fg-tertiary); visibility: hidden; }
+.dropdown-option__check svg { width: 20px; height: 20px; display: block; }
+.dropdown-option[aria-selected="true"] .dropdown-option__check { visibility: visible; }
+
+/* --- select: error + disabled (same tokens as the text field) --- */
+.select--error { border-color: var(--input-border-error); }
+.select:disabled, .select--disabled { background: var(--input-bg-disabled); border-color: var(--input-border); color: var(--input-fg-disabled); cursor: default; }
+.select:disabled .select__chevron, .select--disabled .select__chevron { color: var(--input-fg-disabled); }
+
+/* --- web: hover --- */
+@media (hover: hover) {
+  .select:hover:not(.select--error):not(.select--focus) { border-color: var(--input-border-hover); }
+  .dropdown-option:hover { background: var(--color-surface-primary); }
+}

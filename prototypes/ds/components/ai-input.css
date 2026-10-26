@@ -1,0 +1,70 @@
+/* ==========================================================================
+   AI input — message box + send button (Home + AI chat)
+   Send button: gray (surface-tertiary) when empty → green when a message is typed.
+   ========================================================================== */
+
+.ai-input {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-2xl);         /* 20px: the send button inside is 12, and the quick actions under it 16, so the box needs the softer corner */
+}
+
+.ai-input__field {
+  width: 100%;
+  min-height: 24px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--color-fg-primary);
+  font: var(--font-weight-regular) 16px/24px var(--font-family-base);
+}
+.ai-input__field::placeholder { color: var(--color-fg-secondary); }
+
+/* on a white (surface-secondary) screen the input sits on the gray surface instead */
+.ai-input--alt { background: var(--color-surface-primary); }
+
+.ai-input__row { display: flex; align-items: center; justify-content: flex-end; }
+
+.ai-input__send {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius-lg);          /* 12px */
+  background: var(--color-surface-tertiary); /* inactive (empty) */
+  color: var(--color-fg-primary);
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+.ai-input__send svg { width: 24px; height: 24px; }
+.ai-input__send.is-active { background: var(--color-border-green); color: var(--color-fg-static-black); }
+
+/* --- quick action chips (Home composer) --- */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);                 /* 12px */
+}
+.quick-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);                 /* 8px */
+  padding: var(--space-md) var(--space-lg);  /* 12 / 16 */
+  border: 0;
+  border-radius: var(--radius-xl);      /* 16px */
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-primary);
+  font: var(--font-weight-medium) 16px/24px var(--font-family-base);
+  white-space: nowrap;
+}
+.quick-action:active { background: var(--color-surface-tertiary); }   /* pressed (no hover on mobile) */
+.quick-action svg { width: 18px; height: 18px; flex: 0 0 auto; }

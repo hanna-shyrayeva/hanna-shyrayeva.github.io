@@ -1,0 +1,18 @@
+/* ==========================================================================
+   Tooltip — tap-to-toggle info bubble (no hover on mobile)
+   Positioned via JS (fixed) so it escapes card/scroller clipping.
+   ========================================================================== */
+
+.tooltip {
+  position: fixed;
+  z-index: 60;
+  width: max-content;          /* fill up to max-width instead of shrinking narrow when absolute/fixed */
+  max-width: 200px;
+  padding: 6px;
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-secondary);
+  font: var(--font-weight-regular) 11px/14px var(--font-family-base);   /* role: micro (11/14) — Figma 10, bumped to 11 (decided) */
+  border-radius: var(--radius-sm);        /* 6px */
+  box-shadow: var(--shadow-menu);
+}
+.tooltip[hidden] { display: none; }

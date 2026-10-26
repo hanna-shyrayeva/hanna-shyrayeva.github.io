@@ -1,0 +1,41 @@
+/* ==========================================================================
+   Spinner — classic circular loader (style decided; Figma shows only the loader layout).
+   Track = border-primary ring, arc = fg-primary quarter, 0.8s linear spin.
+   Sizes: sm 16 · md 24 (default) · lg 32 · xl 48 · 2xl 64 (loader) — stroke 2 / 2.5 / 3 / 4 / 4.
+   Loader (Figma 1781:10522) = spinner 64 + a line of text saying what is happening (16R secondary, gap 8).
+   RN: ActivityIndicator (size small≈20 / large≈36) or a rotating SVG arc with the same tokens.
+   ========================================================================== */
+
+.spinner {
+  --spinner-size: 24px;
+  --spinner-stroke: 2.5px;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: var(--spinner-stroke) solid var(--spinner-track, var(--color-border-primary));   /* track */
+  border-top-color: var(--spinner-arc, var(--color-fg-primary));                          /* arc */
+  animation: spinner-rotate .8s linear infinite;
+}
+.spinner--sm  { --spinner-size: 16px; --spinner-stroke: 2px; }
+.spinner--lg  { --spinner-size: 32px; --spinner-stroke: 3px; }
+.spinner--xl  { --spinner-size: 48px; --spinner-stroke: 4px; }
+.spinner--2xl { --spinner-size: 64px; --spinner-stroke: 4px; }       /* loader size (Figma 64) */
+
+@keyframes spinner-rotate { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+/* loader: spinner + status text (Figma 1781:10522) */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);                       /* 8 */
+  text-align: center;
+}
+.loader__text { margin: 0; }                  /* type-body-lg tone-secondary (16R) */
+
+/* inside a button: 20px, colours follow the button (see .btn__spinner in buttons.css) */
+.spinner--btn { --spinner-size: 20px; --spinner-stroke: 2px; }

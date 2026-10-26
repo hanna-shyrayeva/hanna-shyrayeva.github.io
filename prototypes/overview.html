@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overview — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/section.css">
+<link rel="stylesheet" href="ds/components/chart.css">
+<link rel="stylesheet" href="ds/components/table.css">
+<link rel="stylesheet" href="ds/components/goal.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/menu.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  body { background: #fff; padding: var(--pb-page-pad); }
+
+  /* page bits not in the design system (Figma Overview 2273:40224, 2273:42726) */
+  .web .web-main { bottom: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: var(--space-2xl); gap: var(--space-xl); }
+  .web .web-main::-webkit-scrollbar { display: none; }
+  .ov-top { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .ov-tiles { display: flex; gap: var(--space-lg); }
+  .web .ov-tiles .stat-card { flex: 1 1 0; width: auto; }
+  .ov-greet { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .stat-card p { margin: 0; }
+  .ov-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .web .ov-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }   /* two cards a row, as on Goals and Monitors */
+  .ov-cards .monitor-message { margin-top: auto; }
+  .goal-card p, .ov-greet p { margin: 0; }
+  .ov-row-act { position: relative; }
+  .wtable__row > .ov-row-act { flex: 0 0 32px; display: flex; justify-content: flex-end; }   /* actions at the very end of the row */
+  .wtable__row > span:first-child { flex: 2 1 0; }   /* the name takes the room, so narrower screens keep every column */
+  .ov-row-act .action-menu { position: absolute; top: 30px; right: 0; z-index: 30; }
+  .table-row__end { gap: 2px; }
+  .chart-canvas { cursor: crosshair; }
+  .chart-canvas svg path { vector-effect: non-scaling-stroke; }
+  .tone-positive-fill { color: var(--color-fg-positive); }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="ds/badge-icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, B = window.BADGE_ICONS;
+  var T = D.totals;
+  var CARET = '<svg class="delta-caret" viewBox="0 0 10 8" aria-hidden="true"><path d="M5 0 10 8H0Z" fill="currentColor"/></svg>';
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'How am I doing, at a glance',
+    intro: 'With an AI-first home, the numbers got a page of their own. It reads top to bottom by importance: the totals, how they moved, then goals and monitors.',
+    states: [
+      { id: 'page', label: 'Overview', note: 'Four cards on top: net worth, total assets, loans and the return this year.' },
+      { id: 'chart', label: 'Performance', note: 'Five periods, every day of the week on the axis. Hover to read any point.' },
+      { id: 'assets', label: 'Top assets', note: 'The five largest. One you added can be edited, a holding from the bank only removed.' },
+      { id: 'goals', label: 'Goals', note: 'Two goals, an expired one or the closest to its date first. Show more opens Goals.' },
+      { id: 'monitors', label: 'Monitors', note: 'Triggered and failed monitors come first. When all is calm, the rest show instead. Show more opens Monitors.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    App.chatSide(ctx, 'overview');   // Njorda AI in the side menu (web) or the More menu (phone) opens the chat
+    var web = ctx.mode === 'web';
+    var holdings = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings.map(function (h) { return { n: h.n, t: h.t, value: h.value, manual: acc.type === 'Manual', bank: acc.bank }; })); }, []);
+    var s = {
+      holdings: holdings, menu: null,
+      period: '1W', spot: ctx.state === 'page' ? null : ctx.state   // the part the story is about: scrolled into view
+    };
+
+    function assetsTotal() { return s.holdings.reduce(function (x, h) { return x + h.value; }, 0); }
+    function sorted() { return s.holdings.slice().sort(function (a, b) { return b.value - a.value; }); }
+    function name(h) { return h.t === 'Cash' ? 'Sparkonto, ' + h.bank : h.n; }
+
+    /* ---------- sections ---------- */
+    function greeting() {
+      return '<div class="card ov-greet"><p class="type-subheading">Good morning, ' + esc(D.customer.first) + '</p>' +
+        '<p class="type-body tone-secondary">Your investments are up <span class="tone-positive">' + T.weekPct.toFixed(2) + '%</span> since last week.</p></div>';
+    }
+    function tile(label, value, extra) {
+      return '<div class="card stat-card"><span class="stat-card__label type-body tone-secondary">' + label + '</span>' + value + (extra || '') + '</div>';
+    }
+    function tiles() {
+      var total = assetsTotal(), net = total + T.loans;
+      return '<div class="' + (web ? 'ov-tiles' : 'stat-scroller') + '">' +
+        tile('Net worth', '<span class="type-subheading">' + kr(net) + '</span>') +
+        tile('Total assets', '<span class="type-subheading">' + kr(total) + '</span>') +
+        tile('Loans', '<span class="type-subheading">' + kr(T.loans) + '</span>') +
+        tile('Perf. YTD', '<span class="stat-card__value-row"><span class="type-subheading">' + kr(T.ytdSek) + '</span><span class="stat-card__delta type-value tone-positive">' + CARET + T.ytdPct.toFixed(2) + '%</span></span>') +
+        '</div>';
+    }
+
+    // [points, days between points, change over the period (null = this year from the data)]
+    // 1W: five points a day; the longer periods one a day (trading days) with the dips a real portfolio has
+    var PERIODS = {
+      '1W': [36, 0.2, 0.0124, 3, null, [[5 / 7, 6.6 / 7]]], '1M': [31, 1, 0.021, 7, [[0.3, 0.45, -0.022]]], '6M': [127, 1.44, 0.048, 11, [[0.5, 0.62, -0.055]]],
+      '1Y': [253, 1.44, 0.091, 5, [[0.22, 0.34, -0.11], [0.7, 0.76, -0.035]]], 'YTD': [33, 1, null, 9, [[0.55, 0.7, -0.014]]]
+    };
+    function series() {
+      var p = PERIODS[s.period], n = p[0], total = T.investments;
+      var change = p[2] == null ? T.ytdSek : total - total / (1 + p[2]);
+      var vals = A.walk({ n: n, step: p[1], start: total - change, end: total, seed: p[3], dips: p[4], closed: p[5] });   // the week starts on Monday 26 Jan: 31 Jan and 1 Feb are the weekend
+      var end = new Date(2026, 1, 2);
+      return vals.map(function (v, i) {
+        var d = new Date(end.getTime() - (n - 1 - i) * p[1] * 864e5);
+        return { v: v, d: d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() };
+      });
+    }
+    function chart() {
+      var pts = series(), lo = Math.min.apply(0, pts.map(function (p) { return p.v; })), hi = Math.max.apply(0, pts.map(function (p) { return p.v; }));
+      var pad = Math.max((hi - lo) * 0.3, T.investments * 0.006);   // headroom, so small moves look small
+      lo -= pad; hi += pad * 0.4;
+      var W = 1000, H = 160, n = pts.length;
+      var xy = pts.map(function (p, i) { return [i / (n - 1) * W, 12 + (1 - (p.v - lo) / (hi - lo || 1)) * (H - 24)]; });
+      var cv = A.curve(xy), line = cv.d;
+      s.pts = pts; s.xy = cv.xy;   // the hover marker sits on the drawn curve
+      var marks = s.period === '1W' ? [0, 1, 2, 3, 4, 5, 6, 7].map(function (d) { return d / 7; }) : [0, 0.25, 0.5, 0.75, 1];   // a week: every day
+      var ticks = marks.map(function (f, i) {
+        var dm = pts[Math.round(f * (n - 1))].d.split(' ');
+        return !web && s.period === '1W' && i && dm[0] !== '1' ? dm[0] : dm[0] + ' ' + dm[1];   // a week on a phone: the month only where it starts or changes
+      });   // dates along the axis
+      return '<section class="section' + (s.spot === 'chart' ? ' spot' : '') + '"><div class="section-header"><h2 class="type-section-title">Performance</h2></div>' +
+        '<div class="card chart-card"><div class="chart-tabs" role="tablist">' + Object.keys(PERIODS).map(function (k) {
+          return '<button type="button" role="tab" class="chart-tab' + (k === s.period ? ' chart-tab--active' : '') + '" data-period="' + k + '">' + k + '</button>';
+        }).join('') + '</div>' +
+        '<div class="chart-canvas" data-chart><svg viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">' + A.chartFill + '<path class="chart-area" d="' + line + ' L1000 160 L0 160 Z"/><path class="chart-line" d="' + line + '"/></svg>' +
+        '<div class="chart-inspect" hidden><div class="chart-guide"></div><div class="chart-marker"></div><div class="chart-tip"><span class="type-body tone-secondary" data-tip-d></span><span class="chart-tip__value type-value"><span class="chart-tip__dot"></span><span data-tip-v></span></span></div></div></div>' +
+        '<div class="chart-dates">' + ticks.map(function (t) { return '<span>' + t + '</span>'; }).join('') + '</div></div></section>';
+    }
+
+    function header(title, more) {   // Show more leads to the page itself (Assets, Goals, Monitors); the pages live in their own prototypes
+      return '<div class="section-header"><h2 class="type-section-title">' + title + '</h2>' +
+        (more ? '<button type="button" class="section-header__action">Show more</button>' : '') + '</div>';
+    }
+    function rowMenu(h, i) {
+      if (s.menu !== i) return '';
+      var items = h.manual ? [['edit', 'edit', 'Edit'], ['delete', 'delete', 'Delete']] : [['delete', 'delete', 'Delete']];
+      return '<div class="action-menu"><ul>' + items.map(function (x) {
+        return '<li><button type="button" class="action-menu__item" data-act="' + x[0] + '" data-i="' + i + '"><span class="action-menu__icon">' + I(x[1]) + '</span>' + x[2] + '</button></li>';
+      }).join('') + '</ul></div>';
+    }
+    function assets() {
+      var rows = sorted().slice(0, 5);
+      var body;
+      if (web) {
+        body = '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span class="num">Value</span><span class="wtable__gap"></span></div>' +
+          rows.map(function (h) {
+            var i = s.holdings.indexOf(h);
+            return '<div class="wtable__row type-body"><span>' + esc(name(h)) + '</span><span>' + esc(h.t) + '</span><span class="num type-value">' + kr(h.value) + '</span>' +
+              '<span class="ov-row-act"><button type="button" class="wtable__act" data-menu="' + i + '" aria-label="Actions for ' + esc(name(h)) + '">' + I('more-vert') + '</button>' + rowMenu(h, i) + '</span></div>';
+          }).join('') + '</div>';
+      } else {
+        body = '<div class="table">' + rows.map(function (h) {
+          var i = s.holdings.indexOf(h);
+          return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(name(h)) + '</span><span class="type-caption tone-secondary">' + esc(h.t) + '</span></div>' +
+            '<span class="table-row__value type-value">' + kr(h.value) + '</span>' +
+            '<span class="ov-row-act"><button type="button" class="table-row__action" data-menu="' + i + '" aria-label="Actions for ' + esc(name(h)) + '">' + I('more-vert') + '</button>' + rowMenu(h, i) + '</span></div>';
+        }).join('') + '</div>';
+      }
+      return '<section class="section' + (s.spot === 'assets' ? ' spot' : '') + '">' + header('Top 5 assets', true) + body + '</section>';
+    }
+    function liabilities() {
+      var L = D.liabilities, body;
+      if (web) {
+        body = '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span>Bank</span><span class="num">Interest rate</span><span class="num">Amount</span></div>' +
+          L.map(function (l) { return '<div class="wtable__row type-body"><span>' + esc(l.n) + '</span><span>' + esc(l.t) + '</span><span>' + esc(l.bank) + '</span><span class="num">' + l.rate.toFixed(2) + '%</span><span class="num type-value">' + kr(l.amount) + '</span></div>'; }).join('') + '</div>';
+      } else {
+        body = '<div class="table">' + L.map(function (l) {
+          return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(l.n) + '</span><span class="type-caption tone-secondary">' + esc(l.t + ', ' + l.bank) + '</span></div>' +
+            '<div class="table-row__end"><span class="type-value">' + kr(l.amount) + '</span><span class="type-body">' + l.rate.toFixed(2) + '%</span></div></div>';
+        }).join('') + '</div>';
+      }
+      return '<section class="section">' + header('Liabilities') + body + '</section>';
+    }
+    function ring(g) {
+      var p = Math.min(100, Math.round(g.current / g.target * 100)), mod = g.status === 'Expired' ? ' goal-ring--expired' : '';
+      return '<div class="goal-ring' + mod + '"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="goal-ring__track" cx="40" cy="40" r="36"/><circle class="goal-ring__value" cx="40" cy="40" r="36" pathLength="100" stroke-dasharray="' + p + ' 100"/></svg><span class="goal-ring__label">' + p + '%</span></div>';
+    }
+    function goals() {
+      // closest to their date first: expired, then the nearest date
+      var act = D.goals.filter(function (g) { return g.status !== 'Completed'; });
+      var order = ['Kitchen renovation', 'Emergency fund', 'Summer house'];
+      act.sort(function (a, b) { return order.indexOf(a.n) - order.indexOf(b.n); });
+      var list = act.slice(0, 2);
+      return '<section class="section' + (s.spot === 'goals' ? ' spot' : '') + '">' + header('Goals', act.length > 2) + '<div class="ov-list ov-cards">' + list.map(function (g) {
+        var when = g.status === 'Expired' ? '<p class="goal-card__expired type-body"><span class="goal-card__expired-icon">' + I('exclamation-mark') + '</span>Expired on ' + esc(g.date) + '</p>' : '<p class="type-body tone-secondary">' + esc(g.date) + '</p>';
+        return '<div class="card goal-card"><div class="goal-card__body"><p class="type-body-strong">' + esc(g.n) + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(g.target) + '</span></p>' + when + '</div>' + ring(g) + '</div>';
+      }).join('') + '</div></section>';
+    }
+    var STATUS = { 'Triggered': ['negative', 'triggered', 'Triggered'], 'Check failed': ['warning', 'failed', 'Check failed'], 'OK': ['positive', 'ok', 'OK'], 'Checking': ['neutral', 'checking', 'Checking…'], 'Paused': ['paused', 'paused', 'Paused'] };
+    function monitors() {
+      var need = D.monitors.filter(function (m) { return m.state === 'Triggered' || m.state === 'Check failed'; });
+      var list = need.length ? need : D.monitors.slice(0, 2);   // nothing needs attention: the usual ones show
+      return '<section class="section' + (s.spot === 'monitors' ? ' spot' : '') + '">' + header('Monitors', true) + '<div class="ov-list ov-cards">' + list.map(function (m) {
+        var st = STATUS[m.state];
+        var msg = m.message && (m.state === 'Triggered' || m.state === 'Check failed') ? '<div class="monitor-message monitor-message--' + st[0] + ' type-body">' + esc(m.message) + '</div>' : '';
+        return '<article class="card monitor-card"><div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--' + st[0] + '">' + B[st[1]] + st[2] + '</span><span class="type-caption tone-secondary">' + esc(m.checked) + '</span></div></div>' +
+          '<div class="monitor-card__body"><p class="type-body-strong">' + esc(m.n) + '</p><p class="type-body tone-secondary">' + esc(m.rule) + '</p></div>' + msg + '</article>';
+      }).join('') + '</div></section>';
+    }
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var scroller = web ? ctx.screen.querySelector('.web-main') : ctx.screen.querySelector('.phone');
+      var top = scroller ? scroller.scrollTop : 0;
+      var body = '<div class="ov-top">' + greeting() + tiles() + '</div>' + chart() + assets() + liabilities() +
+        '<div class="ov-list" style="gap:var(--space-xl)">' + goals() + monitors() + '</div>';
+      if (web) {
+        ctx.screen.innerHTML = '<div class="web">' + A.webSide('overview') + '<main class="web-main"><div class="web-head"><h1 class="web-head__title type-page-title">Overview</h1></div>' + body + '</main></div>';
+      } else {
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + '<header class="page-header"><h1 class="page-header__title type-page-title">Overview</h1></header>' +
+          '<main class="screen-content">' + body + '</main></div>' + A.tabbar('overview');
+      }
+      var sc = web ? ctx.screen.querySelector('.web-main') : ctx.screen.querySelector('.phone');
+      sc.scrollTop = top;
+      bind();
+    }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); fn(b); }; }); }
+      on('[data-period]', function (b) { s.period = b.getAttribute('data-period'); draw(); });
+      on('[data-menu]', function (b) { var i = +b.getAttribute('data-menu'); s.menu = s.menu === i ? null : i; draw(); });
+      on('[data-act]', function (b) { act(b.getAttribute('data-act'), +b.getAttribute('data-i')); });
+      root.onclick = function () { if (s.menu != null) { s.menu = null; draw(); } };
+      var c = root.querySelector('[data-chart]');
+      if (c) {
+        var box = c.querySelector('.chart-inspect');
+        var move = function (e) {
+          var r = c.getBoundingClientRect(), x = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width;
+          var i = Math.max(0, Math.min(s.pts.length - 1, Math.round(x * (s.pts.length - 1))));
+          var px = s.xy[i][0] / 1000 * 100, py = s.xy[i][1] / 160 * 100;
+          box.hidden = false;
+          box.querySelector('.chart-guide').style.left = px + '%';
+          var mk = box.querySelector('.chart-marker'); mk.style.left = px + '%'; mk.style.top = py + '%';
+          var tip = box.querySelector('.chart-tip'); tip.style.left = px > 60 ? '' : 'calc(' + px + '% + 12px)'; tip.style.right = px > 60 ? 'calc(' + (100 - px) + '% + 12px)' : '';
+          box.querySelector('[data-tip-d]').textContent = s.pts[i].d;
+          box.querySelector('[data-tip-v]').textContent = kr(s.pts[i].v);
+        };
+        c.onmousemove = move; c.ontouchmove = move; c.ontouchstart = move;
+        c.onmouseleave = function () { box.hidden = true; };
+      }
+    }
+
+    function act(a, i) {
+      var h = s.holdings[i]; s.menu = null;
+      if (a === 'delete') {
+        draw();
+        A.confirmModal(ctx.screen, 'Delete asset?', '“' + name(h) + '” will be removed from Njorda. ' + (h.manual ? 'You added it yourself, so you can add it again any time.' : 'Your account at ' + h.bank + ' is not affected.'), 'Delete', function () {
+          s.holdings.splice(i, 1); draw(); A.confirmPill(ctx.screen, 'Asset deleted', web ? 40 : 120);
+        });
+      } else if (a === 'edit') {
+        draw(); editValue(h);
+      }
+    }
+
+    function editValue(h) {
+      var wrap = document.createElement('div');
+      wrap.className = 'modal-backdrop';
+      wrap.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal__head"><h3 class="modal__title type-section-title">Edit ' + esc(h.n) + '</h3><button type="button" class="modal__close" aria-label="Close">' + I('close') + '</button></div>' +
+        '<div class="input"><label class="input__label type-body tone-default" for="ov-val">Value</label><div class="field"><input class="field__input" id="ov-val" inputmode="numeric" value="' + kr(h.value).replace(' kr', '') + '"><span class="field__currency">kr</span></div>' +
+        '<span class="input__error type-label" hidden>Enter the value</span></div>' +
+        '<div class="modal__actions"><button type="button" class="btn btn--h40 btn--neutral-2" data-no>Cancel</button><button type="button" class="btn btn--h40 btn--primary" data-yes>Save</button></div></div>';
+      function close() { wrap.remove(); }
+      wrap.onclick = function (e) { if (e.target === wrap) close(); };
+      wrap.querySelector('.modal__close').onclick = close;
+      wrap.querySelector('[data-no]').onclick = close;
+      wrap.querySelector('[data-yes]').onclick = function () {
+        var v = parseInt(wrap.querySelector('#ov-val').value.replace(/\D/g, ''), 10);
+        if (!v) { wrap.querySelector('.field').classList.add('field--error'); wrap.querySelector('.input__error').hidden = false; return; }
+        h.value = v; close(); draw(); A.confirmPill(ctx.screen, 'Saved. Totals updated', web ? 40 : 120);
+      };
+      ctx.screen.appendChild(wrap);
+      var f = wrap.querySelector('#ov-val'); f.focus({ preventScroll: true }); f.select();
+    }
+
+    draw();
+    var spot = ctx.screen.querySelector('.spot'), sc = web ? ctx.screen.querySelector('.web-main') : ctx.screen.querySelector('.phone');
+    if (spot && sc) sc.scrollTop = Math.max(0, spot.offsetTop - (web ? 24 : 110));
+  }
+})();
+</script>
+</body>
+</html>

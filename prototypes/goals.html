@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goals — Njorda prototype</title>
+<link rel="stylesheet" href="ds/styles/fonts.css">
+<link rel="stylesheet" href="ds/styles/tokens.css">
+<link rel="stylesheet" href="ds/styles/base.css">
+<link rel="stylesheet" href="ds/styles/typography.css">
+<link rel="stylesheet" href="ds/components/shell.css">
+<link rel="stylesheet" href="ds/components/buttons.css">
+<link rel="stylesheet" href="ds/components/tabs.css">
+<link rel="stylesheet" href="ds/components/cards.css">
+<link rel="stylesheet" href="ds/components/goal.css">
+<link rel="stylesheet" href="ds/components/chart.css">
+<link rel="stylesheet" href="ds/components/bank.css">
+<link rel="stylesheet" href="ds/components/input.css">
+<link rel="stylesheet" href="ds/components/dropdown.css">
+<link rel="stylesheet" href="ds/components/monitor.css">
+<link rel="stylesheet" href="ds/components/menu.css">
+<link rel="stylesheet" href="ds/components/state.css">
+<link rel="stylesheet" href="ds/components/modal.css">
+<link rel="stylesheet" href="ds/components/toast.css">
+<link rel="stylesheet" href="ds/components/chat.css">
+<link rel="stylesheet" href="ds/components/ai-input.css">
+<link rel="stylesheet" href="ds/components/tabbar.css">
+<link rel="stylesheet" href="shared/web-shell.css">
+<link rel="stylesheet" href="shared/ai-chat.css">
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 32px; }
+  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+
+  /* page bits not in the design system (Figma Goals page 690:1137) */
+  .g-tabs { display: flex; gap: var(--space-md); }
+  .g-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+  /* web: two cards a row, as on Monitors */
+  .web .g-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .web .g-list > .goal-card.is-ai { grid-column: 1 / -1; }
+  .g-list .goal-card { cursor: pointer; text-align: left; border: 0; font: inherit; color: inherit; }
+  .g-empty { display: flex; flex-direction: column; gap: 120px; }
+  .g-empty .empty-state { max-width: none; padding-top: 72px; }
+  .phone .g-empty { gap: var(--space-2xl); }
+  .phone .g-empty .empty-state { padding-top: var(--space-xl); }
+  .g-ideas { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .g-ideas .link-card { min-height: 84px; }
+  /* "Need inspiration?" — the AI idea: gradient ring, same technique as .btn--ai-secondary */
+  .g-ideas .link-card.is-ai { border: 2px solid transparent; padding: calc(var(--space-lg) - 2px);
+    background: linear-gradient(var(--color-surface-secondary), var(--color-surface-secondary)) padding-box, var(--gradient-brand) border-box; }
+
+  /* details */
+  .g-head-more { position: relative; margin-left: auto; }
+  .g-head-more .action-menu { position: absolute; top: 32px; right: 0; }
+  .g-head-more__btn { width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--color-fg-tertiary); }
+  .g-head-more__btn svg { width: 24px; height: 24px; }
+  .g-details { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .g-accounts { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .g-acc { display: flex; align-items: center; gap: var(--space-md); }
+  .g-acc .bank-card__logo { width: 44px; height: 44px; }
+  .g-acc__info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  .g-acc__remove { width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--color-fg-tertiary); }
+  .g-acc__remove svg { width: 24px; height: 24px; }
+  .goal-card p { margin: 0; }
+  .goal-card.is-completed .goal-card__body { opacity: .6; }
+  .chart-canvas svg path { vector-effect: non-scaling-stroke; }
+
+  /* form */
+  .g-form { display: flex; flex-direction: column; gap: var(--space-xl); }
+  .g-form .card.g-acc { padding: var(--space-md) var(--space-lg); }
+  .g-select { position: relative; }
+  .g-select .dropdown-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; }
+  .g-switch-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+  .web .g-form__submit { align-self: center; width: 336px; }
+  .back-btn { width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--color-fg-primary); }
+  .back-btn svg { width: 24px; height: 24px; }
+  .g-picked { display: flex; flex-direction: column; gap: var(--space-md); }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="ds/icons.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/app-shell.js"></script>
+<script src="shared/ai-chat.js"></script>
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script>
+(function () {
+  var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D;
+  var LOGO = { Nordnet: 'nordnet', Avanza: 'avanza', SEB: 'seb' };
+  var ACC = D.accounts.filter(function (a) { return a.bank; });   // accounts a goal can use (not manual assets)
+  function acc(id) { return D.accounts.filter(function (a) { return a.id === id; })[0]; }
+
+  /* the AI example: a sailing boat, 500 000 kr by Dec 2029 at 5.5 % a year (not one of the goals Elsa already has) */
+  var KF = acc('kf'), months = 47, r = 0.055 / 12;
+  var fvNow = KF.total * Math.pow(1 + r, months);
+  var monthly = Math.ceil((500000 - fvNow) * r / (Math.pow(1 + r, months) - 1) / 100) * 100;
+
+  var IDEAS = [
+    { ai: true, n: 'Need inspiration?', d: 'Njorda AI can build a custom goal based on your investments.', ask: 'Suggest a goal based on my investments' },
+    { n: 'Set sail', d: 'Save for a boat of your own.', ask: 'Help me save for a sailing boat' },
+    { n: 'Vitamin D Boost', d: 'Plan your recharge in a sunny paradise.', ask: 'Help me save for a holiday in the sun' },
+    { n: 'Puppy Love', d: 'Get ready for small paws and big adventures.', ask: 'Help me save for a puppy' }
+  ];
+  var PROPOSAL = { n: 'Sailing boat', target: 500000, accounts: ['kf'], date: '31 Dec 2029' };
+  var EXAMPLE = { n: 'New car', amount: '400 000', date: '30 Jun 2028', accounts: ['isk'] };
+
+  function fresh() {
+    return D.goals.map(function (g, i) { return { id: i, n: g.n, target: g.target, current: g.current, accounts: g.accounts.slice(), date: g.date, status: g.status, reached: g.reached }; });
+  }
+  function pct(g) { return Math.min(100, Math.round(g.current / g.target * 100)); }
+
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Njorda app',
+    title: 'Goals that show how far is left',
+    intro: 'A goal is an amount, a date and the accounts that pay for it. Each card shows what for, how far and by when.',
+    states: [
+      { id: 'list', label: 'My goals', note: 'Active goals, completed ones and ideas for a new one. A goal past its date turns amber.' },
+      { id: 'ai', label: 'Create with AI', note: 'The assistant proposes the amount, the date and the monthly saving. The draft appears in the list to save or discard.' },
+      { id: 'create', label: 'Create manually', note: 'Four questions in plain words. The date is optional, so a goal can start as a wish.' },
+      { id: 'details', label: 'Goal details', note: 'Where the money comes from and how it moved, so the ring is never a mystery.' }
+    ],
+    render: render
+  });
+
+  function render(ctx) {
+    var web = ctx.mode === 'web';
+    var s = {
+      goals: fresh(),   // never starts empty: the empty page only shows if every goal is deleted
+      tab: 'active',
+      view: { create: 'form', details: 'details' }[ctx.state] || 'list',
+      detail: null, open: false, menu: false, period: 'YTD', form: null,
+      draft: null,   // the goal the assistant drafted: on the page, outlined, until it is saved or discarded
+      spot: null
+    };
+    if (ctx.state === 'details') s.detail = s.goals.filter(function (g) { return g.n === 'Summer house'; })[0];
+    var timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+    function active() { return s.goals.filter(function (g) { return g.status !== 'Completed'; }); }
+    function done() { return s.goals.filter(function (g) { return g.status === 'Completed'; }); }
+
+    /* ---------- pieces ---------- */
+    function ring(g) {
+      var p = pct(g), mod = g.status === 'Expired' ? ' goal-ring--expired' : g.status === 'Completed' ? ' goal-ring--completed' : '';
+      return '<div class="goal-ring' + mod + '"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="goal-ring__track" cx="40" cy="40" r="36"/>' +
+        '<circle class="goal-ring__value" cx="40" cy="40" r="36" pathLength="100" stroke-dasharray="' + p + ' 100"/></svg><span class="goal-ring__label">' + p + '%</span></div>';
+    }
+    function when(g) {
+      if (g.status === 'Expired') return '<p class="goal-card__expired type-body"><span class="goal-card__expired-icon">' + I('exclamation-mark') + '</span>Expired on ' + esc(g.date) + '</p>';
+      if (g.status === 'Completed') return '<p class="type-body tone-secondary">Reached on ' + esc(g.reached || 'today') + '</p>';
+      return '<p class="type-body tone-secondary">' + esc(g.date || 'No date') + '</p>';
+    }
+    function goalCard(g, tag) {
+      return '<' + (tag || 'button type="button"') + ' class="card goal-card' + (g.status === 'Completed' ? ' is-completed' : '') + (s.spot === g.n ? ' spot' : '') + '" data-goal="' + g.id + '">' +
+        '<div class="goal-card__body"><p class="type-body-strong">' + esc(g.n) + '</p>' +
+        '<p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(g.target) + '</span></p>' + when(g) + '</div>' +
+        ring(g) + '</' + (tag ? tag.split(' ')[0] : 'button') + '>';
+    }
+    function accRow(id, removable) {
+      var a = acc(id);
+      return '<div class="g-acc' + (removable ? ' card' : '') + '"><span class="bank-card__logo"><img src="ds/assets/images/banks/' + LOGO[a.bank] + '.svg" alt=""></span>' +
+        '<span class="g-acc__info"><span class="type-body">' + esc(a.name) + '</span><span class="type-caption tone-secondary">' + esc(a.bank + ', ' + a.type) + '</span></span>' +
+        '<span class="type-value">' + kr(a.total) + '</span>' +
+        (removable ? '<button type="button" class="g-acc__remove" data-remove="' + id + '" aria-label="Remove ' + esc(a.name) + '">' + I('close') + '</button>' : '') + '</div>';
+    }
+
+    function tabs() {
+      return '<div class="g-tabs">' +
+        '<button type="button" class="tab' + (s.tab === 'active' ? ' tab--active' : '') + '" data-tab="active">Active <span class="tab__badge">' + active().length + '</span></button>' +
+        '<button type="button" class="tab' + (s.tab === 'done' ? ' tab--active' : '') + '" data-tab="done">Completed <span class="tab__badge">' + done().length + '</span></button>' +
+        '<button type="button" class="tab' + (s.tab === 'ideas' ? ' tab--active' : '') + '" data-tab="ideas">Ideas</button></div>';
+    }
+    function ideas() {
+      return '<div class="g-ideas"><p class="type-body-lg tone-secondary">' + (web ? 'Click' : 'Tap') + ' any idea to customise it with Njorda AI and add it as a goal.</p>' +
+        IDEAS.map(function (d, k) {
+          return '<button type="button" class="link-card' + (d.ai ? ' is-ai' : '') + '" data-idea="' + k + '"><span class="link-card__text"><span class="type-body-strong">' + esc(d.n) + '</span><span class="type-body tone-secondary">' + esc(d.d) + '</span></span><span class="link-card__arrow" style="color:var(--color-fg-tertiary)">' + I('arrow-right') + '</span></button>';
+        }).join('') + '</div>';
+    }
+    function draftCard() {
+      var d = s.draft, g = { n: d.n, target: d.target, current: KF.total, status: 'Active' };
+      return '<div class="card goal-card is-ai"><div class="goal-card__body">' + A.aiTag() + '<p class="type-body-strong">' + esc(d.n) + '</p>' +
+        '<p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(d.target) + '</span></p>' +
+        '<p class="type-body tone-secondary">' + esc(d.date) + ', about ' + kr(monthly) + ' a month</p>' +
+        '<div class="ac-draft-acts"><button type="button" class="btn btn--h36 btn--primary" data-draft="save">Save</button><button type="button" class="btn btn--h36 btn--neutral-2" data-draft="discard">Discard</button></div></div>' + ring(g) + '</div>';
+    }
+    function listView() {
+      if (s.tab === 'ideas') return ideas();
+      var items = s.tab === 'active' ? active() : done(), draft = s.draft && s.tab === 'active' ? draftCard() : '';
+      if (!items.length && !draft) {
+        var t = s.tab === 'active'
+          ? ['No active goals yet', 'You don’t have any active goals yet.<br>Create a new one or let Njorda AI inspire you.']
+          : ['No completed goals yet', 'Goals you reach will show up here.'];
+        return '<div class="g-empty"><div class="empty-state"><p class="type-section-title">' + t[0] + '</p><p class="type-body-lg tone-secondary">' + t[1] + '</p></div>' +
+          (s.tab === 'active' ? '<div class="g-ideas"><p class="type-section-title">Ideas</p>' + ideas() + '</div>' : '') + '</div>';
+      }
+      return '<div class="g-list">' + draft + items.map(function (g) { return goalCard(g); }).join('') + '</div>';
+    }
+
+    /* performance of the goal's accounts over a period — a calm series that ends on today's value */
+    // [points, change, axis labels, days between points, seed, dips], as on Overview
+    var PERIODS = { '1W': [36, 0.0124, ['27 Jan', '28 Jan', '29 Jan', '30 Jan', '31 Jan', '1 Feb', '2 Feb'], 0.2, 4, null, [[5 / 7, 6.6 / 7]]],
+      '1M': [31, 0.021, ['3 Jan', '10 Jan', '17 Jan', '24 Jan', '2 Feb'], 1, 8, [[0.3, 0.45, -0.02]]], '6M': [127, 0.048, ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'], 1.44, 12, [[0.5, 0.62, -0.05]]],
+      '1Y': [253, 0.091, ['Feb', 'Apr', 'Jun', 'Aug', 'Oct', 'Dec', 'Feb'], 1.44, 6, [[0.22, 0.34, -0.1], [0.7, 0.76, -0.03]]], 'YTD': [33, null, ['1 Jan', '8 Jan', '15 Jan', '22 Jan', '29 Jan', '2 Feb'], 1, 10, [[0.55, 0.7, -0.012]]] };
+    function ytdOf(ids) {
+      return ids.reduce(function (sum, id) { return sum + acc(id).holdings.reduce(function (x, h) { return x + h.value - h.value / (1 + (h.ytd || 0) / 100); }, 0); }, 0);
+    }
+    function chart(g) {
+      var p = PERIODS[s.period], total = g.accounts.reduce(function (x, id) { return x + acc(id).total; }, 0);
+      var change = p[1] == null ? ytdOf(g.accounts) : total - total / (1 + p[1]);
+      var n = p[0], pts = A.walk({ n: n, step: p[3], start: total - change, end: total, seed: p[4], dips: p[5], closed: p[6] });
+      var lo = Math.min.apply(0, pts), hi = Math.max.apply(0, pts), W = 1000, H = 160;
+      var xy = pts.map(function (x, i) { return [i / (n - 1) * W, 12 + (1 - (x - lo) / (hi - lo || 1)) * (H - 24)]; });
+      var line = A.curve(xy).d;
+      return '<div class="card chart-card"><div style="display:flex;flex-direction:column;gap:var(--space-sm)"><p class="type-body tone-secondary">Performance</p>' +
+        '<p class="type-subheading">' + (change >= 0 ? '+' : '−') + kr(Math.abs(change)) + '</p></div>' +
+        '<div class="chart-tabs" role="tablist">' + Object.keys(PERIODS).map(function (k) {
+          return '<button type="button" role="tab" class="chart-tab' + (k === s.period ? ' chart-tab--active' : '') + '" data-period="' + k + '">' + k + '</button>';
+        }).join('') + '</div>' +
+        '<div class="chart-canvas"><svg viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">' + A.chartFill + '<path class="chart-area" d="' + line + ' L1000 160 L0 160 Z"/><path class="chart-line" d="' + line + '"/></svg></div>' +
+        '<div class="chart-dates">' + p[2].map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div></div>';
+    }
+    function detailsView() {
+      var g = s.detail;
+      return '<div class="g-details">' + goalCard(g, 'div') +
+        '<div class="card g-accounts"><p class="type-body tone-secondary">Accounts to achieve with</p>' + g.accounts.map(function (id) { return accRow(id); }).join('') + '</div>' +
+        chart(g) + '</div>';
+    }
+    function headMenu() {
+      var g = s.detail, items = [['edit', 'edit', 'Edit']];
+      if (g.status !== 'Completed') items.push(['complete', 'checkmark', 'Complete']);
+      items.push(['delete', 'delete', 'Delete']);
+      return '<div class="g-head-more"><button type="button" class="g-head-more__btn" data-a="menu" aria-label="More actions">' + I('more-vert') + '</button>' +
+        (s.menu ? '<div class="action-menu"><ul>' + items.map(function (x) {
+          return '<li><button type="button" class="action-menu__item" data-act="' + x[0] + '"><span class="action-menu__icon">' + I(x[1]) + '</span>' + x[2] + '</button></li>';
+        }).join('') + '</ul></div>' : '') + '</div>';
+    }
+
+    /* ---------- form ---------- */
+    function formView() {
+      var f = s.form;
+      var picked = f.all ? ACC.map(function (a) { return a.id; }) : f.accounts;
+      return '<form class="g-form" novalidate>' +
+        field('name', 'What’s your goal?', '<input class="field__input" id="g-name" placeholder="For example, New car" value="' + esc(f.name) + '" autocomplete="off">') +
+        field('amount', 'How much?', '<input class="field__input" id="g-amount" inputmode="numeric" placeholder="0" value="' + esc(f.amount) + '" autocomplete="off"><span class="field__currency">kr</span>') +
+        field('date', 'By when? (optional)', '<input class="field__input" id="g-date" placeholder="Choose a date" value="' + esc(f.date) + '" autocomplete="off"><span class="field__icon">' + I('calendar') + '</span>') +
+        '<div class="input"><span class="input__label type-body tone-default">Achieve with?</span>' +
+        (f.all ? '' : '<div class="g-select"><button type="button" class="select' + (f.err.accounts ? ' select--error' : '') + '" data-a="pick" aria-expanded="' + !!f.pick + '"><span class="select__value select__value--placeholder">Select account</span><span class="select__chevron">' + I('arrow-down') + '</span></button>' +
+          (f.pick ? '<div class="dropdown-panel"><ul class="dropdown-list">' + ACC.filter(function (a) { return f.accounts.indexOf(a.id) < 0; }).map(function (a) {
+            return '<li><button type="button" class="dropdown-option" data-add="' + a.id + '"><span class="bank-card__logo"><img src="ds/assets/images/banks/' + LOGO[a.bank] + '.svg" alt=""></span>' + esc(a.name + ', ' + a.bank) + '</button></li>';
+          }).join('') + '</ul></div>' : '') + '</div>') +
+        (f.err.accounts ? '<span class="input__error type-label">Choose at least one account</span>' : '') + '</div>' +
+        (picked.length ? '<div class="g-picked">' + picked.map(function (id) { return accRow(id, !f.all); }).join('') + '</div>' : '') +
+        '<div class="g-switch-row"><span class="type-body">Use all my accounts</span><button type="button" class="toggle" role="switch" aria-checked="' + !!f.all + '" data-a="all" aria-label="Use all my accounts"><span class="toggle__handle"></span></button></div>' +
+        (web ? '<button type="submit" class="btn btn--primary g-form__submit">' + (f.edit != null ? 'Save changes' : 'Create goal') + '</button>' : '') + '</form>';
+    }
+    function field(k, label, inner) {
+      var e = s.form.err[k];
+      return '<div class="input"><label class="input__label type-body tone-default" for="g-' + k + '">' + label + '</label><div class="field' + (e ? ' field--error' : '') + '">' + inner + '</div>' +
+        (e ? '<span class="input__error type-label">' + e + '</span>' : '') + '</div>';
+    }
+    function readForm() {
+      var f = s.form, q = function (id) { var el = ctx.screen.querySelector(id); return el ? el.value : ''; };
+      f.name = q('#g-name'); f.amount = q('#g-amount'); f.date = q('#g-date');
+    }
+
+    var chat = A.chat({
+      web: web, screen: function () { return ctx.screen; }, draw: function () { draw(); }, later: later,
+      // creating a goal, or asking for one: the draft goes on this page; anything else gets the usual answer
+      answer: function (q) { return s.creating || A.chatTopic(q) === 'goals' ? propose() : A.chatAnswer(q, false); },
+      onNew: function () { s.creating = false; },
+      pages: { goals: 'Goals' },
+      empty: function () {   // only while creating; otherwise the usual greeting
+        if (!s.creating) return null;
+        return '<div class="ac-empty"><span class="ac-empty__icon">' + I('ai-chat') + '</span><p class="type-section-title">What would you like to save for?</p>' +
+          '<p class="type-body tone-secondary">Tell me in your own words, and I’ll suggest<br>an amount, a date and the accounts to use.</p>' +
+          '<button type="button" class="link" data-manual>Fill in the form yourself</button></div>';
+      },
+      onShow: function () { s.open = false; draw(); },
+      onClose: function () { s.open = false; draw(); }
+    });
+
+    /* ---------- draw ---------- */
+    function draw() {
+      var ph = ctx.screen.querySelector('.phone'), scroll = ph ? ph.scrollTop : 0;
+      var title = s.view === 'form' ? (s.form.edit != null ? 'Edit goal' : 'Create goal') : s.view === 'details' ? 'Goal details' : 'Goals';
+      var body = s.view === 'form' ? formView() : s.view === 'details' ? detailsView() : tabs() + listView();
+      if (web) {
+        var head = s.view === 'list'
+          ? '<div class="web-head"><h1 class="web-head__title type-page-title">Goals</h1><button type="button" class="btn btn--h40 btn--primary" data-a="create">Create goal</button></div>'
+          : '<div class="web-head"><button type="button" class="back-btn" data-back aria-label="Back">' + I('back') + '</button><h1 class="web-head__title type-page-title">' + title + '</h1>' + (s.view === 'details' ? headMenu() : '') + '</div>';
+        ctx.screen.innerHTML = '<div class="web' + (s.open ? ' has-panel' : '') + '">' + A.webSide('goals') +
+          '<main class="web-main">' + head + body + '</main>' + chat.panel() + '</div>';
+      } else {
+        var header = s.view === 'list'
+          ? '<header class="page-header"><h1 class="page-header__title type-page-title">Goals</h1></header>'
+          : '<header class="page-header"><button type="button" class="page-header__back" data-back aria-label="Back">' + I('back') + '</button><h1 class="page-header__title type-page-title">' + title + '</h1>' + (s.view === 'details' ? headMenu() : '') + '</header>';
+        var dock = s.view === 'form'
+          ? A.tabbar(null, '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-submit>' + (s.form.edit != null ? 'Save changes' : 'Create goal') + '</button></div>')
+          : s.view === 'details' ? A.tabbar('more') : A.tabbar('more', '<div class="tabbar__action"><button type="button" class="btn btn--primary" data-a="create">Create goal</button></div>');
+        ctx.screen.innerHTML = '<div class="phone">' + A.statusbar() + header +
+          '<main class="screen-content" style="padding-bottom:' + (s.view === 'details' ? 120 : 200) + 'px">' + body + '</main></div>' + dock +
+          chat.panel(s.open);
+        ctx.screen.querySelector('.phone').scrollTop = scroll;
+      }
+      bind();
+    }
+
+    function bind() {
+      var root = ctx.screen;
+      function on(sel, fn) { root.querySelectorAll(sel).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(b); }; }); }
+      on('[data-tab]', function (b) { s.tab = b.getAttribute('data-tab'); s.spot = null; draw(); });
+      on('[data-idea]', function (b) { openChat(IDEAS[+b.getAttribute('data-idea')]); });
+      on('[data-a="create"]', function () { openChat(null, true); });   // one way in, as for monitors: the assistant first, the form one link away
+      on('[data-goal]', function (b) { s.detail = s.goals.filter(function (g) { return g.id === +b.getAttribute('data-goal'); })[0]; s.view = 'details'; s.period = 'YTD'; s.menu = false; draw(); if (ph()) ph().scrollTop = 0; });
+      on('[data-back]', function () { s.view = 'list'; s.menu = false; draw(); });
+      on('[data-period]', function (b) { s.period = b.getAttribute('data-period'); draw(); });
+      on('[data-a="menu"]', function () { s.menu = !s.menu; draw(); });
+      on('[data-act]', function (b) { act(b.getAttribute('data-act')); });
+      // form
+      on('[data-a="pick"]', function () { readForm(); s.form.pick = !s.form.pick; draw(); });
+      on('[data-add]', function (b) { readForm(); s.form.accounts.push(b.getAttribute('data-add')); s.form.pick = false; s.form.err.accounts = null; draw(); });
+      on('[data-remove]', function (b) { readForm(); s.form.accounts = s.form.accounts.filter(function (x) { return x !== b.getAttribute('data-remove'); }); draw(); });
+      on('[data-a="all"]', function () { readForm(); s.form.all = !s.form.all; s.form.pick = false; s.form.err.accounts = null; draw(); });
+      on('[data-submit]', submit);
+      chat.bind(root);   // after the page's own, so the chat's buttons are the chat's
+      on('[data-manual]', function () { chat.stop(); openForm(null); });
+      on('[data-act="ai"]', function () { if (s.open) { chat.stop(); s.open = false; } else { s.open = true; s.creating = false; chat.s.tab = 'chat'; } draw(); });   // Njorda AI in the side menu
+      on('[data-draft]', function (b) {
+        if (b.getAttribute('data-draft') === 'save') { var d = s.draft; s.draft = null; add(d); return; }
+        s.draft = null; draw(); A.confirmPill(ctx.screen, 'Draft discarded', web ? 40 : 200);
+      });
+      var form = root.querySelector('.g-form');
+      if (form) form.onsubmit = function (e) { e.preventDefault(); submit(); };
+    }
+    function ph() { return ctx.screen.querySelector('.phone'); }
+
+    function act(a) {
+      var g = s.detail; s.menu = false;
+      if (a === 'edit') { openForm(g); return; }
+      if (a === 'complete') {
+        g.status = 'Completed'; g.reached = '2 Feb 2026'; g.current = Math.max(g.current, g.target);
+        s.view = 'list'; s.tab = 'done'; s.spot = g.n; draw(); A.confirmPill(ctx.screen, 'Goal completed', web ? 40 : 200); return;
+      }
+      if (a === 'delete') {
+        draw();
+        A.confirmModal(ctx.screen, 'Delete goal?', '“' + g.n + '” will be removed. Your accounts and money are not affected.', 'Delete', function () {
+          s.goals = s.goals.filter(function (x) { return x !== g; }); s.view = 'list'; draw(); A.confirmPill(ctx.screen, 'Goal deleted', web ? 40 : 200);
+        });
+      }
+    }
+
+    function openForm(g) {
+      s.view = 'form'; s.open = false;
+      s.form = g ? { edit: g.id, name: g.n, amount: A.kr(g.target).replace(' kr', ''), date: g.date, accounts: g.accounts.slice(), all: false, err: {} }
+        : { edit: null, name: '', amount: '', date: '', accounts: [], all: false, err: {} };
+      draw();
+      if (ph()) ph().scrollTop = 0;
+    }
+    function fillExample() {
+      // type an example so the flow can be watched without typing
+      var steps = [['#g-name', EXAMPLE.n], ['#g-amount', EXAMPLE.amount], ['#g-date', EXAMPLE.date]], k = 0;
+      (function next() {
+        if (k >= steps.length) { readForm(); s.form.accounts = EXAMPLE.accounts.slice(); draw(); return; }
+        var el = ctx.screen.querySelector(steps[k][0]), text = steps[k][1], i = 0;
+        var t = setInterval(function () {
+          if (!el.isConnected) return clearInterval(t);
+          el.value = text.slice(0, ++i);
+          if (i >= text.length) { clearInterval(t); k++; later(next, 200); }
+        }, 35);
+        timers.push(t);
+      })();
+    }
+    function submit() {
+      readForm();
+      var f = s.form, amount = parseInt(String(f.amount).replace(/\D/g, ''), 10), ids = f.all ? ACC.map(function (a) { return a.id; }) : f.accounts;
+      f.err = {};
+      if (!f.name.trim()) f.err.name = 'Give the goal a name';
+      if (!amount) f.err.amount = 'Enter how much you need';
+      if (!ids.length) f.err.accounts = true;
+      if (Object.keys(f.err).length) { draw(); return; }
+      var current = ids.reduce(function (x, id) { return x + acc(id).total; }, 0);
+      if (f.edit != null) {
+        var g = s.goals.filter(function (x) { return x.id === f.edit; })[0];
+        g.n = f.name.trim(); g.target = amount; g.date = f.date.trim(); g.accounts = ids; g.current = current;
+        if (g.status === 'Expired' && g.date !== D.goals.filter(function (x) { return x.n === 'Kitchen renovation'; })[0].date) g.status = 'Active';
+        s.detail = g; s.view = 'details'; draw(); A.confirmPill(ctx.screen, 'Changes saved', web ? 40 : 120); return;
+      }
+      add({ n: f.name.trim(), target: amount, accounts: ids, date: f.date.trim() });
+    }
+    function add(d) {
+      var g = { id: Date.now(), n: d.n, target: d.target, accounts: d.accounts, date: d.date, status: 'Active',
+        current: d.accounts.reduce(function (x, id) { return x + acc(id).total; }, 0) };
+      s.goals.unshift(g); s.view = 'list'; s.tab = 'active'; s.spot = g.n;
+      draw(); if (ph()) ph().scrollTop = 0;
+      A.confirmPill(ctx.screen, 'Goal created', web ? 40 : 200);
+    }
+
+    /* ---------- AI ---------- */
+    function openChat(idea, blank) {   // blank: Create goal by hand, an empty chat with nothing typed in
+      s.open = true; s.creating = true; s.view = 'list'; s.tab = 'active';
+      chat.reset(); draw();
+      if (blank) return;
+      var d = idea || IDEAS[1];
+      later(function () { if (s.open) chat.type(d.ask); }, idea ? 300 : 900);
+    }
+    function propose() {
+      return { wait: 'Looking at your savings…', delay: 1600, page: 'goals', title: 'Goal: ' + PROPOSAL.n, parts: [
+        '<p>Here’s a goal based on your Avanza Kapitalförsäkring, which already holds ' + kr(KF.total) + ':</p>',
+        '<div class="ac-figs"><div class="ac-fig"><span class="type-caption tone-secondary">Target</span><span class="type-subheading">' + kr(PROPOSAL.target) + '</span></div>' +
+          '<div class="ac-fig"><span class="type-caption tone-secondary">By</span><span class="type-subheading">' + PROPOSAL.date + '</span></div>' +
+          '<div class="ac-fig"><span class="type-caption tone-secondary">Each month</span><span class="type-subheading">' + kr(monthly) + '</span></div></div>',
+        '<p>The monthly amount assumes 5.5% a year, so it’s an estimate, not advice. “' + PROPOSAL.n + '” is on Goals now: save it there, or tell me what to change.</p>'
+      ], before: function () { s.draft = PROPOSAL; s.view = 'list'; s.tab = 'active'; } };
+    }
+
+    /* ---------- start ---------- */
+    A.moreMenu(ctx, function () { s.open = true; s.creating = false; chat.s.tab = 'chat'; draw(); }, 'goals');   // phone: the More tab opens the menu, and Njorda AI there opens this page's chat
+    if (ctx.state === 'create') { openForm(null); fillExample(); }
+    else draw();
+    if (ctx.state === 'ai') openChat(null);
+    var spot = ctx.screen.querySelector('.spot');
+    if (spot && ph()) ph().scrollTop = Math.max(0, spot.offsetTop - 120);
+  }
+})();
+</script>
+</body>
+</html>

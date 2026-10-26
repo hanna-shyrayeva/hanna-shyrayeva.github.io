@@ -1,0 +1,132 @@
+/* ==========================================================================
+   Cards — Njorda surface cards
+   ========================================================================== */
+
+.card {
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-xl);        /* 16px */
+  padding: var(--space-lg);               /* 16px */
+}
+
+/* --- summary section (greeting + stat scroller) --- */
+.summary { display: flex; flex-direction: column; gap: var(--space-lg); }
+
+.summary-greeting { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+/* horizontal scroller of stat cards (peek of the next card) */
+.stat-scroller {
+  display: flex;
+  gap: var(--space-lg);
+  overflow-x: auto;
+  scrollbar-width: none;                  /* hide scrollbar (cosmetic; RN has none) */
+  scroll-snap-type: x proximity;
+  /* let the row bleed to the screen edge on the right while keeping left inset */
+  margin-right: calc(var(--space-lg) * -1);
+  padding-right: var(--space-lg);
+}
+.stat-scroller::-webkit-scrollbar { display: none; }
+
+/* stat card (Figma "default card" / "card with %", ±tooltip): 251×82
+   label 14R secondary (+ optional (i) 16px) → value 18SB → optional delta 14M */
+.stat-card {
+  flex: 0 0 auto;                         /* explicit width, not flex-basis — stays 251 in row AND column parents */
+  width: 251px;
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);                   /* 4px */
+  scroll-snap-align: start;
+}
+.stat-card__label { position: relative; display: inline-flex; align-items: center; gap: var(--space-xs); }   /* anchors the tooltip */
+.stat-card__info {
+  display: inline-flex;
+  width: 16px; height: 16px;
+  flex: 0 0 auto;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--color-fg-tertiary);
+  cursor: pointer;
+}
+.stat-card__info svg { width: 16px; height: 16px; }
+
+/* value + signed change (e.g. Perf. YTD) */
+.stat-card__value-row { display: inline-flex; align-items: baseline; gap: var(--space-sm); }   /* 8px */
+.stat-card__delta { display: inline-flex; align-items: baseline; gap: 2px; }                  /* caret → % */
+.delta-caret { width: 10px; height: 8px; flex: 0 0 auto; }                                     /* Figma 10×8 */
+.delta-caret--down { transform: rotate(180deg); }                                              /* negative change */
+
+/* --- setting card (Figma Profile section 1734:14980) — one setting per card ---
+   card p16, radius 16; label 16M (body-strong). Variants:
+     field    : label (+ badge) · edit icon 24 → value 16R secondary (row h40), gap 12   → h108
+     editing  : (.is-editing, Figma 1745:20065) label → inputs side by side → Save / Cancel h40, gap 12
+     control  : label ……… trailing control — compact select (h40) · toggle · h36 button   → h72 / h56 / h68 */
+.setting-card { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.setting-card--field { flex-direction: column; align-items: stretch; gap: var(--space-md); }
+.setting-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.setting-card__label { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; margin: 0; }   /* label + optional badge, gap 8 */
+.setting-card__value { min-height: 40px; display: flex; align-items: center; margin: 0; overflow-wrap: anywhere; }
+.setting-card__edit {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: inline-flex;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--color-fg-tertiary);            /* icon/secondary */
+  cursor: pointer;
+}
+.setting-card__edit svg { width: 24px; height: 24px; display: block; }
+.setting-card__edit:active { color: var(--color-fg-primary); }
+.setting-card > .btn { flex: 0 0 auto; }
+
+/* --- link card (Figma "asset card", Add asset 1936:14423) — tappable row that opens a flow ---
+   p16, radius 16, gap 16: icon 24 (fg-primary) · title 16M / description 14R secondary (gap 4) · arrow-right 24.
+   h80 with a one-line description. Cards stack with gap 12. */
+.link-card {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+.link-card:active { background: var(--color-surface-tertiary); }   /* pressed (not in Figma — decided) */
+.link-card__icon,
+.link-card__arrow { flex: 0 0 auto; width: 24px; height: 24px; color: var(--color-fg-primary); }
+.link-card__icon svg,
+.link-card__arrow svg { width: 24px; height: 24px; display: block; }
+.link-card__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+.link-list { display: flex; flex-direction: column; gap: var(--space-md); }   /* 12 between cards */
+
+/* field card — editing state: inline inputs + Save / Cancel (tap edit to enter, either button to leave) */
+.setting-card__form { display: none; flex-direction: column; gap: var(--space-md); }       /* 12 */
+.setting-card__row { display: flex; gap: var(--space-md); }
+.setting-card__row > * { flex: 1 1 0; min-width: 0; }
+.setting-card.is-editing .setting-card__form { display: flex; }
+.setting-card.is-editing .setting-card__edit,
+.setting-card.is-editing .setting-card__value { display: none; }
+
+/* trailing control that opens a menu (compact select → option list), overlaying the next cards */
+.setting-card__control { position: relative; flex: 0 0 auto; }
+.setting-card__menu { position: absolute; top: 100%; right: 0; z-index: 20; min-width: 160px; }   /* .dropdown-panel adds margin-top 8 */
+
+/* --- disclosure card (Risk → About chart symbols) — added from the Phase 1 screens ---
+   card p16; head = info icon 20 (icon/secondary) · title 16M · chevron 24 (flips when open); body 14R secondary, gap 8.
+   Collapsed by default; the whole head is the tap target. */
+.disclosure { display: flex; flex-direction: column; gap: var(--space-md); }
+.disclosure__head { display: flex; align-items: center; gap: var(--space-sm); width: 100%; padding: 0; border: 0; background: transparent; color: var(--color-fg-primary); text-align: left; cursor: pointer; }
+.disclosure__head > span:first-of-type { flex: 1 1 auto; }
+.disclosure__icon { width: 20px; height: 20px; flex: 0 0 auto; color: var(--color-fg-tertiary); }
+.disclosure__chev { width: 24px; height: 24px; flex: 0 0 auto; color: var(--color-fg-tertiary); transition: transform var(--motion-fast) var(--ease-standard); }
+.disclosure[aria-expanded="true"] .disclosure__chev { transform: rotate(180deg); }
+.disclosure__body { display: none; flex-direction: column; gap: var(--space-sm); }
+.disclosure[aria-expanded="true"] .disclosure__body { display: flex; }
+
+/* --- stat scroller in a loading state keeps the card width --- */
+.stat-scroller .sk-card { width: 251px; }

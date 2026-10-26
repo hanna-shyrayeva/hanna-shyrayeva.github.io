@@ -1,0 +1,18 @@
+/* ==========================================================================
+   Onboarding — sign-in screens (Figma 1643:2959 · 3157 · 3241 · 3319 · 9630 · 9712) — added from the Phase 1 screens
+   White page (surface/secondary) under a header with back · language (globe 32).
+   One block, 361 wide, centred on the screen:
+     title 24SB centred · 24 · lede 14R secondary centred · 24 · controls, gap 16
+   Field labels 14R; the submit button sits right under the fields (not in the dock).
+   Screen-level errors → negative info banner at the top; field errors → under the field (input error).
+   ========================================================================== */
+.onb-page, .onb-page body, .onb-page .phone, .onb-page .statusbar, .onb-page .page-header { background: var(--color-surface-secondary); }
+.onb-page .page-header { justify-content: space-between; }
+.onb-page .page-header .lang { margin-left: auto; }
+.onb-page .lang-globe:active { background: var(--color-surface-primary); }
+.onb { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: var(--space-lg) var(--space-lg) 72px; }
+.onb__block { display: flex; flex-direction: column; gap: var(--space-xl); }
+.onb__title, .onb__lede { text-align: center; }
+.onb__controls { display: flex; flex-direction: column; gap: var(--space-lg); }
+.onb__controls > .link { align-self: center; }
+.onb__controls .btn .btn__icon { width: 24px; height: 24px; }

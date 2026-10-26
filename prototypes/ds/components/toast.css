@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Info banner / toast — mobile (Figma "Toasts" 1988:32413, placement 1988:33565)
+   361 wide (full width − 2×16), padding 12/16, radius 16, shadow-menu,
+   text 14M + 24px close (set icon "close", icon/secondary). Types: neutral · positive · warning · negative.
+   Placement: floats over the page, 16 below the status bar (top 70 on a 54pt status bar),
+   covering the page header; dismissed with ×.
+   ========================================================================== */
+
+.toast {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);                       /* 16 */
+  padding: var(--space-md) var(--space-lg);   /* 12 / 16 */
+  border-radius: var(--radius-xl);            /* 16 */
+  box-shadow: var(--shadow-menu);
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-primary);
+}
+.toast[hidden] { display: none; }
+.toast--positive { background: var(--color-surface-success);  color: var(--color-fg-positive); }
+.toast--warning  { background: var(--color-surface-warning);  color: var(--color-fg-warning); }
+.toast--negative { background: var(--color-surface-negative); color: var(--color-fg-negative); }
+
+.toast__text { flex: 1 1 auto; min-width: 0; margin: 0; }   /* role: value (14M), colour inherits the type */
+
+.toast__close {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: inline-flex;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--color-fg-tertiary);            /* icon/secondary */
+  cursor: pointer;
+}
+.toast__close svg { width: 24px; height: 24px; display: block; }
+.toast__close:active { color: var(--color-fg-primary); }   /* pressed */
+
+/* host: pins the toast to the top of the screen, over the page header */
+.toast-host {
+  position: fixed;
+  top: 70px;                                  /* status bar 54 + 16 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 393px;
+  box-sizing: border-box;
+  padding: 0 var(--space-lg);
+  z-index: 50;                                /* above page header (29) and tab bar (40) */
+}
+
+/* ==========================================================================
+   Notice — inline banner in the page flow (email not verified, offline / stale data).
+   Same shape family as the info banner, but it sits in the layout: no shadow, no overlay.
+   Tinted surface + status icon 20 + text 14R fg-primary (+ optional 14M title and link).
+   ========================================================================== */
+.notice {
+  display: flex; align-items: flex-start; gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-secondary);
+  color: var(--color-fg-primary);
+}
+.notice__icon { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 0; color: var(--color-fg-secondary); }
+.notice__icon svg { width: 20px; height: 20px; display: block; }
+.notice__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notice__body > * { margin: 0; }
+.notice__action { margin-top: var(--space-xs); align-self: flex-start; }
+.notice--warning { background: var(--color-surface-warning); }
+.notice--warning .notice__icon { color: var(--color-icon-warning); }
+.notice--negative { background: var(--color-surface-negative); }
+.notice--negative .notice__icon { color: var(--color-fg-negative); }
+.notice--info { background: var(--color-surface-info); }
+.notice--info .notice__icon { color: var(--color-fg-info); }
+
+/* ==========================================================================
+   Confirmation — short "Saved" message, dark pill, appears above the bottom dock
+   and hides itself after 2.5 s. Dark pill in light theme, light pill in dark theme (--confirm-bg / --confirm-fg).
+   ========================================================================== */
+.confirm {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  padding: 10px var(--space-lg);
+  border-radius: var(--radius-lg);            /* 12 — same as tabs */
+  background: var(--confirm-bg);
+  color: var(--confirm-fg);
+  box-shadow: var(--elevation-float);
+  font: var(--font-weight-medium) 14px/20px var(--font-family-base);
+}
+.confirm svg { width: 20px; height: 20px; display: block; flex: 0 0 auto; }
+.confirm[hidden] { display: none; }
+.confirm-host { position: fixed; left: 0; right: 0; bottom: 105px; display: flex; justify-content: center; pointer-events: none; z-index: 50; }
+
+/* --- notice with a close (email-not-verified reminder) — added from the Phase 1 screens ---
+   same 24px × as the info banner, top-aligned with the first line; closing hides it for the session. */
+.notice__close { flex: 0 0 auto; width: 24px; height: 24px; margin: -2px -4px 0 0; display: inline-flex; padding: 0; border: 0; background: transparent; color: var(--color-fg-tertiary); cursor: pointer; }
+.notice__close svg { width: 24px; height: 24px; display: block; }
+.notice__close:active { color: var(--color-fg-primary); }

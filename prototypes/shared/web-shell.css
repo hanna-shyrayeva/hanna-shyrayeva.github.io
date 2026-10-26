@@ -1,0 +1,177 @@
+/* ==========================================================================
+   Web shell — the desktop layout of the Njorda app (Figma "Njorda app with
+   AI assistant", 1440 × 1080). Not part of the mobile design system, so it
+   lives here, built only from ds/styles/tokens.css values.
+   ========================================================================== */
+
+.web {
+  position: relative;
+  width: 100%;                 /* the screen sets the size: 1024–1440 wide, see block.js */
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-surface-primary);
+  color: var(--color-fg-primary);
+  font-family: var(--font-family-base);
+}
+
+/* --- sidebar (dark, 312 × 1032, 24 from the edges) --- */
+.web-side {
+  position: absolute;
+  left: var(--space-xl);
+  top: var(--space-xl);
+  width: 312px;
+  height: calc(100% - 2 * var(--space-xl));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  border-radius: var(--radius-xl);
+  background: var(--color-static-dark);     /* #191d1a in both themes (Figma 2147:39651) */
+  color: var(--color-on-static);
+  transition: width var(--motion-base) var(--ease-standard), padding var(--motion-base) var(--ease-standard);
+}
+.web-side__burger { flex: 0 0 auto; width: 24px; height: 24px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.web-side__burger svg { width: 24px; height: 24px; display: block; }
+
+/* performance widget */
+.web-perf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--palette-ink-800);       /* #252926 in both themes */
+}
+.web-perf__group { display: flex; flex-direction: column; gap: var(--space-sm); }
+.web-perf__item { display: flex; flex-direction: column; gap: var(--space-xs); }
+.web-perf__label { font: var(--font-weight-regular) 12px/16px var(--font-family-base); color: var(--palette-neutral-400); }
+.web-perf__big { font: var(--font-weight-semibold) 30px/40px var(--font-family-base); font-variant-numeric: tabular-nums; }
+.web-perf__value { font: var(--font-weight-semibold) 18px/26px var(--font-family-base); font-variant-numeric: tabular-nums; }
+.web-perf__row { display: flex; align-items: baseline; gap: 6px; }
+.web-perf__up { font: var(--font-weight-medium) 14px/20px var(--font-family-base); color: var(--brand-on-dark); }
+.web-perf__spark { display: block; width: 240px; height: 64px; color: var(--brand-on-dark); overflow: visible; }
+.web-perf__line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.web-perf__area { fill: url(#web-perf-fill); }
+
+/* navigation */
+.web-nav { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--space-sm); }
+.web-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-on-static);
+  font: var(--font-weight-medium) 16px/24px var(--font-family-base);
+  text-align: left;
+}
+.web-nav__item svg { width: 24px; height: 24px; flex: 0 0 auto; }
+.web-nav__item.is-active { color: var(--brand-on-dark); }
+.web-nav__item { cursor: default; }   /* the menu shows where things live; in the prototypes it does not navigate */
+.web-nav__item--profile svg { width: 20px; height: 20px; margin: 2px; }   /* the filled person reads bigger than the line icons */
+
+.web-side__actions { display: flex; flex-direction: column; gap: var(--space-lg); }
+.web-side__actions .btn { justify-content: flex-start; gap: var(--space-lg); }
+.web-side__actions .btn__icon { width: 24px; height: 24px; }
+
+/* folded menu: a 72 wide rail of icons; the page takes the room */
+.web-side.is-collapsed { width: 72px; padding: var(--space-xl) var(--space-md); }
+.web-side.is-collapsed .web-side__burger { align-self: center; }
+.web-side.is-collapsed .web-perf, .web-side.is-collapsed .web-nav__label, .web-side.is-collapsed .btn__label { display: none; }
+.web-side.is-collapsed .web-nav__item { justify-content: center; }
+.web-side.is-collapsed .web-side__actions .btn { width: 40px; height: 40px; padding: 0; justify-content: center; }
+.web:has(.web-side.is-collapsed) .web-main { left: 120px; width: calc(100% - 152px); }
+.web.has-panel:has(.web-side.is-collapsed) .web-main, .ac-open .web:has(.web-side.is-collapsed) .web-main { width: calc(100% - 664px); }
+
+/* --- page area (1040 wide; narrows to 528 when the AI panel is open) --- */
+.web-main {
+  position: absolute;
+  left: 368px;
+  top: var(--space-2xl);
+  transition: left var(--motion-base) var(--ease-standard), width var(--motion-base) var(--ease-standard);
+  width: calc(100% - 400px);   /* 368 left (sidebar) + 32 right */
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+.web.has-panel .web-main, .ac-open .web .web-main { width: calc(100% - 912px); }   /* 1440 → 528, as in Figma; .ac-open: see shared/ai-chat.js */
+/* narrow screens: the chat would cover the page, so the side menu steps aside while the chat is open and the page keeps its room */
+.pb-screen.is-narrow .web.has-panel .web-side, .pb-screen.is-narrow.ac-open .web .web-side { display: none; }
+.pb-screen.is-narrow .web.has-panel .web-main, .pb-screen.is-narrow.ac-open .web .web-main { left: var(--space-2xl); width: calc(100% - 520px - 2 * var(--space-2xl)); }
+.pb-screen.is-narrow .web-panel { box-shadow: var(--shadow-menu); }
+.web-head { min-height: 40px; display: flex; align-items: center; gap: var(--space-lg); }
+.web-head__title { flex: 1 1 auto; margin: 0; }
+.web-head .btn { width: auto; }
+
+/* web monitor card: the actions sit next to the text (mobile uses a kebab menu) */
+.monitor-card__row { display: flex; align-items: center; gap: var(--space-lg); }
+.monitor-card__row .monitor-card__body { flex: 1 1 auto; min-width: 0; }
+.monitor-card__actions { display: flex; gap: var(--space-sm); flex: 0 0 auto; }
+.icon-action {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: transparent;
+  color: var(--color-fg-tertiary);
+}
+.icon-action svg { width: 24px; height: 24px; }
+.icon-action:hover { background: var(--color-surface-primary); color: var(--color-fg-primary); }
+
+/* --- AI side panel (520 wide, full height, slides in from the right) --- */
+.web-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 520px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  background: var(--color-surface-secondary);
+  transform: translateX(100%);
+  transition: transform var(--motion-base) var(--ease-standard);
+}
+.web.has-panel .web-panel, .ac-open .web .web-panel { transform: none; }
+.web-panel .chat-header { padding: 0; background: transparent; }
+.web-panel .chat-thread { padding: var(--space-sm) 0 0; }
+.web-panel .chat-dock { padding: 0; background: transparent; }
+
+/* --- shared: a phone's row of cards can be dragged with a mouse (shared/app-shell.js) --- */
+.stat-scroller, .stat-scroller .stat-card { cursor: grab; }
+.stat-scroller.is-dragging { cursor: grabbing; scroll-snap-type: none; }   /* follows the mouse; snaps again after it glides to a card */
+.stat-scroller.is-dragging * { cursor: grabbing; }
+
+/* --- shared: the part of the screen the story is talking about: scrolled into view, no outline --- */
+.spot { position: relative; }
+
+/* ==========================================================================
+   Web table (Figma Overview 2273:40224 → Top 5 assets, Liabilities).
+   Header row 14R secondary, rows h44: name column 400, the rest share the width,
+   numbers right-aligned; an optional 32px action slot at the end.
+   Mobile uses the design-system .table-row instead.
+   ========================================================================== */
+.wtable { border-radius: var(--radius-xl); background: var(--table-bg); }   /* no overflow: hidden, so a row menu can open past the card */
+.wtable > :first-child { border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+.wtable > :last-child { border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.wtable__row { display: flex; align-items: center; gap: var(--space-md); min-height: 44px; padding: 0 var(--space-lg); box-shadow: inset 0 -1px 0 var(--table-border); }
+.wtable__row:last-child { box-shadow: none; }
+.wtable__row--head { min-height: 44px; color: var(--color-fg-secondary); }
+.wtable__row > span { flex: 1 1 0; min-width: 0; }
+.wtable__row > span:first-child { flex: 0 0 400px; }
+.wtable__row > .num { text-align: right; font-variant-numeric: tabular-nums; }
+.wtable__act { flex: 0 0 32px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-xl); background: transparent; color: var(--color-fg-tertiary); position: relative; }
+.wtable__act svg { width: 24px; height: 24px; }
+.wtable__act:hover { background: var(--color-surface-primary); color: var(--color-fg-primary); }
+.wtable__gap { flex: 0 0 32px; }
+
+/* sidebar: My Profile is a button, not a nav item; when its page is open it gets the green outline */
+.web-side .btn--menu.is-active { box-shadow: inset 0 0 0 1px var(--color-border-green); }

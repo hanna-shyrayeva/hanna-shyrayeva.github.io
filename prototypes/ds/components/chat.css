@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Chat — AI conversation view (full screen, own scroll, fixed input dock)
+   ========================================================================== */
+
+/* full-height chat, fully white; the thread scrolls on its own so the
+   header (with the close button) always sits above the messages */
+.phone--chat { height: 100dvh; overflow: hidden; background: var(--color-surface-secondary); }
+.phone--chat .statusbar { background: var(--color-surface-secondary); }
+
+.chat-header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-lg) var(--space-lg) var(--space-sm);
+  background: var(--color-surface-secondary);
+}
+.chat-header__close {
+  width: 24px; height: 24px;
+  padding: 0; border: 0;
+  background: transparent;
+  color: var(--color-fg-primary);
+}
+.chat-header__close svg { width: 24px; height: 24px; }
+
+.chat-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);                 /* 24px between turns */
+  padding: var(--space-sm) var(--space-lg) 0;
+}
+
+/* user prompt bubble (right) */
+.chat-user { display: flex; justify-content: flex-end; }
+.chat-user__bubble {
+  max-width: 80%;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);      /* 12px */
+  background: var(--color-surface-primary);
+  color: var(--color-fg-primary);
+}
+
+/* AI response */
+.chat-ai { display: flex; flex-direction: column; gap: var(--space-lg); }
+.chat-ai__avatar { width: 32px; height: 32px; }
+.chat-ai__avatar img { width: 100%; height: 100%; display: block; }
+.chat-ai__block { display: flex; flex-direction: column; gap: var(--space-md); color: var(--color-fg-primary); }
+.chat-ai__heading { font: var(--font-weight-medium) 24px/30px var(--font-family-base); margin: 0; }
+.chat-ai__block ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.chat-ai__block li { list-style: disc; }
+.chat-ai__block li ul { margin-top: 6px; }
+.chat-ai__block li ul li { list-style: circle; }
+
+/* bottom dock: input + disclaimer */
+.chat-dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg) 0;
+  background: var(--color-surface-secondary);
+}
+.chat-disclaimer { text-align: center; }
+
+.chat-home { display: flex; justify-content: center; padding: var(--space-sm) 0; }
+.chat-home__bar { width: 139px; height: 5px; border-radius: 100px; background: var(--color-fg-primary); }
+
+/* ─── AI "generating" loader (per Njorda animation spec) ───────────────
+   Icon: chat-bubble mask + drifting brand gradient + breathing scale.
+   Text: monochrome shimmer pass (left → right) with a calm beat between. */
+.njorda-loader {
+  align-self: flex-start;
+  display: inline-flex;
+  flex-direction: column;       /* icon on top, text below (matches the app) */
+  align-items: flex-start;
+  gap: 10px;
+}
+.njorda-icon-drift {
+  --shell-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M23.2632 0C26.9448 0.000322966 29.9298 2.98497 29.9298 6.66667V19.8867C29.9297 23.5683 26.9447 26.5531 23.2632 26.5534H11.5457L6.09912 32V26.276C3.34377 25.4575 1.33358 22.9078 1.3335 19.8867V6.66667C1.3335 2.98477 4.31826 0 8.00016 0H23.2632Z' fill='black'/%3E%3C/svg%3E");
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  position: relative;
+  flex-shrink: 0;
+  background-image: var(--gradient-brand);   /* static brand gradient (no drift) */
+  background-size: 100% 100%;
+  transform-origin: center;
+  animation: breathe 2.6s ease-in-out infinite;   /* gentle pulse */
+  -webkit-mask-image: var(--shell-mask); mask-image: var(--shell-mask);
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+.njorda-icon-drift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M15.6313 8.85156L21.5276 16.0005H9.73492L15.6313 8.85156Z' fill='%23191D1A'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.text-shimmer-bloom {
+  font: var(--font-weight-medium) 16px/24px var(--font-family-base);
+  background-image: linear-gradient(100deg, #7F7F7F 0%, #7F7F7F 38%, #C8C8C8 50%, #BFBFBF 60%, #7F7F7F 72%, #7F7F7F 100%);
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: shimmer-pass 3.2s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { transform: scale(0.96); } 50% { transform: scale(1.10); } }
+@keyframes shimmer-pass { 0% { background-position: 100% 50%; } 65% { background-position: 0% 50%; } 100% { background-position: 0% 50%; } }
+@media (prefers-reduced-motion: reduce) {
+  .njorda-icon-drift, .text-shimmer-bloom { animation: none; }
+}
+
+/* AI error turn */
+.chat-error { display: flex; flex-direction: column; gap: var(--space-md); align-items: flex-start; }

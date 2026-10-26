@@ -1,0 +1,56 @@
+/* ==========================================================================
+   State view — screen wrapper that centres an empty / error state
+   ========================================================================== */
+
+.state-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg) 120px;   /* bottom clears the tab bar */
+}
+
+/* --- empty state (Figma 2051:36024) — text only, no icon; copy depends on the page.
+   Title 20SB · 16 · body 16R secondary, centred, max 361. The page's action
+   (e.g. "Add asset", "Create monitor") lives in the bottom dock (.tabbar__action),
+   not inside the empty state. */
+.empty-state {
+  width: 100%;
+  max-width: 361px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);                     /* 16 */
+  text-align: center;
+}
+.empty-state > * { margin: 0; }
+
+/* --- error page (Figma 2024:38208 onboarding · 2024:38248 in app) ---
+   Full-screen, content centred vertically: illustration 87×100 · 32 · text · 32 · buttons.
+   Onboarding: surface-secondary screen, globe header, one button (Refresh Page).
+   In app    : surface-primary screen, tab bar, Refresh Page + Go to Home (secondary).
+   Dark theme comes from the tokens — no separate styles. */
+.error-state {
+  width: 100%;
+  max-width: 361px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xl);                    /* 32 */
+  text-align: center;
+}
+.error-state__art { width: 87px; height: 100px; color: var(--color-fg-tertiary); }   /* icon/secondary */
+.error-state__art svg { width: 100%; height: 100%; display: block; }
+.error-state__text { display: flex; flex-direction: column; gap: var(--space-lg); }  /* title 20SB · 16 · body 16R secondary */
+.error-state__actions { width: 100%; display: flex; flex-direction: column; gap: var(--space-lg); }
+
+/* screen wrappers */
+.error-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+.error-page--onboarding { background: var(--color-surface-secondary); }
