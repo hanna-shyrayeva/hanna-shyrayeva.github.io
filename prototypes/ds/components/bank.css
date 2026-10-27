@@ -98,9 +98,9 @@
 .bank-option:disabled { cursor: default; }
 .bank-option:disabled .bank-option__text { opacity: .5; }
 
-/* --- web: hover (the cards in the bank picker and the cards that open their accounts) --- */
+/* --- web: hover (the cards in the bank picker, the bank cards and the assets added by hand) --- */
 .bank-option, .bank-card { transition: box-shadow var(--motion-fast) var(--ease-standard); }
 @media (hover: hover) {
   .bank-option:hover:not(:disabled) { box-shadow: var(--shadow-card-hover); }
-  .bank-card[aria-expanded]:hover { box-shadow: var(--shadow-card-hover); }
+  .bank-card:hover { box-shadow: var(--shadow-card-hover); }   /* banks and assets added by hand alike */
 }
