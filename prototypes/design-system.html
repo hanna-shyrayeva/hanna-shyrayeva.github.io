@@ -206,7 +206,25 @@
         '<div class="ds-grid">' +
           box('Search', states(['Default', 'Hover', 'Focus', 'Filled'], [srch(''), srch('hover'), srch('focus'), srch('', 'Nordea')])) +
           box('Select', states(['Default', 'Hover', 'Focus', 'Filled', 'Error'], [sel(''), sel('', 'hover'), sel('', 'focus'), sel('Avanza ISK'), sel('', 'error')])) +
-        '</div>';
+        '</div>' +
+        box('Date picker', '<div class="ds-row" style="align-items:flex-start;gap:var(--space-2xl)">' +
+          spec('<div style="width:240px">' + field('Valuation date', '<input class="field__input" value="' + s.date + '" readonly tabindex="-1">' + '<span class="field__icon">' + I('calendar') + '</span>', 'focus') + '</div>', 'The field, open') +
+          spec(calendar(), 'Pick a day; the arrows change the month') + '</div>');
+    }
+    /* the calendar under a date field: today (2 Feb 2026 in the app) outlined, the chosen day green */
+    var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    s.date = '14.02.2026'; s.cal = [2026, 1];
+    function calendar() {
+      var y = s.cal[0], mo = s.cal[1], m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s.date), sel = [+m[3], +m[2] - 1, +m[1]];
+      var start = (new Date(y, mo, 1).getDay() + 6) % 7, cells = '';
+      for (var k = 0; k < 42; k++) {
+        var dt = new Date(y, mo, k - start + 1), Y = dt.getFullYear(), M = dt.getMonth(), D_ = dt.getDate();
+        var val = ('0' + D_).slice(-2) + '.' + ('0' + (M + 1)).slice(-2) + '.' + Y;
+        cells += '<button type="button" class="datepicker__day' + (M !== mo ? ' is-out' : '') + (Y === 2026 && M === 1 && D_ === 2 ? ' is-today' : '') + '" aria-selected="' + (sel[0] === Y && sel[1] === M && sel[2] === D_) + '" data-day="' + val + '">' + D_ + '</button>';
+      }
+      return '<div class="datepicker" style="margin-top:0;box-shadow:var(--shadow-menu)"><div class="datepicker__head"><button type="button" class="datepicker__nav datepicker__nav--prev" data-month="-1" aria-label="Previous month">' + I('arrow-right') + '</button><span>' + MONTHS[mo] + ' ' + y + '</span>' +
+        '<button type="button" class="datepicker__nav" data-month="1" aria-label="Next month">' + I('arrow-right') + '</button></div><div class="datepicker__grid">' +
+        ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(function (w) { return '<span class="datepicker__dow">' + w + '</span>'; }).join('') + cells + '</div></div>';
     }
     function badges() {
       return head('Badges', 'A status is never colour alone: icon, word and colour.') + '<div class="ds-grid">' +
@@ -310,6 +328,9 @@
       on('.tab:not([disabled])', function (b) { var row = b.closest('.ds-mx') ? null : b.parentNode; if (row) row.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('tab--active', t === b); }); });
       on('[data-x]', function (b) { var m = b.closest('.toast, .notice'); if (m) m.style.visibility = 'hidden'; setTimeout(function () { if (m && m.isConnected) m.style.visibility = ''; }, 1500); });
       on('[data-confirm]', function () { A.confirmPill(root, 'Goal saved', 40); });
+      // the date picker works: a day fills the field, the arrows change the month
+      on('[data-day]', function (b) { s.date = b.getAttribute('data-day'); var m = s.date.split('.'); s.cal = [+m[2], +m[1] - 1]; draw(); });
+      on('[data-month]', function (b) { var d = new Date(s.cal[0], s.cal[1] + (+b.getAttribute('data-month')), 1); s.cal = [d.getFullYear(), d.getMonth()]; draw(); });
     }
     draw(); lastWide = web;
     return { go: function (g) { if (g === s.g) return; s.g = g; draw(); ctx.screen.scrollTop = 0; } };

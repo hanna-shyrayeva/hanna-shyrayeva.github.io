@@ -36,6 +36,10 @@
   .web .web-main { bottom: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: var(--space-2xl); }
   .web .web-main::-webkit-scrollbar { display: none; }
   .a-lede { margin: 0; }
+  .a-pop { position: relative; }   /* a select or a date field with its panel */
+  .a-pop > .dropdown-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; }
+  .a-pop > .datepicker { position: absolute; left: 0; top: 100%; z-index: 20; }
+  .a-pop .field--date, .a-pop .field--date .field__input { cursor: pointer; }
   .a-hub { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
   .phone .a-hub { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
   .a-hub .link-card__text, .link-card__text > * { margin: 0; }
@@ -233,7 +237,7 @@
         { id: 'avanza', name: 'Avanza', status: 'off', open: false, accounts: [['Kapitalförsäkring', '9552 00 487 12', 'KF', 247086]] },
         { id: 'seb', name: 'SEB', status: 'ok', open: false, accounts: [['Sparkonto', '5357 10 042 88', 'Savings', 85000], ['Mortgage', '5357 80 113 04', 'Mortgage', -2180000]] }
       ],
-      more: false, secs: [], manual: [], type: 'realestate', tab: 'basic', form: {}, err: {},
+      more: false, secs: [], manual: [], type: 'realestate', tab: 'basic', form: {}, err: {}, pop: null, cal: null,
       sec: null, q: '', menu: null, flow: null, newRow: null
     };
     var timers = [];
@@ -356,10 +360,40 @@
         (opts.suffix ? '<span class="field__currency">' + opts.suffix + '</span>' : '') + (opts.icon ? '<span class="field__icon">' + I(opts.icon) + '</span>' : '') + '</div>' +
         (e ? '<span class="input__error type-label">' + esc(e) + '</span>' : opts.help ? '<span class="input__helper type-caption">' + esc(opts.help) + '</span>' : '') + '</div>';
     }
+    /* a select opens its list; the chosen one has the check */
     function select(id, label, options) {
-      var v = s.form[id] || options[0];
-      return '<div class="input"><span class="input__label type-body tone-default">' + label + '</span><button type="button" class="select" data-cycle="' + id + '" data-opts="' + esc(options.join('|')) + '"><span class="select__value">' + esc(v) + '</span><span class="select__chevron">' + I('arrow-down') + '</span></button></div>';
+      var v = s.form[id] || options[0], open = s.pop === id;
+      return '<div class="input"><span class="input__label type-body tone-default">' + label + '</span><div class="a-pop"><button type="button" class="select" data-pop="' + id + '" aria-haspopup="listbox" aria-expanded="' + open + '"><span class="select__value">' + esc(v) + '</span><span class="select__chevron">' + I('arrow-down') + '</span></button>' +
+        (open ? '<div class="dropdown-panel"><ul class="dropdown-list" role="listbox">' + options.map(function (o) {
+          return '<li><button type="button" class="dropdown-option" role="option" aria-selected="' + (o === v) + '" data-pick="' + id + '" data-val="' + esc(o) + '"><span class="dropdown-option__check">' + I('checkmark') + '</span>' + esc(o) + '</button></li>';
+        }).join('') + '</ul></div>' : '') + '</div></div>';
     }
+    /* a date field opens a calendar on its month; today in the app is 2 Feb 2026 */
+    var TODAY = [2026, 1, 2], MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    function parseDate(v) { var m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v || ''); return m ? [+m[3], +m[2] - 1, +m[1]] : null; }
+    function fmtDate(y, mo, d) { return ('0' + d).slice(-2) + '.' + ('0' + (mo + 1)).slice(-2) + '.' + y; }
+    function dateFld(id, label, def, ph) {
+      var v = s.form[id] != null ? s.form[id] : (def || ''), open = s.pop === id;
+      return '<div class="input"><label class="input__label type-body tone-default" for="f-' + id + '">' + esc(label) + '</label><div class="a-pop">' +
+        '<div class="field field--date' + (open ? ' field--focus' : '') + '" data-pop="' + id + '"><input class="field__input" id="f-' + id + '" placeholder="' + esc(ph || '') + '" value="' + esc(v) + '" readonly aria-haspopup="dialog" aria-expanded="' + open + '"><span class="field__icon">' + I('calendar') + '</span></div>' +
+        (open ? calendar(id, v) : '') + '</div></div>';
+    }
+    function calendar(id, v) {
+      var sel = parseDate(v), view = s.cal || (sel ? [sel[0], sel[1]] : [TODAY[0], TODAY[1]]), y = view[0], mo = view[1];
+      var start = (new Date(y, mo, 1).getDay() + 6) % 7, days = new Date(y, mo + 1, 0).getDate(), prevDays = new Date(y, mo, 0).getDate(), cells = '';
+      for (var k = 0; k < 42; k++) {
+        var d = k - start + 1, cy = y, cm = mo, out = false;
+        if (d < 1) { d += prevDays; cm = mo - 1; out = true; } else if (d > days) { d -= days; cm = mo + 1; out = true; }
+        var dt = new Date(cy, cm, d), Y = dt.getFullYear(), M = dt.getMonth(), Dd = dt.getDate();
+        var isSel = sel && sel[0] === Y && sel[1] === M && sel[2] === Dd, isToday = TODAY[0] === Y && TODAY[1] === M && TODAY[2] === Dd;
+        cells += '<button type="button" class="datepicker__day' + (out ? ' is-out' : '') + (isToday ? ' is-today' : '') + '" aria-selected="' + !!isSel + '" data-day="' + id + '" data-val="' + fmtDate(Y, M, Dd) + '">' + Dd + '</button>';
+      }
+      return '<div class="datepicker" role="dialog" aria-label="Choose a date"><div class="datepicker__head"><button type="button" class="datepicker__nav datepicker__nav--prev" data-month="-1" aria-label="Previous month">' + I('arrow-right') + '</button>' +
+        '<span>' + MONTHS[mo] + ' ' + y + '</span><button type="button" class="datepicker__nav" data-month="1" aria-label="Next month">' + I('arrow-right') + '</button></div>' +
+        '<div class="datepicker__grid">' + ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(function (w) { return '<span class="datepicker__dow">' + w + '</span>'; }).join('') + cells + '</div></div>';
+    }
+    // the money fields follow the chosen currency
+    function cur() { return { SEK: 'kr', EUR: '€', USD: '$' }[s.form.currency || 'SEK']; }
     function formView() {
       var t = s.type, tabs = '<div class="a-tabs">' + [['basic', 'Basic'], ['details', 'Details'], ['advanced', 'Advanced']].map(function (x) { return '<button type="button" class="tab' + (s.tab === x[0] ? ' tab--active' : '') + '" data-ftab="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
       var body;
@@ -367,9 +401,9 @@
         body = t === 'liability'
           ? fld('name', 'Name', { ph: 'For example, Car loan' }) + fld('lender', 'Lender', { ph: 'For example, Santander' }) + fld('value', 'Amount', { ph: '0', num: true, suffix: 'kr' }) + fld('rate', 'Interest rate (%)', { ph: '0.00', num: true })
           : fld('name', 'Name', { ph: t === 'realestate' ? 'For example, Apartment in Vasastan' : 'Name of the asset' }) + (t === 'realestate' ? fld('address', 'Address', { ph: 'For example, Odengatan 10, Stockholm' }) : '') +
-            select('currency', 'Currency', ['SEK', 'EUR', 'USD']) + fld('date', 'Valuation date', { value: '02.02.2026', icon: 'calendar' }) + fld('value', 'Total value', { ph: '0', num: true, suffix: 'kr', wide: t === 'realestate' });
+            select('currency', 'Currency', ['SEK', 'EUR', 'USD']) + dateFld('date', 'Valuation date', '02.02.2026') + fld('value', 'Total value', { ph: '0', num: true, suffix: cur(), wide: t === 'realestate' });
       } else if (s.tab === 'details') {
-        body = fld('cost', 'Cost basis', { ph: '0', num: true, suffix: 'kr', help: 'What you originally paid for this asset.' }) + fld('acq', 'Acquisition date', { ph: 'Choose a date', icon: 'calendar' }) +
+        body = fld('cost', 'Cost basis', { ph: '0', num: true, suffix: cur(), help: 'What you originally paid for this asset.' }) + dateFld('acq', 'Acquisition date', '', 'Choose a date') +
           fld('share', 'Ownership share (%)', { ph: '100', num: true, help: 'Your percentage ownership if shared.' }) + select('liq', 'Liquidity', ['High (easily converted to cash)', 'Medium (weeks to sell)', 'Low (months to sell)']) +
           fld('notes', 'Notes', { area: true, wide: true, ph: 'Add any additional notes about this asset.' });
       } else {
@@ -493,7 +527,14 @@
         });
       });
       on('[data-ftab]', function (b) { keep(); s.tab = b.getAttribute('data-ftab'); draw(); });
-      on('[data-cycle]', function (b) { keep(); var id = b.getAttribute('data-cycle'), o = b.getAttribute('data-opts').split('|'), cur = o.indexOf(s.form[id] || o[0]); s.form[id] = o[(cur + 1) % o.length]; draw(); });
+      on('[data-pop]', function (b) { keep(); var id = b.getAttribute('data-pop'); s.pop = s.pop === id ? null : id; s.cal = null; draw(); });
+      on('[data-pick]', function (b) { s.form[b.getAttribute('data-pick')] = b.getAttribute('data-val'); s.pop = null; draw(); });
+      on('[data-day]', function (b) { s.form[b.getAttribute('data-day')] = b.getAttribute('data-val'); s.pop = null; s.cal = null; draw(); });
+      on('[data-month]', function (b) {
+        var id = s.pop, sel = parseDate(s.form[id] != null ? s.form[id] : (id === 'date' ? '02.02.2026' : '')), v = s.cal || (sel ? [sel[0], sel[1]] : [TODAY[0], TODAY[1]]);
+        var d = new Date(v[0], v[1] + (+b.getAttribute('data-month')), 1); s.cal = [d.getFullYear(), d.getMonth()]; draw();
+      });
+      root.onclick = function (e) { if (s.pop && !(e.target.closest && e.target.closest('.a-pop'))) { keep(); s.pop = null; s.cal = null; draw(); } };   // a click elsewhere closes the open list or calendar
       on('[data-sec]', function (b) {
         s.secs.push({ sec: SECURITIES[+b.getAttribute('data-sec')], qty: '', value: '' }); s.q = ''; draw();
         var n = ctx.screen.querySelector('[data-qty="' + (s.secs.length - 1) + '"]'); if (n) n.focus();   // straight on to the quantity

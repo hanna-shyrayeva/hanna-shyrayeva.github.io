@@ -47,6 +47,10 @@
   .phone .g-empty .empty-state { padding-top: var(--space-xl); }
   .g-ideas { display: flex; flex-direction: column; gap: var(--space-lg); }
   .g-ideas .link-card { min-height: 84px; }
+  /* web: the ideas two a row, as the cards on the main tab, the AI idea among them */
+  .web .g-ideas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .web .g-ideas > :not(.link-card) { grid-column: 1 / -1; }   /* the note takes the whole row; the AI idea is a card like the others */
+  .web.has-panel .g-ideas { grid-template-columns: minmax(0, 1fr); }
   /* "Need inspiration?" — the AI idea: gradient ring, same technique as .btn--ai-secondary */
   .g-ideas .link-card.is-ai { border: 2px solid transparent; padding: calc(var(--space-lg) - 2px);
     background: linear-gradient(var(--color-surface-secondary), var(--color-surface-secondary)) padding-box, var(--gradient-brand) border-box; }
@@ -138,7 +142,9 @@
       draft: null,   // the goal the assistant drafted: on the page, outlined, until it is saved or discarded
       spot: null
     };
-    if (ctx.state === 'details') s.detail = s.goals.filter(function (g) { return g.n === 'Summer house'; })[0];
+    // details: the goal it was opened for (a card on Overview, or #goal= in the address), otherwise Summer house
+    var wanted = (window.PB_HINT && window.PB_HINT.goal) || new URLSearchParams(location.hash.slice(1)).get('goal');
+    if (ctx.state === 'details') s.detail = s.goals.filter(function (g) { return g.n === wanted; })[0] || s.goals.filter(function (g) { return g.n === 'Summer house'; })[0];
     var timers = [];
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 

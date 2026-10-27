@@ -68,3 +68,8 @@
 }
 .quick-action:active { background: var(--color-surface-tertiary); }   /* pressed (no hover on mobile) */
 .quick-action svg { width: 18px; height: 18px; flex: 0 0 auto; }
+
+/* --- web: hover (the composer and the quick actions lift a little) --- */
+.ai-input, .quick-action { transition: box-shadow var(--motion-fast) var(--ease-standard); }
+.quick-action { cursor: pointer; }
+@media (hover: hover) { .ai-input:hover, .ai-input:focus-within, .quick-action:hover { box-shadow: var(--shadow-card-hover); } }

@@ -94,7 +94,7 @@
   color: var(--color-fg-primary);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-standard);
+  transition: background-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
 }
 .link-card:active { background: var(--color-surface-tertiary); }   /* pressed (not in Figma — decided) */
 .link-card__icon,
@@ -130,3 +130,6 @@
 
 /* --- stat scroller in a loading state keeps the card width --- */
 .stat-scroller .sk-card { width: 251px; }
+
+/* --- web: hover (a light shadow lifts the card under the pointer) --- */
+@media (hover: hover) { .link-card:hover { box-shadow: var(--shadow-card-hover); } }

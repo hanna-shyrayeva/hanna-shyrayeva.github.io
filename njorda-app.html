@@ -415,7 +415,7 @@
     nav.appendChild(skip(1));
 
     /* a jump (arrow, dot, a state picked inside): the page glides there and only the end state is shown */
-    var target = null, flying = 0;
+    var target = null, flying = 0, pendingOpen = -1;
     function toUnit(g) {
       if (!on()) return;
       target = g; clearTimeout(flying); flying = setTimeout(function () { target = null; onScroll(); }, 1500);
@@ -460,12 +460,17 @@
         sent[i] = -1; tell(frames[i]); onScroll();
       }
       if (m.type === 'pb-height' && m.h && !on()) frames[i].style.height = Math.ceil(m.h) + 'px';
+      if (m.type === 'pb-state-index' && i === pendingOpen) {   // the prototype opened that state: go to it
+        pendingOpen = -1; sent[i] = m.index;
+        if (on()) toUnit(first[i] + m.index); else frames[i].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      }
       if (m.type === 'pb-state' && on() && typeof m.index === 'number') { sent[i] = m.index; toUnit(first[i] + m.index); }   // a state picked inside: the page follows
       if (m.type === 'pb-wheel' && on() && m.dy && !wheel(m.dy)) window.scrollBy(0, m.dy);   // a wheel over the prototype moves the page
       if (m.type === 'pb-open' && m.proto) {   // a menu item inside a prototype: that prototype, on the same device
         var j = frames.findIndex(function (x) { return x.getAttribute('src') === 'prototypes/' + m.proto + '.html'; });
         if (j < 0) return;
         if (frames[j].contentWindow) frames[j].contentWindow.postMessage({ type: 'pb-mode', mode: m.mode }, '*');
+        if (m.state && frames[j].contentWindow) { pendingOpen = j; frames[j].contentWindow.postMessage({ type: 'pb-open-state', state: m.state, hint: { goal: m.goal } }, '*'); return; }   // it answers with the state's index
         if (on()) toUnit(first[j]); else frames[j].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
       }
     });
@@ -514,7 +519,7 @@
     }, { passive: true });
     window.addEventListener('sitetheme', function () { frames.forEach(tell); });
 
-    /* the tip: once per visit, when the deck first pins; it goes after "Got it", Escape or two steps */
+    /* the tip: once per visit, when the deck first pins; it stays until "Got it" (or Escape) */
     var tipEl = deck.querySelector('.deck__tip'), tipAt = null, seen = false;
     try { seen = sessionStorage.getItem('deck-tip') === '1'; } catch (e) {}
     function tipHide() {
@@ -527,7 +532,6 @@
       var y = pos();
       if (y < -viewH() * 0.25 || y > units.length * step()) return;   // the deck isn't on screen
       if (tipAt === null) { tipAt = g; setTimeout(function () { if (!seen) tipEl.classList.add('is-shown'); }, 500); }
-      else if (Math.abs(g - tipAt) >= 2) tipHide();
     }
     tipEl.querySelector('button').addEventListener('click', tipHide);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tipHide(); });

@@ -38,11 +38,13 @@
   .ov-top { display: flex; flex-direction: column; gap: var(--space-lg); }
   .ov-tiles { display: flex; gap: var(--space-lg); }
   .web .ov-tiles .stat-card { flex: 1 1 0; width: auto; }
+  .web.has-panel .ov-tiles, .ac-open .web .ov-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* the chat beside it: the four figures as two rows of two */
   .ov-greet { display: flex; flex-direction: column; gap: var(--space-sm); }
   .stat-card p { margin: 0; }
   .ov-list { display: flex; flex-direction: column; gap: var(--space-lg); }
   .web .ov-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }   /* two cards a row, as on Goals and Monitors */
   .ov-cards .monitor-message { margin-top: auto; }
+  .ov-cards [data-proto] { cursor: pointer; }
   .web.has-panel .ov-cards, .ac-open .web .ov-cards { grid-template-columns: minmax(0, 1fr); }   /* the chat beside it leaves room for one card a row */
   .goal-card p, .ov-greet p { margin: 0; }
   .ov-row-act { position: relative; }
@@ -156,9 +158,9 @@
         '<div class="chart-dates">' + ticks.map(function (t) { return '<span>' + t + '</span>'; }).join('') + '</div></div></section>';
     }
 
-    function header(title, more) {   // Show more leads to the page itself (Assets, Goals, Monitors); the pages live in their own prototypes
+    function header(title, more, proto) {   // Show more leads to the page itself; Goals and Monitors have prototypes of their own, so theirs open them
       return '<div class="section-header"><h2 class="type-section-title">' + title + '</h2>' +
-        (more ? '<button type="button" class="section-header__action">Show more</button>' : '') + '</div>';
+        (more ? '<button type="button" class="section-header__action"' + (proto ? ' data-proto="' + proto + '"' : '') + '>Show more</button>' : '') + '</div>';
     }
     function rowMenu(h, i) {
       if (s.menu !== i) return '';
@@ -210,19 +212,19 @@
       var order = ['Kitchen renovation', 'Emergency fund', 'Summer house'];
       act.sort(function (a, b) { return order.indexOf(a.n) - order.indexOf(b.n); });
       var list = act.slice(0, 2);
-      return '<section class="section' + (s.spot === 'goals' ? ' spot' : '') + '">' + header('Goals', act.length > 2) + '<div class="ov-list ov-cards">' + list.map(function (g) {
+      return '<section class="section' + (s.spot === 'goals' ? ' spot' : '') + '">' + header('Goals', act.length > 2, 'goals') + '<div class="ov-list ov-cards">' + list.map(function (g) {
         var when = g.status === 'Expired' ? '<p class="goal-card__expired type-body"><span class="goal-card__expired-icon">' + I('exclamation-mark') + '</span>Expired on ' + esc(g.date) + '</p>' : '<p class="type-body tone-secondary">' + esc(g.date) + '</p>';
-        return '<div class="card goal-card"><div class="goal-card__body"><p class="type-body-strong">' + esc(g.n) + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(g.target) + '</span></p>' + when + '</div>' + ring(g) + '</div>';
+        return '<div class="card goal-card" role="link" tabindex="0" data-proto="goals" data-proto-state="details" data-proto-goal="' + esc(g.n) + '"><div class="goal-card__body"><p class="type-body-strong">' + esc(g.n) + '</p><p class="goal-card__amount"><span class="type-subheading tone-default">' + kr(g.current) + '</span><span class="type-body of"> of ' + kr(g.target) + '</span></p>' + when + '</div>' + ring(g) + '</div>';
       }).join('') + '</div></section>';
     }
     var STATUS = { 'Triggered': ['negative', 'triggered', 'Triggered'], 'Check failed': ['warning', 'failed', 'Check failed'], 'OK': ['positive', 'ok', 'OK'], 'Checking': ['neutral', 'checking', 'Checking…'], 'Paused': ['paused', 'paused', 'Paused'] };
     function monitors() {
       var need = D.monitors.filter(function (m) { return m.state === 'Triggered' || m.state === 'Check failed'; });
       var list = need.length ? need : D.monitors.slice(0, 2);   // nothing needs attention: the usual ones show
-      return '<section class="section' + (s.spot === 'monitors' ? ' spot' : '') + '">' + header('Monitors', true) + '<div class="ov-list ov-cards">' + list.map(function (m) {
+      return '<section class="section' + (s.spot === 'monitors' ? ' spot' : '') + '">' + header('Monitors', true, 'monitors') + '<div class="ov-list ov-cards">' + list.map(function (m) {
         var st = STATUS[m.state];
         var msg = m.message && (m.state === 'Triggered' || m.state === 'Check failed') ? '<div class="monitor-message monitor-message--' + st[0] + ' type-body">' + esc(m.message) + '</div>' : '';
-        return '<article class="card monitor-card"><div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--' + st[0] + '">' + B[st[1]] + st[2] + '</span><span class="type-caption tone-secondary">' + esc(m.checked) + '</span></div></div>' +
+        return '<article class="card monitor-card" role="link" tabindex="0" data-proto="monitors"><div class="monitor-card__header"><div class="monitor-card__meta"><span class="badge badge--' + st[0] + '">' + B[st[1]] + st[2] + '</span><span class="type-caption tone-secondary">' + esc(m.checked) + '</span></div></div>' +
           '<div class="monitor-card__body"><p class="type-body-strong">' + esc(m.n) + '</p><p class="type-body tone-secondary">' + esc(m.rule) + '</p></div>' + msg + '</article>';
       }).join('') + '</div></section>';
     }

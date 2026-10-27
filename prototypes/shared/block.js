@@ -206,8 +206,15 @@
           /* scroll-driven page: scrolling steps through the states, so the hint says so */
           if (hintEl) hintEl.textContent = m.scrolly ? 'Scroll to step through the states, or pick one.' : cfg.hint;
         }
-        if (m.type === 'pb-go' && cfg.states[m.index] && m.index !== index()) { st.state = cfg.states[m.index].id; draw(); report(); }
+        if (m.type === 'pb-go' && cfg.states[m.index] && m.index !== index()) { window.PB_HINT = null; st.state = cfg.states[m.index].id; draw(); report(); }   // scrolling: the states as they are, no hint from an earlier jump
         if (m.type === 'pb-mode' && (m.mode === 'web' || m.mode === 'mob') && m.mode !== st.mode && !st.narrow && !cfg.webOnly) { st.mode = m.mode; draw(); report(); }   // opened from another prototype's menu
+        if (m.type === 'pb-open-state') {   // opened from another prototype: this state, drawn again even if it is the current one (a different goal)
+          window.PB_HINT = m.hint || null;
+          var k = -1; cfg.states.forEach(function (x, j) { if (x.id === m.state) k = j; });
+          if (k < 0) k = 0;
+          st.state = cfg.states[k].id; draw(); report();
+          parent.postMessage({ type: 'pb-state-index', index: k }, '*');
+        }
       });
       if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
       parent.postMessage({ type: 'pb-ready', n: cfg.states.length, index: index() }, '*');

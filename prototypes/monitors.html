@@ -47,6 +47,10 @@
   .phone .mon-empty .empty-state { padding-top: var(--space-xl); }
   .mon-ideas { display: flex; flex-direction: column; gap: var(--space-lg); }
   .mon-ideas .link-card { min-height: 84px; }
+  /* web: the ideas two a row, as the cards on the main tab, the AI idea among them */
+  .web .mon-ideas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .web .mon-ideas > :not(.link-card) { grid-column: 1 / -1; }   /* the note takes the whole row; the AI idea is a card like the others */
+  .web.has-panel .mon-ideas { grid-template-columns: minmax(0, 1fr); }
   /* "Need inspiration?" — the AI idea, as on Goals: gradient ring, same technique as .btn--ai-secondary */
   .mon-ideas .link-card.is-ai { border: 2px solid transparent; padding: calc(var(--space-lg) - 2px);
     background: linear-gradient(var(--color-surface-secondary), var(--color-surface-secondary)) padding-box, var(--gradient-brand) border-box; }

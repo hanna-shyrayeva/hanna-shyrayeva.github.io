@@ -69,3 +69,7 @@
 }
 .monitor-message--negative { background: var(--badge-negative-bg); color: var(--badge-negative-fg); }
 .monitor-message--warning  { background: var(--badge-warning-bg);  color: var(--badge-warning-fg); }
+
+/* --- web: hover --- */
+.monitor-card { transition: box-shadow var(--motion-fast) var(--ease-standard); }
+@media (hover: hover) { .monitor-card:hover { box-shadow: var(--shadow-card-hover); } }

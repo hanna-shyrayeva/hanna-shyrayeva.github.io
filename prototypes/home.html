@@ -44,7 +44,9 @@
   .web .web-main { gap: var(--space-xl); }
   .ov-tiles { display: flex; gap: var(--space-lg); }
   .web .ov-tiles .stat-card { flex: 1 1 0; width: auto; min-width: 0; }
-  .web.has-panel .ov-tiles .stat-card { padding-left: var(--space-md); padding-right: var(--space-md); }
+  .web.has-panel .ov-tiles, .ac-open .web .ov-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* the chat beside it: the four figures as two rows of two */
+  .ov-greet { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .ov-greet p { margin: 0; }
   .ov-tiles .stat-card__value-row { flex-wrap: wrap; }
   .stat-card p { margin: 0; }
   .chart-canvas svg path { vector-effect: non-scaling-stroke; }
@@ -119,11 +121,14 @@
     /* Overview, as the page next to the chat */
     var CARET = '<svg class="delta-caret" viewBox="0 0 10 8" aria-hidden="true"><path d="M5 0 10 8H0Z" fill="currentColor"/></svg>';
     function lit(h) { return s.hl === 'year' ? MENTIONED.indexOf(h.n) > -1 : s.hl === 'tech' ? h.sector === 'Technology' : false; }
-    function tiles() {
+    function tiles() {   // as on Overview: the greeting, then net worth, total assets, loans and the return this year
       var tile = function (label, value) { return '<div class="card stat-card"><span class="stat-card__label type-body tone-secondary">' + label + '</span>' + value + '</div>'; };
-      return '<div class="' + (web ? 'ov-tiles' : 'stat-scroller') + '">' +
+      return '<div class="card ov-greet"><p class="type-subheading">Good morning, ' + esc(D.customer.first) + '</p>' +
+        '<p class="type-body tone-secondary">Your investments are up <span class="tone-positive">' + T.weekPct.toFixed(2) + '%</span> since last week.</p></div>' +
+        '<div class="' + (web ? 'ov-tiles' : 'stat-scroller') + '">' +
         tile('Net worth', '<span class="type-subheading">' + kr(T.netWorth) + '</span>') +
         tile('Total assets', '<span class="type-subheading">' + kr(T.totalAssets) + '</span>') +
+        tile('Loans', '<span class="type-subheading">' + kr(T.loans) + '</span>') +
         tile('Perf. YTD', '<span class="stat-card__value-row"><span class="type-subheading">' + kr(T.ytdSek) + '</span><span class="stat-card__delta type-value tone-positive">' + CARET + T.ytdPct.toFixed(2) + '%</span></span>') + '</div>';
     }
     function chart() {

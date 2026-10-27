@@ -48,3 +48,7 @@
   color: var(--chart-pie-text);
   font: var(--font-weight-medium) 16px/24px var(--font-family-base);   /* 16M */
 }
+
+/* --- web: hover (a goal card opens its details) --- */
+.goal-card { transition: box-shadow var(--motion-fast) var(--ease-standard); }
+@media (hover: hover) { button.goal-card:hover, .goal-card[data-proto]:hover { box-shadow: var(--shadow-card-hover); } }

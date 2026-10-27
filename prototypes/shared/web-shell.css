@@ -166,6 +166,7 @@
 .wtable > :last-child { border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
 .wtable__row { display: flex; align-items: center; gap: var(--space-md); min-height: 44px; padding: 0 var(--space-lg); box-shadow: inset 0 -1px 0 var(--table-border); }
 .wtable__row:last-child { box-shadow: none; }
+@media (hover: hover) { .wtable__row:not(.wtable__row--head):hover { background: color-mix(in srgb, var(--table-bg) 55%, var(--color-surface-primary)); } }   /* the row under the pointer: half way to the page colour, so it never matches it */
 .wtable__row--head { min-height: 44px; color: var(--color-fg-secondary); }
 .wtable__row > span { flex: 1 1 0; min-width: 0; }
 .wtable__row > span:first-child { flex: 0 0 400px; }
@@ -173,7 +174,7 @@
 .wtable__act { flex: 0 0 32px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-xl); background: transparent; color: var(--color-fg-tertiary); position: relative; }
 .wtable__act svg { width: 24px; height: 24px; }
 .wtable__act:hover { background: var(--color-surface-primary); color: var(--color-fg-primary); }
-.wtable__gap { flex: 0 0 32px; }
+.wtable__row > .wtable__gap { flex: 0 0 32px; }   /* the header keeps the actions column, so its titles sit over their values */
 
 /* sidebar: My Profile is a button, not a nav item; when its page is open it gets the green outline */
 .web-side .btn--menu.is-active { box-shadow: inset 0 0 0 1px var(--color-border-green); }

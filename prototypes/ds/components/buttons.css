@@ -164,11 +164,13 @@
 
 /* --- web: hover (a pointer only; on a phone the same colour shows while pressing) --- */
 @media (hover: hover) {
-  .btn--primary:hover:not(:disabled) { background: var(--btn-primary-bg-pressed); }
+  .btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-primary-bg) 60%, var(--btn-primary-bg-pressed)); }   /* a light step towards the pressed colour (darker in light, lighter in dark); the full step stays for the click */
+  .btn--primary:active:not(:disabled) { background: var(--btn-primary-bg-pressed); }
   .btn--secondary:hover:not(:disabled) { border-color: var(--btn-secondary-border-pressed); background: var(--btn-secondary-bg-pressed); }
   .btn--neutral:hover:not(:disabled) { background: var(--btn-neutral-bg-pressed); }
   .btn--neutral-2:hover:not(:disabled) { background: var(--btn-neutral-2-bg-pressed); }
   .btn--negative:hover:not(:disabled) { background: var(--btn-negative-bg-pressed); }
   .btn--menu:hover:not(:disabled) { background: var(--btn-menu-bg-pressed); }
-  .btn--ai:hover:not(:disabled), .btn--ai-menu:hover:not(:disabled) { background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand); }
+  .btn--ai:hover:not(:disabled), .btn--ai-menu:hover:not(:disabled) { background: linear-gradient(rgba(0, 0, 0, .06), rgba(0, 0, 0, .06)), var(--gradient-brand); }   /* a touch darker */
+  .btn--ai:active:not(:disabled), .btn--ai-menu:active:not(:disabled) { background: linear-gradient(var(--overlay-pressed), var(--overlay-pressed)), var(--gradient-brand); }
 }

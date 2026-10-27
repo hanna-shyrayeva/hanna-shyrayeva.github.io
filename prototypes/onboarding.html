@@ -37,7 +37,9 @@
   .onb__block .link { text-decoration: none; }   /* no underlines on links, on the web and on a phone */
   .ob-terms { display: flex; align-items: center; gap: var(--space-sm); }
   .ob-terms .link { text-decoration: none; }
+  @media (hover: hover) { .ob-foot .link:hover, .onb__block .link:hover, .ob-terms .link:hover { text-decoration: underline; } }   /* the web: the link under the pointer is underlined */
   .field--pw .field__icon { cursor: pointer; }
+  /* Apple and Google: hover as any button, but a click leads nowhere in the prototype (see go) */
   .ob-form { display: flex; flex-direction: column; gap: var(--space-lg); }
   .field--readonly .field__input { color: var(--color-fg-secondary); }
   .ob-lang { position: relative; }
@@ -105,7 +107,7 @@
       { id: 'bankid', label: 'Log in with BankID', note: 'On a computer BankID on another device comes first, with a QR code. On a phone, this device.' },
       { id: 'email', label: 'Log in with email', note: 'For people without BankID. An empty field says what is missing.' },
       { id: 'register', label: 'Sign up with BankID', note: 'Same order as logging in, and every button says Sign up.' },
-      { id: 'signup', label: 'Sign up with email', note: 'Four fields and the terms. Apple or Google fill in the email.' }
+      { id: 'signup', label: 'Sign up with email', note: 'Four fields and the terms.' }
     ],
     render: render
   });
@@ -218,9 +220,8 @@
     function go(v) {
       s.err = {}; s.langMenu = false; s.modal = null;
       if (v === 'qr' || v === 'wait') { s.modal = v; draw(); return; }
-      if (v.indexOf('social:') === 0) { loggingIn(); return; }
-      if (v.indexOf('regSocial:') === 0) { s.provider = v.split(':')[1]; v = 'regEmail'; }
-      else if (v === 'regEmail') s.provider = null;
+      if (v.indexOf('social:') === 0 || v.indexOf('regSocial:') === 0) return;   // Apple and Google are shown, not built: no form behind them
+      if (v === 'regEmail') s.provider = null;
       if (v !== s.view) s.history.push(s.view);
       s.view = v; draw();
     }

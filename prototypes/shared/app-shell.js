@@ -77,9 +77,13 @@
     if (!p || location.pathname.slice(-(p.getAttribute('data-proto').length + 6)) === p.getAttribute('data-proto') + '.html') return;   // this page: its own handler (Add assets inside the assets flow)
     e.preventDefault(); e.stopPropagation();   // first, before the page's own handlers on the same button
     var mode = document.querySelector('.pb-device--mob') ? 'mob' : 'web';   // the next prototype opens on the same device
-    if (window.parent !== window) parent.postMessage({ type: 'pb-open', proto: p.getAttribute('data-proto'), mode: mode }, '*');
-    else location.href = p.getAttribute('data-proto') + '.html#mode=' + mode;
+    var stateId = p.getAttribute('data-proto-state'), goal = p.getAttribute('data-proto-goal');   // e.g. a goal card: Goals, its details
+    if (window.parent !== window) parent.postMessage({ type: 'pb-open', proto: p.getAttribute('data-proto'), mode: mode, state: stateId, goal: goal }, '*');
+    else location.href = p.getAttribute('data-proto') + '.html#mode=' + mode + (stateId ? '&state=' + stateId : '') + (goal ? '&goal=' + encodeURIComponent(goal) : '');
   }, true);
+
+  // a card that works as a link (Overview's goals and monitors) opens with Enter too
+  document.addEventListener('keydown', function (e) { var c = e.key === 'Enter' && e.target.closest && e.target.closest('[data-proto][role=link]'); if (c) c.click(); });
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-side]');
