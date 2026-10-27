@@ -22,6 +22,8 @@
     ['banks', 'Banks', 'banks'], ['spread', 'Risk and spread', 'shield'],
     ['goals', 'Goals', 'goals'], ['monitors', 'Monitors', 'monitors'], ['profile', 'My profile', 'user']
   ];
+  // menu items that have a prototype of their own: on the case page they open it, on their own they load it
+  var PROTO = { home: 'home', overview: 'overview', spread: 'risk-spread', goals: 'goals', monitors: 'monitors' };
   var sideCollapsed = false;   // the burger folds the menu to its icons; kept while the screen redraws
 
   /* this year's value: a random walk that drifts up (performance this year is positive), lightly smoothed and drawn as a curve */
@@ -60,13 +62,24 @@
   // the menu itself: the sections, then Njorda AI and Add assets (the web side menu, and the phone's More menu)
   function sideMenu(active) {
     return '<nav class="web-nav">' + NAV.map(function (n) {
-        return '<button type="button" class="web-nav__item web-nav__item--' + n[0] + (n[0] === active ? ' is-active' : '') + '" title="' + n[1] + '" aria-disabled="true" tabindex="-1">' + icon(n[2]) + '<span class="web-nav__label">' + n[1] + '</span></button>';
+        var go = PROTO[n[0]] && n[0] !== active;
+        return '<button type="button" class="web-nav__item web-nav__item--' + n[0] + (n[0] === active ? ' is-active' : '') + '" title="' + n[1] + '"' +
+          (go ? ' data-proto="' + PROTO[n[0]] + '"' : ' aria-disabled="true" tabindex="-1"') + '>' + icon(n[2]) + '<span class="web-nav__label">' + n[1] + '</span></button>';
       }).join('') + '</nav>' +
       '<div class="web-side__actions">' +
         '<button type="button" class="btn btn--ai-menu" data-act="ai" title="Njorda AI">' + icon('ai-triangle', 'btn__icon') + '<span class="btn__label">Njorda AI</span></button>' +
-        '<button type="button" class="btn btn--menu" data-act="add" title="Add assets">' + icon('plus', 'btn__icon') + '<span class="btn__label">Add assets</span></button>' +
+        '<button type="button" class="btn btn--menu" data-act="add" data-proto="assets" title="Add assets">' + icon('plus', 'btn__icon') + '<span class="btn__label">Add assets</span></button>' +
       '</div>';
   }
+
+  document.addEventListener('click', function (e) {
+    var p = e.target.closest && e.target.closest('[data-proto]');
+    if (!p || location.pathname.slice(-(p.getAttribute('data-proto').length + 6)) === p.getAttribute('data-proto') + '.html') return;   // this page: its own handler (Add assets inside the assets flow)
+    e.preventDefault(); e.stopPropagation();   // first, before the page's own handlers on the same button
+    var mode = document.querySelector('.pb-device--mob') ? 'mob' : 'web';   // the next prototype opens on the same device
+    if (window.parent !== window) parent.postMessage({ type: 'pb-open', proto: p.getAttribute('data-proto'), mode: mode }, '*');
+    else location.href = p.getAttribute('data-proto') + '.html#mode=' + mode;
+  }, true);
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-side]');

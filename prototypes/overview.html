@@ -43,6 +43,7 @@
   .ov-list { display: flex; flex-direction: column; gap: var(--space-lg); }
   .web .ov-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }   /* two cards a row, as on Goals and Monitors */
   .ov-cards .monitor-message { margin-top: auto; }
+  .web.has-panel .ov-cards, .ac-open .web .ov-cards { grid-template-columns: minmax(0, 1fr); }   /* the chat beside it leaves room for one card a row */
   .goal-card p, .ov-greet p { margin: 0; }
   .ov-row-act { position: relative; }
   .wtable__row > .ov-row-act { flex: 0 0 32px; display: flex; justify-content: flex-end; }   /* actions at the very end of the row */

@@ -70,7 +70,9 @@
 }
 .web-nav__item svg { width: 24px; height: 24px; flex: 0 0 auto; }
 .web-nav__item.is-active { color: var(--brand-on-dark); }
-.web-nav__item { cursor: default; }   /* the menu shows where things live; in the prototypes it does not navigate */
+.web-nav__item { cursor: default; }   /* the menu shows where things live; only pages with a prototype open */
+.web-nav__item[data-proto] { cursor: pointer; }
+@media (hover: hover) { .web-nav__item[data-proto]:hover { background: rgba(255, 255, 255, .08); } }
 .web-nav__item--profile svg { width: 20px; height: 20px; margin: 2px; }   /* the filled person reads bigger than the line icons */
 
 .web-side__actions { display: flex; flex-direction: column; gap: var(--space-lg); }

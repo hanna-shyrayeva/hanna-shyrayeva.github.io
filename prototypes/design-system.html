@@ -82,6 +82,9 @@
   .link.is-hover { text-decoration: underline; }
   .ds .card.goal-card, .ds .card.monitor-card, .ds .bank-card, .ds .stat-card { width: 100%; }
   .ds .bank-card__logo img { width: 100%; height: 100%; display: block; }
+  /* the web table in a half-width box: the name takes the room, the value never wraps (the app table is wider) */
+  .ds .wtable__row > span:first-child { flex: 2 1 0; }
+  .ds .wtable__row > .num { flex: 0 0 auto; min-width: 104px; white-space: nowrap; }
   .ds-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-lg) var(--space-xl); }
   .ds-grid .ds-states { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .ds-states .ds-spec { gap: var(--space-sm); }
@@ -175,13 +178,13 @@
       return '<button type="button" class="btn ' + cls + extra + '"' + (st === 'disabled' ? ' disabled' : '') + (st === 'loading' ? ' aria-busy="true"' : '') + '>' + label + (st === 'loading' ? SPIN : '') + '</button>';
     }
     function buttons() {
-      var st = ['default', 'pressed', 'disabled', 'loading'], C = ['Default', 'Hover, pressed', 'Disabled', 'Loading'];   // a pointer gets the colour a finger gets while pressing
+      var st = ['default', 'pressed', 'disabled', 'loading'], C = ['Default', web ? 'Hover, pressed' : 'Pressed', 'Disabled', 'Loading'];   // a pointer gets the colour a finger gets while pressing; a phone has no hover
       function row(name, cls, label) { return [name, st.map(function (x) { return btn(cls, label, x); })]; }
       return head('Buttons', 'On the web the pointer gets the colour a finger gets while pressing.') +
         matrix(C, [row('Primary', 'btn--primary btn--h40', 'Save'), row('Secondary', 'btn--secondary btn--h40', 'Change'), row('Neutral', 'btn--neutral-2 btn--h40', 'Cancel'), row('Njorda AI', 'btn--ai btn--h40', I('ai-triangle', 'btn__icon') + 'Njorda AI')]) +
         '<div class="ds-grid">' +
           box('Sizes', '<div class="ds-row">' + spec(btn('btn--primary btn--auto', 'Connect banks'), '48, a page action') + spec(btn('btn--primary btn--h40 btn--auto', 'Create goal'), '40, in a header') + spec(btn('btn--primary btn--h36 btn--auto', 'Save'), '36, on a card') + '</div>') +
-          box('Links', '<div class="ds-row">' + spec('<button type="button" class="link">Forgot your password?</button>', 'Default') + spec('<button type="button" class="link is-hover">Forgot your password?</button>', 'Hover') + spec('<button type="button" class="link is-pressed">Forgot your password?</button>', 'Pressed') + spec('<button type="button" class="section-header__action">Show more</button>', 'Section action') + '</div>') +
+          box('Links', '<div class="ds-row">' + spec('<button type="button" class="link">Forgot your password?</button>', 'Default') + (web ? spec('<button type="button" class="link is-hover">Forgot your password?</button>', 'Hover') : '') + spec('<button type="button" class="link is-pressed">Forgot your password?</button>', 'Pressed') + spec('<button type="button" class="section-header__action">Show more</button>', 'Section action') + '</div>') +
         '</div>';
     }
     function field(label, inner, mod, err, value) {
@@ -189,7 +192,7 @@
     }
     // one row per kind of field, its states side by side and wide enough for the placeholder
     function states(cols, cells) {
-      return '<div class="ds-states">' + cells.map(function (c, i) { return c ? '<div class="ds-spec ds-spec--wide">' + cap(cols[i]) + c + '</div>' : ''; }).join('') + '</div>';
+      return '<div class="ds-states">' + cells.map(function (c, i) { return c && (web || cols[i] !== 'Hover') ? '<div class="ds-spec ds-spec--wide">' + cap(cols[i]) + c + '</div>' : ''; }).join('') + '</div>';
     }
     function inputs() {
       var inp = function (v, ph) { return '<input class="field__input" ' + (v ? 'value="' + v + '"' : 'placeholder="' + ph + '"') + ' tabindex="-1">'; };
@@ -214,7 +217,7 @@
     function tabs() {
       var page = function (cls) { return '<div class="ds-row" style="gap:var(--space-sm)">' + cls + '</div>'; };
       return head('Tabs', 'Filled and heavier when active, so it reads without colour.') +
-        matrix(['Default', 'Hover, pressed', 'Active'], [
+        matrix(['Default', web ? 'Hover, pressed' : 'Pressed', 'Active'], [
           ['Page tab', ['<button type="button" class="tab">Ideas</button>', '<button type="button" class="tab is-pressed">Ideas</button>', '<button type="button" class="tab tab--active">Ideas</button>']],
           ['With a count', ['<button type="button" class="tab">Completed <span class="tab__badge">1</span></button>', '<button type="button" class="tab is-pressed">Completed <span class="tab__badge">1</span></button>', '<button type="button" class="tab tab--active">Active <span class="tab__badge">3</span></button>']],
           ['Chart period', ['<span class="chart-tab">1M</span>', '<span class="chart-tab" style="background:var(--tab-page-bg-pressed)">1M</span>', '<span class="chart-tab chart-tab--active">1W</span>']]
@@ -245,9 +248,13 @@
     }
     function rows() {
       var H = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings.map(function (h) { return { n: h.t === 'Cash' ? 'Sparkonto, ' + acc.bank : h.n, t: h.t, bank: acc.bank || 'Added manually', v: h.value }; })); }, []).sort(function (a, b) { return b.v - a.v; }).slice(0, 4);
+      // the web table sits in a half-width box: short names, so every row stays on one line
+      var SHORT = ['Avanza Global', 'Sparkonto, SEB', 'Investor AB ser. B', 'Apple Inc.'];
+      var W = D.accounts.reduce(function (a, acc) { return a.concat(acc.holdings.map(function (h) { return { n: h.t === 'Cash' ? 'Sparkonto, ' + acc.bank : h.n, t: h.t, bank: acc.bank, v: h.value }; })); }, []).filter(function (h) { return SHORT.indexOf(h.n) > -1; }).sort(function (a, b) { return b.v - a.v; });
       var mob = '<div class="table">' + H.map(function (h) { return '<div class="table-row"><div class="table-row__main"><span class="type-body">' + esc(h.n) + '</span><span class="type-caption tone-secondary">' + esc(h.t) + '</span></div><span class="table-row__value type-value">' + kr(h.v) + '</span></div>'; }).join('') +
         '<button type="button" class="table-row row-btn"><div class="table-row__main"><span class="type-body">Show all holdings</span></div><span class="table-row__action">' + I('arrow-right') + '</span></button></div>';
-      var webT = '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span>Bank</span><span class="num">Value</span></div>' + H.map(function (h) { return '<div class="wtable__row type-body"><span>' + esc(h.n) + '</span><span>' + esc(h.t) + '</span><span>' + esc(h.bank) + '</span><span class="num type-value">' + kr(h.v) + '</span></div>'; }).join('') + '</div>';
+      var webT = '<div class="wtable"><div class="wtable__row wtable__row--head type-body"><span>Name</span><span>Type</span><span>Bank</span><span class="num">Value</span></div>' + W.map(function (h) { return '<div class="wtable__row type-body"><span>' + esc(h.n) + '</span><span>' + esc(h.t) + '</span><span>' + esc(h.bank) + '</span><span class="num type-value">' + kr(h.v) + '</span></div>'; }).join('') + '</div>';
+      if (!web) return head('Rows') + box('Rows', mob);   // a phone: the rows only, the web table is for wide screens
       return head('Rows and tables', 'The same data on a phone and on the web.') + '<div class="ds-grid" style="grid-template-columns:minmax(0,393px) minmax(0,1fr)">' + box('Rows, phone', mob) + box('Table, web', webT) + '</div>';
     }
     function messages() {

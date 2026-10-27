@@ -66,18 +66,21 @@
     root.appendChild(story);
     root.appendChild(stage);
 
-    /* two scroll areas on the case page: the page moves from one prototype to the next,
-       the device only ever scrolls its own screen, and stops at the end instead of moving the page */
-    if (EMBED) stage.addEventListener('wheel', function (e) {
-      if (!PINNED) return;   // prototypes stacked one after another (narrow window): the page scrolls as usual
-      if (!e.target.closest || !e.target.closest('.pb-device')) return;
+    /* one scroll on the case page: while the page holds the prototype in place, the wheel always moves
+       the page, which steps through the states; the screen inside shows each state from its top.
+       Only the story column, when it is taller than the window, still scrolls itself */
+    if (EMBED) document.addEventListener('wheel', function (e) {
+      if (!PINNED || e.ctrlKey) return;   // prototypes stacked one after another (narrow window): the page scrolls as usual
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // sideways rows scroll as usual
-      for (var el = e.target; el && el !== stage; el = el.parentElement) {
-        var oy = getComputedStyle(el).overflowY;
-        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1 &&
-            (e.deltaY > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0)) return;   // it can still scroll: it takes the wheel
+      if (!(e.target.closest && e.target.closest('.pb-device'))) {
+        for (var el = e.target; el && el.nodeType === 1 && el !== document.body; el = el.parentElement) {
+          var oy = getComputedStyle(el).overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1 &&
+              (e.deltaY > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0)) return;   // it can still scroll: it takes the wheel
+        }
       }
       e.preventDefault();
+      parent.postMessage({ type: 'pb-wheel', dy: e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewH() : 1) }, '*');
     }, { passive: false });
 
     var noteEl = null;
@@ -204,6 +207,7 @@
           if (hintEl) hintEl.textContent = m.scrolly ? 'Scroll to step through the states, or pick one.' : cfg.hint;
         }
         if (m.type === 'pb-go' && cfg.states[m.index] && m.index !== index()) { st.state = cfg.states[m.index].id; draw(); report(); }
+        if (m.type === 'pb-mode' && (m.mode === 'web' || m.mode === 'mob') && m.mode !== st.mode && !st.narrow && !cfg.webOnly) { st.mode = m.mode; draw(); report(); }   // opened from another prototype's menu
       });
       if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
       parent.postMessage({ type: 'pb-ready', n: cfg.states.length, index: index() }, '*');

@@ -34,6 +34,7 @@
   /* web: two cards a row, so a rule reads in one or two lines instead of one long one */
   .web .mon-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
   .web .mon-list > .monitor-card.is-ai { grid-column: 1 / -1; }
+  .web.has-panel .mon-list { grid-template-columns: minmax(0, 1fr); }   /* the chat beside it leaves room for one card a row */
   .mon-card .monitor-message { margin-top: auto; }   /* the message sits at the bottom, so cards in a row line up */
   .mon-card .monitor-card__menu { border-radius: 8px; }
   @media (hover: hover) { .mon-card .monitor-card__menu:hover { background: var(--color-surface-tertiary); } }

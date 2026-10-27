@@ -39,6 +39,7 @@
   /* web: two cards a row, as on Monitors */
   .web .g-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
   .web .g-list > .goal-card.is-ai { grid-column: 1 / -1; }
+  .web.has-panel .g-list { grid-template-columns: minmax(0, 1fr); }   /* the chat beside it leaves room for one card a row */
   .g-list .goal-card { cursor: pointer; text-align: left; border: 0; font: inherit; color: inherit; }
   .g-empty { display: flex; flex-direction: column; gap: 120px; }
   .g-empty .empty-state { max-width: none; padding-top: 72px; }
