@@ -38,6 +38,7 @@
     --display: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif;
     --ink: #1b1d1c; --muted: #5f6461; --line: #dcdfdd; --soft: #f3f5f4; --stage: #e8ebe9; --accent: #2b8040; --bg: #fff; --surface: #fff; --top-bg: rgba(255, 255, 255, .92); --main-hover: #333835; --on-main: #fff;
     --box-bg: #1b1d1c; --box-fg: #fff; --box-muted: #b9bfbb; --box-line: #4a4f4c; --box-main-bg: #fff; --box-main-fg: #1b1d1c;
+    --case-shadow: 0 1px 2px rgba(27, 29, 28, .04), 0 12px 24px -10px rgba(27, 29, 28, .12), 0 32px 56px -24px rgba(27, 29, 28, .18);
     --text: 760px; --wide: 1120px; --pad: 32px;   /* same grid as the case page text */
   }
   @media (max-width: 600px) { :root { --pad: 16px; } }
@@ -96,9 +97,10 @@
   .section { padding-top: 64px; }   /* no divider lines: the space alone separates the sections */
   .section__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
   .section__head h2 { font-size: 28px; line-height: 1.2; font-weight: 600; }
-  .case { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 0; border-radius: 24px; overflow: hidden; background: var(--soft); text-decoration: none; transition: box-shadow .2s ease; }
-  .case:hover { box-shadow: 0 12px 32px rgba(0, 0, 0, .08); }
-  .case:hover .case__more { text-decoration: underline; }
+  .case { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 0; border-radius: 24px; overflow: hidden; background: var(--soft); text-decoration: none; transition: transform .3s ease, box-shadow .3s ease; }
+  /* hover: the card lifts on a soft layered shadow; the button has only its own .btn--main hover */
+  .case:hover, .case:focus-visible { transform: translateY(-4px); box-shadow: var(--case-shadow); }
+  @media (prefers-reduced-motion: reduce) { .case { transition: none; } .case:hover, .case:focus-visible { transform: none; } }
   @media (max-width: 860px) { .case { grid-template-columns: minmax(0, 1fr); } }
   .case__img { background: #4cff7b; display: flex; align-items: center; justify-content: center; }
   .case__img img { display: block; width: 100%; height: auto; }
@@ -107,9 +109,9 @@
   .case__meta { font-size: 14px; color: var(--muted); }
   .case h3 { font-size: 26px; line-height: 1.2; font-weight: 600; }
   .case p { color: var(--muted); }
-  .tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 4px 0 0; padding: 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 4px 0 10px; padding: 0; }
   .tags li { padding: 4px 10px; border-radius: 8px; background: var(--surface); font-size: 13px; }
-  .case__more { margin-top: auto; padding-top: 8px; font-weight: 500; }
+  .case__more { margin-top: auto; align-self: flex-start; }   /* a span styled as .btn--main: the whole card is the link */
   .soon { margin-top: 16px; padding: 24px 28px; border-radius: 20px; border: 1.5px dashed var(--line); display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; }
   .soon b { font-weight: 600; }
   .soon span { color: var(--muted); font-size: 15px; }
@@ -148,6 +150,7 @@
     --bg: #111312; --ink: #e6e9e7; --muted: #9aa19d; --line: #2a2f2c; --soft: #1a1e1c; --stage: #202523; --accent: #5fd38a;
     --surface: #1f2421; --top-bg: rgba(17, 19, 18, .88); --main-hover: #cfd4d1; --on-main: #111312;
     --box-bg: #1a1e1c; --box-fg: #e6e9e7; --box-muted: #9aa19d; --box-line: #3a403c; --box-main-bg: #e6e9e7; --box-main-fg: #111312;
+    --case-shadow: 0 0 0 1px #2a2f2c, 0 24px 48px -20px rgba(0, 0, 0, .7);   /* a dark page hides a plain shadow: an edge line does the work */
     color-scheme: dark;
   }
   /* images: a dark version for the dark theme */
@@ -213,9 +216,9 @@
       <div class="case__body">
         <p class="case__meta">Njorda, 2023 to 2026</p>
         <h3>From a dashboard to an assistant</h3>
-        <p>Three generations of an investment app for everyday (retail) investors: a cleaner dashboard, an AI assistant at the centre, then an interactive prototype and design system made with AI. With live prototypes of every key flow.</p>
-        <ul class="tags"><li>Product design</li><li>AI assistant</li><li>Design system</li><li>Interactive prototype</li></ul>
-        <span class="case__more">Read the case study →</span>
+        <p>Three generations of an investment app for everyday investors, with live prototypes of every key flow.</p>
+        <ul class="tags"><li>AI assistant</li><li>Design system</li><li>iOS, Android &amp; web</li></ul>
+        <span class="btn btn--main case__more">View case study</span>
       </div>
     </a>
     <div class="soon"><b>Advisor platform for wealth managers</b><span>B2B case study in progress</span></div>
