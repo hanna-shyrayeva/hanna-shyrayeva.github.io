@@ -3565,8 +3565,8 @@ Report.init();
   html.has-menu .ptoolbar .pbtn-chev { display: inline-flex !important; }
   html.has-menu .ptoolbar .pbtn { width: auto !important; padding: 0 12px !important; justify-content: center; }
   html.has-menu .ptoolbar { flex-wrap: nowrap !important; }   /* never two rows: a wrap that comes and goes while cards resize made the buttons blink (her ask, 16 Nov) */
-  @container (max-width: 479px) {   /* a narrow card (480: before the full buttons stop fitting, not after): the same buttons, a little tighter, so the three fit one line */
-    html.has-menu .ptoolbar .pbtn { padding: 0 8px !important; gap: 4px !important; font-size: 13px !important; }
+  @container (max-width: 399px) {   /* only a really narrow card gets the tighter buttons without arrows; at 400+ they keep their normal size and arrows (her ask, 16 Nov) */
+    html.has-menu .ptoolbar .pbtn { padding: 0 6px !important; gap: 4px !important; font-size: 13px !important; }   /* 6, not 8: at a 340 card Add product stuck out by 11 px */
     html.has-menu .ptoolbar .pbtn svg, html.has-menu .ptoolbar .pbtn i { flex: none; }
     html.has-menu .ptoolbar, html.has-menu .ptoolbar > * { gap: 6px !important; }
     /* no arrows here, so Save, Actions and Add product fit one line with their words (her ask, 16 Nov: no stretched Add product); the menus still open on click */

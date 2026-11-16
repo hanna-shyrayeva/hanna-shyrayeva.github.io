@@ -123,8 +123,8 @@
   /* case page: load the panes, the builder in the state from the hash */
   var hq = new URLSearchParams(location.hash.slice(1)), tab = hq.get('tab');
   if (hq.get('side') === '0') { document.body.classList.add('sidebar-collapsed'); sidebarCollapsedState = true; }   // more room for two portfolios
-  document.getElementById('pane-list').src = 'list.html?v=mwjnyd47' + location.hash;   // a new version after every build, so the browser never shows a cached pane
-  document.getElementById('pane-builder-resizable').src = 'builder.html?v=mwjnyd47' + location.hash;
+  document.getElementById('pane-list').src = 'list.html?v=mwjrnfkb' + location.hash;   // a new version after every build, so the browser never shows a cached pane
+  document.getElementById('pane-builder-resizable').src = 'builder.html?v=mwjrnfkb' + location.hash;
   if (tab === 'list') document.querySelector('[data-target="pane-list"]').click();
   /* the portal side menu (menu=1): Clients and Collect holdings go to the clients prototype, Portfolios is the library */
   if (hq.get('menu') === '1') {
