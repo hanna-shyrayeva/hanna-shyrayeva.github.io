@@ -95,6 +95,7 @@
 
   /* work */
   .section { padding-top: 64px; }   /* no divider lines: the space alone separates the sections */
+  @media (max-width: 600px) { #work { scroll-margin-top: 16px; } }   /* a jump to the cases (All case studies on a case page) clears the top bar on a phone */
   .section__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
   .section__head h2 { font-size: 28px; line-height: 1.2; font-weight: 600; }
   .case { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 0; border-radius: 24px; overflow: hidden; background: var(--soft); text-decoration: none; transition: transform .3s ease, box-shadow .3s ease; }
