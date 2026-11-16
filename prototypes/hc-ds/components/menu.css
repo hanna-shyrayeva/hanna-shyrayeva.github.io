@@ -1,0 +1,24 @@
+/* ==========================================================================
+   ⋮ menu — Edit / Delete on manual accounts, holdings and cash
+   ========================================================================== */
+.cs-kebab-wrap { position: relative; flex: none; display: flex; }
+.cs-kebab {
+  flex: none; width: 28px; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: var(--radius-xs);
+  color: var(--text-muted); font-size: var(--icon-sm); cursor: pointer;
+}
+.cs-kebab:hover, .cs-kebab.on { background: var(--surface-1); color: var(--text-primary); }
+
+.cs-pop {
+  position: absolute; right: 0; top: calc(100% + var(--space-xs)); z-index: 20; min-width: 140px; padding: var(--space-xs);
+  background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-popover);
+}
+.cs-pop button {
+  display: flex; align-items: center; gap: var(--space-sm); width: 100%; padding: var(--space-sm) var(--space-md);
+  background: none; border: none; border-radius: var(--radius-xs);
+  font-size: var(--font-size-md); color: var(--text-primary); text-align: left; cursor: pointer;
+}
+.cs-pop button:hover { background: var(--surface-1); }
+.cs-pop button.danger { color: var(--text-danger); }
+.cs-pop button .ic { font-size: var(--icon-sm); }

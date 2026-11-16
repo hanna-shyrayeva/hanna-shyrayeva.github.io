@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharing holdings with the advisor — Holdings Collection prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (hc/app.html, made by data/build-hc-app.js), shown in the device as it is */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+(function () {
+  function url(state) { return 'hc/app.html#state=' + state + '&view=web'; }   // web only for now: the mobile version is off
+  var screen = null;
+  var block = Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Holdings collection',
+    title: 'Sharing holdings with the advisor',
+    intro: 'Connect banks, check, share. The same steps, now forgiving when something is missed.<span class="pb-br"></span>A one-screen version was explored too; the client firm chose steps, so its customers had nothing to relearn.',
+    fill: true,
+    themes: false,
+    webOnly: true,   // no Web / Mobile switch; on a phone the block shows a picture and Open the prototype
+    webMin: 1280,   // the same scale as the other case prototypes (her ask, 11 Nov: at 768 it looked too large on small screens)
+    webH: 600,
+    states: [
+      { id: 'intro', label: 'The link', note: 'The first thing the client sees: who is asking and what will be shared.' },
+      { id: 'picked', label: 'Pick banks', note: 'Several banks at once, with the ones most clients use on top.<span class="pb-br"></span>No bank on the list? Skip, and add accounts manually.' },
+      { id: 'queue', label: 'Signing in', note: 'BankID runs bank by bank in one window. The queue above says what’s next.' },
+      { id: 'review', label: 'Review', note: 'Everything collected, bank by bank, before anything is shared.<span class="pb-br"></span>In the old flow the list of banks was fixed once you moved on; now Add bank sits right in the list.' },
+      { id: 'manual-add', label: 'Manual accounts', note: 'For what BankID can’t reach.<span class="pb-br"></span>Adding holdings to several accounts used to be fiddly; now each account has its own Add holding, so they go in one after another.' },
+      { id: 'report', label: 'The advisor’s report', note: 'One report language across the portal: the client sees exactly what the advisor will.' }
+    ],
+    open: function (state) { return url(state); },
+    keep: true,
+    render: function (ctx) { screen = ctx.screen; PBFrame(ctx.screen, url(ctx.state), 'Holdings collection prototype'); }
+  });
+
+  /* a click inside the prototype took it to another state: the list follows (only the screen showing now counts).
+     The app tells its own finer states; each belongs to one of the key moments above */
+  var MOMENT = { intro: 'intro', pick: 'picked', picked: 'picked', queue: 'queue', review: 'review', addbank: 'review', shared: 'review',   // Shared is no longer a tab of its own (10 Nov)
+   
+    manual: 'manual-add', 'manual-add': 'manual-add', report: 'report', fees: 'report' };   // the one-screen direction (app state "one") is left out for now
+  window.addEventListener('message', function (e) {
+    var m = e.data, f = screen && screen._latest;
+    if (m && m.type === 'hc-state' && f && e.source === f.contentWindow && MOMENT[m.id]) block.mark(MOMENT[m.id]);
+  });
+})();
+</script>
+</body>
+</html>

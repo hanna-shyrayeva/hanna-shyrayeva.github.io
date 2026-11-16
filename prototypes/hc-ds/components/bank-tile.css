@@ -1,0 +1,48 @@
+/* ==========================================================================
+   Bank logo (avatar), bank tile (Select banks, Add bank), Unavailable tag
+   One tile = one bank profile: name + account types. A bank can have two
+   profiles (assets / Bank account), so the types tell them apart.
+   ========================================================================== */
+
+/* logo — image, or the bank's initial when there is no logo */
+.cs-avatar {
+  flex: none; width: 32px; height: 32px; border-radius: var(--radius-xs);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-secondary);
+  background: var(--surface-1); border: 0.5px solid var(--border);
+}
+.cs-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--radius-xs); }
+.cs-avatar.sm { width: 24px; height: 24px; border-radius: var(--radius-xs); font-size: var(--font-size-xs); }
+.cs-avatar.sm img { border-radius: var(--radius-xs); }
+.cs-avatar .ic { font-size: var(--icon-md); }                    /* manual account: type icon in the logo slot */
+
+/* grid of tiles */
+.pk-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-sm); }
+@container hc (min-width: 600px) {
+  .pk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container hc (min-width: 960px) {
+  .cs-wrap.wide .pk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* tile */
+.pk-tile {
+  display: flex; align-items: center; gap: var(--space-md); width: 100%; min-height: 58px; padding: var(--space-md);
+  font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-primary); text-align: left;
+  background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius);
+  cursor: pointer; transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.pk-tile:hover { border-color: var(--border-accent); background: var(--bg-accent-muted); }
+.pk-tile:active { background: color-mix(in srgb, var(--fill-accent) 18%, var(--surface-2)); }
+.pk-tile.sel { border-color: var(--border-accent); background: var(--bg-accent-muted); }   /* selected (checkbox on) */
+.pk-tile.disabled { cursor: default; }
+.pk-tile.disabled:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.pk-tile.disabled .cs-avatar, .pk-tile.disabled .pk-name, .pk-tile.disabled .pk-tx small { opacity: .5; }  /* the tag stays readable */
+
+.pk-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-xxs); }
+.pk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-tx small { font-size: var(--font-size-xs); font-weight: var(--font-weight-regular); line-height: 1.35; color: var(--text-secondary); }  /* account types, wrap */
+.pk-namerow { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }   /* name + Unavailable tag inline */
+
+/* tag — Unavailable */
+.cs-mi-tag { flex: none; font-size: var(--font-size-xs); color: var(--text-secondary); border: 0.5px solid var(--border-strong); border-radius: var(--radius-xxs); padding: var(--space-xxs) var(--space-sm); }

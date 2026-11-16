@@ -1,0 +1,51 @@
+/* ==========================================================================
+   Holdings Collection — base + layout
+   Breakpoints are container queries on .hc-app (the app root / iframe body),
+   so the layout follows the width the flow actually gets:
+     mobile  < 600px   one column, buttons stacked
+     tablet  600–959   cards in 2 columns, Review 600px
+     web     >= 960    Select banks 920px with 3 columns
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+.hc-app {
+  container: hc / inline-size;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--surface-0);
+  -webkit-font-smoothing: antialiased;
+  padding: var(--space-lg) var(--space-md) var(--space-4xl);
+}
+.hc-app input, .hc-app button, .hc-app textarea { font-family: inherit; }
+/* controls do not inherit the font by default, so every component control sets it itself
+   (works outside .hc-app too) */
+.cs-primary, .cs-secondary, .cs-act, .cs-act-secondary, .cs-confirm, .cs-x, .cs-modal-x, .cs-kebab, .cs-pop button,
+.cs-addhold, .cs-addrow, .cs-feedback, .rp-btn, .pk-tile, .cs-input, .cs-textarea, .cs-selbtn, .cs-mitem { font-family: var(--font-sans); }
+.hc-app input:focus { outline: none; }
+
+/* ---- page column ---- */
+.cs-wrap { max-width: 420px; margin: 0 auto; position: relative; }
+@container hc (min-width: 600px) {
+  .cs-wrap { max-width: 600px; }
+  .cs-wrap.wide { max-width: 920px; }       /* Select banks (step 1) */
+  .cs-wrap.report { max-width: 960px; }     /* Report */
+}
+
+/* ---- card + sections ---- */
+.cs-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); }
+.cs-sec { padding: var(--space-lg); }
+.cs-sec + .cs-sec { border-top: 0.5px solid var(--border); }
+.cs-sec.cs-foot { border-top: 0.5px solid var(--border); padding-top: var(--space-lg); }
+
+/* ---- headings ---- */
+.cs-lbl { font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); color: var(--text-primary); margin: 0 0 var(--space-md); }
+.cs-lbl.cs-lbl-lg { font-size: var(--font-size-xl); margin-bottom: var(--space-md); }   /* screen title: Select and connect banks, Review your data */
+.pk-sub { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-secondary); margin: 0 0 var(--space-sm); }  /* Frequently used, Others, Connected banks, Manual accounts */
+.pk-sub-gap { margin-top: var(--space-xl) !important; }
+
+/* ---- icons: inline SVG from assets/icons, sized by font-size, colour = currentColor ---- */
+.ic { display: block; flex: none; width: 1em; height: 1em; }
+
+/* ---- spinner animation (spinner icon) ---- */
+.spin { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

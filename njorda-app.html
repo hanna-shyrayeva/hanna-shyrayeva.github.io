@@ -99,7 +99,10 @@
      prototype (scrollytelling); on narrow screens they simply follow each other */
   .band { margin-top: 48px; background: var(--soft); }   /* the grey band behind the prototypes, edge to edge */
   .band--solo { margin: 32px 0 8px; }
-  .deck { max-width: calc(1440px + 2 * var(--pad)); margin: 0 auto; }
+  .deck { margin: 0 auto; padding: 0 24px; }   /* as in the advisor portal case: no max width; 24 here + the blocks’ own 16 = 40 from the window edge */
+  @media (max-width: 600px) { .deck { padding: 0; } }
+  .deck.is-on { padding-right: 64px; }   /* pinned: room on the right for the arrows and dots */
+  .band .deck.is-on .deck__nav { right: -28px; }   /* the nav sits 16 px from the screen, away from the scrollbar (her ask, 16 Nov) */
   .deck .block { margin: 0 0 32px; }
   .deck.is-on .deck__stage { position: sticky; top: var(--top-h, 0px); height: calc(100vh - var(--top-h, 0px)); }
   .deck.is-on .block { position: absolute; inset: 0; height: 100%; margin: 0; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; }
@@ -565,5 +568,7 @@
 <script src="theme.js"></script>
 <script src="menu.js"></script>
 <script src="intro.js"></script>
+<script src="lightbox.js"></script>
+<script src="prototypes/shared/deck-nav.js"></script>
 </body>
 </html>

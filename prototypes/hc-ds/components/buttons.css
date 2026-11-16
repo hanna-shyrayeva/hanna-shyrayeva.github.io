@@ -1,0 +1,80 @@
+/* ==========================================================================
+   Buttons
+   .cs-primary    main action (Connect and review, Next, Save, Start sharing)
+   .cs-secondary  second action next to a primary (View report, Save & add new)
+   .cs-act            small primary (Try again in a row)
+   .cs-act-secondary  small secondary (Try again in an expanded row, Cancel)
+   .cs-confirm        small destructive (Remove), pairs with .cs-act-secondary
+   .cs-x, .cs-modal-x        icon buttons (remove row, close modal)
+   .cs-feedback   text link (Share feedback)
+   .rp-btn        report toolbar (Back, Download PDF = .rp-dl)
+   ========================================================================== */
+
+/* primary — Large: 16/24 medium, radius 12, padding 8x16 */
+.cs-primary {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-sm);
+  font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); line-height: 24px;
+  color: var(--on-accent); background: var(--fill-accent);
+  border: none; border-radius: var(--radius); padding: var(--space-sm) var(--space-lg); margin-bottom: var(--space-md);
+  cursor: pointer; transition: background var(--dur-fast);
+}
+.cs-primary:hover { background: var(--fill-accent-hover); }
+.cs-primary:active { background: var(--fill-accent-active); }
+.cs-primary:disabled, .cs-primary:disabled:hover { background: var(--fill-disabled-cta); color: var(--on-accent); cursor: default; }
+.cs-primary .ic { font-size: var(--icon-md); }
+
+/* secondary — same size, 1px border (padding 7 keeps the height equal to primary) */
+.cs-secondary {
+  width: 100%;
+  font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); line-height: 24px;
+  color: var(--text-primary); background: var(--surface-2);
+  border: 1px solid var(--border-strong); border-radius: var(--radius); padding: calc(var(--space-sm) - 1px) var(--space-lg); margin-bottom: var(--space-md);
+  cursor: pointer; transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.cs-secondary:hover { background: var(--surface-1); }
+.cs-secondary:disabled, .cs-secondary:disabled:hover { color: var(--text-muted); border-color: var(--border); background: var(--surface-2); cursor: default; }
+
+/* small — 14/20, height 36 */
+.cs-act {
+  flex: none; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); line-height: 20px;
+  color: var(--on-accent); background: var(--fill-accent);
+  border: none; border-radius: var(--radius); padding: var(--space-sm) var(--space-md); cursor: pointer;
+}
+.cs-act:hover { background: var(--fill-accent-hover); }
+.cs-act:active { background: var(--fill-accent-active); }
+/* small secondary — 1px border, padding 7 keeps the height 36 */
+.cs-act-secondary {
+  font-size: var(--font-size-md); font-weight: var(--font-weight-medium); line-height: 20px;
+  color: var(--text-primary); background: var(--surface-2);
+  border: 1px solid var(--border-strong); border-radius: var(--radius); padding: calc(var(--space-sm) - 1px) var(--space-md); cursor: pointer;
+}
+.cs-act-secondary:hover { background: var(--surface-1); }
+
+/* confirmation pair */
+.cs-modalbtns { display: flex; gap: var(--space-sm); }
+.cs-modalbtns button { flex: 1; }
+.cs-confirm { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); line-height: 20px; padding: var(--space-sm) var(--space-md); border-radius: var(--radius); cursor: pointer; background: var(--bg-danger); border: none; color: var(--text-danger); }
+.cs-confirm:hover { background: var(--border-danger); }
+
+/* icon buttons */
+.cs-x { flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: var(--icon-sm); padding: 0; }
+.cs-modal-x {
+  position: absolute; top: var(--space-lg); right: var(--space-lg); display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; background: none; border: none; padding: 0; cursor: pointer; color: var(--text-secondary); font-size: var(--icon-lg); line-height: 1;
+}
+
+/* text link */
+.cs-feedback { display: inline; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-primary); text-decoration: underline; cursor: pointer; }
+
+/* report toolbar */
+.rp-btn {
+  height: 36px; padding: 0 var(--space-lg); display: inline-flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-primary);
+  background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius); cursor: pointer;
+}
+.rp-btn:hover { background: var(--surface-1); }
+.rp-btn:disabled { cursor: default; }
+.rp-btn .ic { font-size: var(--icon-sm); color: var(--text-secondary); }
+.rp-btn.rp-dl { min-width: 132px; justify-content: center; background: var(--fill-accent); border-color: var(--fill-accent); color: var(--on-accent); } /* fixed width: Download PDF -> Preparing… -> Downloaded */
+.rp-btn.rp-dl:hover { background: var(--fill-accent-hover); border-color: var(--fill-accent-hover); }
+.rp-btn.rp-dl:disabled { opacity: .85; }

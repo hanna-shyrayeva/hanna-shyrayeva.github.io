@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clients and client profile — Advisor portal prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (clients-2026.html), shown in the device as it is, with the portal menu collapsed */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+(function () {
+  function url(state) { return 'clients-2026.html#' + state + '&case=1'; }
+  var screen = null;
+  var block = Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Clients',
+    title: 'Clients and client profile',
+    intro: 'The whole client base, and one client in detail. Calmer screens that tell more.',
+    fill: true,
+    webOnly: true,
+    themes: false,
+    webMin: 1280,
+    webH: 600,
+    states: [
+      { id: 'list', label: 'Client list', note: 'Built to answer who needs attention, without opening a single profile.<span class="pb-br"></span>Each row shows the client’s banks, assets, a clear data status and the last update, where the old list had only names and reports. Send link on the row asks for fresh holdings in one click.' },
+      { id: 'add', label: 'Adding a client', note: 'The client is created first, then asked for their holdings, so every link belongs to someone.<span class="pb-br"></span>The link can be copied, scanned as a QR code or opened right here.' },
+      { id: 'overview', label: 'Client profile', note: 'Fewer cards, only the key numbers. Assets grouped by bank instead of one long table.<span class="pb-br"></span>Two new sections: the portfolios proposed to the client and a history of every action in the profile.<span class="pb-br"></span>A bank whose consent has expired stays in the list, outside the totals, with Send link on its row.' },
+      { id: 'analysis', label: 'Analysis', note: 'Fewer, smaller charts, grouped by topic, with the numbers that matter in cards.<span class="pb-br"></span>New insights show what could be better in the portfolio, one click from a proposal in the builder.' }
+    ],
+    open: function (state) { return url(state); },
+    keep: true,
+    render: function (ctx) { screen = ctx.screen; PBFrame(ctx.screen, url(ctx.state), 'Advisor portal prototype, clients'); }
+  });
+
+  /* a click inside the prototype took it to another state: the list follows (only the screen showing now counts) */
+  window.addEventListener('message', function (e) {
+    var m = e.data, f = screen && screen._latest;
+    if (m && m.type === 'cl-state' && f && e.source === f.contentWindow) block.mark(m.id);
+  });
+})();
+</script>
+</body>
+</html>

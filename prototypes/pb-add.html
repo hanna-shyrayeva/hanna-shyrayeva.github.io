@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A new portfolio for a client — Portfolio Builder prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (pb/app.html), shown in the device as it is */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+(function () {
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Portfolio Builder',
+    title: 'A new portfolio for a client',
+    intro: 'The client is the context, not a form field. Who the portfolio is for comes first, then where it starts, and the second step offers only what fits the answer: choosing a client unlocks the holdings they shared.',
+    fill: true,
+    webOnly: true,
+    themes: false,
+    webMin: 1280,
+    webH: 600,
+    hint: 'Pick a state, then click around: the prototype works.',
+    states: [
+      { id: 'add-client', label: 'Who is it for?', note: 'Search by name or personal ID, or continue without a client. A badge marks clients whose bank holdings are already collected.' },
+      { id: 'add-source', label: 'Where does it start?', note: 'For a client with collected holdings: their accounts, an empty portfolio or one from the library.' },
+      { id: 'add-source-none', label: 'No holdings yet', note: 'The option stays in place, dimmed, says why, and offers to collect the holdings. Never a dead end.' },
+      { id: 'add-holdings', label: 'Choosing accounts', note: 'Accounts are grouped by bank, with their type. With two or more, the same products merge into one position, and the summary says so.' },
+      { id: 'add-library', label: 'From the library', note: 'Search, filter by client and date, and see the owner and the top holdings before picking.' },
+      { id: 'add-conflict', label: 'Someone else’s portfolio', note: 'Copying takes only the contents. A warning shows only when the owner differs from the client the portfolio is for.' }
+    ],
+    open: function (state) { return 'pb/app.html#menu=1&tab=list&state=' + state; },
+    keep: true,
+    render: function (ctx) { PBFrame(ctx.screen, 'pb/app.html#menu=1&case=1&tab=list&state=' + ctx.state, 'Portfolio Builder prototype, adding a portfolio'); }
+  });
+})();
+</script>
+</body>
+</html>

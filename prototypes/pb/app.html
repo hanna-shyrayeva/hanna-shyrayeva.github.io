@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Portfolio Builder — app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --surface-0:#f4f4f4; --surface-1:#f9f9f9;
+    --text-primary:#1b1f1d; --text-secondary:#767977; --text-muted:#989a99;
+    --border-strong:#d1d2d2; --bg-selected:#e6e6e6;
+    --font-sans:'Geologica',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{display:flex;background:var(--surface-0);color:var(--text-primary);font-family:var(--font-sans);-webkit-font-smoothing:antialiased;}
+  .sidebar{width:220px;flex:0 0 220px;min-width:220px;max-width:220px;background:var(--surface-1);
+    border-right:1px solid var(--border-strong);display:flex;flex-direction:column;
+    padding:18px 12px;overflow-y:auto;box-sizing:border-box;
+    transition:width .16s ease,padding .16s ease;}
+  body.sidebar-collapsed .sidebar{width:0;flex:0 0 0;min-width:0;max-width:0;padding:18px 0;overflow:hidden;border-right:0;}
+  .brand{padding:2px 10px 16px;border-bottom:1px solid var(--border-strong);margin-bottom:12px;
+    display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
+  .brand-title{font-size:14px;font-weight:500;color:var(--text-primary);white-space:nowrap;}
+  .sidebar-collapse-btn{appearance:none;border:0;background:transparent;cursor:pointer;
+    color:var(--text-muted);padding:2px;border-radius:6px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;width:28px;height:28px;}
+  .sidebar-collapse-btn:hover{background:var(--surface-0);color:var(--text-primary);}
+  .sidebar-collapse-btn svg,.sidebar-toggle svg{width:20px;height:20px;display:block;}
+  .sidebar-toggle{display:none;position:absolute;top:14px;left:14px;z-index:10;width:30px;height:30px;
+    align-items:center;justify-content:center;appearance:none;border:1px solid var(--border-strong);
+    border-radius:8px;background:var(--surface-1);color:var(--text-secondary);cursor:pointer;}
+  .sidebar-toggle:hover{background:var(--surface-0);color:var(--text-primary);}
+  body.sidebar-collapsed .sidebar-toggle{display:flex;}
+  .navitem{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;appearance:none;border:0;
+    background:transparent;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;
+    color:var(--text-secondary);padding:10px 12px;border-radius:8px;margin-bottom:2px;}
+  .navitem:hover{background:var(--surface-0);color:var(--text-primary);}
+  .navitem.active{background:var(--bg-selected);color:var(--text-primary);}
+  .navitem-sub{font-size:11px;font-weight:400;color:var(--text-muted);margin-top:1px;}
+  .content{flex:1 1 auto;min-width:0;height:100%;position:relative;}
+  .pane{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;}
+  .pane.active{display:block;}
+</style>
+<style>/* case page */ .sidebar, .sidebar-toggle { display: none !important; }</style>
+<style>/* the portal side menu, as in clients-2026.html (light Njorda app menu); only with menu=1 */
+  .pside { display: none; }
+  html.has-menu body { background: #f0f0f2; }
+  html.has-menu body .pside { display: flex; flex: 0 0 auto; flex-direction: column; gap: 20px; width: 264px; margin: 24px 0 24px 24px; padding: 20px 16px; background: #fff; border-radius: 16px; overflow: hidden; font-family: var(--font-sans); transition: width .15s, padding .15s; }
+  .pside-top { display: flex; align-items: center; gap: 12px; }
+  .pside-burger { flex: none; width: 32px; height: 32px; padding: 0; border: none; background: none; border-radius: 8px; color: #1a1a1e; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .pside-burger:hover { background: #f4f4f6; }
+  .pside-brand b { display: block; font-size: 16px; font-weight: 500; white-space: nowrap; color: #1a1a1e; }
+  .pside-brand small { display: block; font-size: 12px; color: #6b6f76; margin-top: 2px; white-space: nowrap; }
+  .pside-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .pnav { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 10px; border: none; border-radius: 8px; background: none; color: #6b6f76; font: 500 14px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
+  .pnav svg { flex: none; }
+  .pnav:hover { background: #f4f4f6; color: #1a1a1e; }
+  .pnav.on { background: #f3e9ff; color: #7d33e0; }
+  .pnav.off, .pnav.off:hover { background: none; color: #6b6f76; cursor: default; }
+  .pside-cta { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: none; border-radius: 12px; background: #9f59fb; color: #fff; font: 500 14px var(--font-sans); cursor: pointer; }
+  .pside-cta:hover { background: #894dd7; }
+  .pside-cta svg { display: none; width: 22px; height: 22px; }
+  .pside-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 0.5px solid #e6e6ea; }
+  .pside-me { display: flex; align-items: center; gap: 12px; padding: 4px 10px; white-space: nowrap; color: #6b6f76; }
+  .pside-me b { display: block; font-size: 14px; font-weight: 500; color: #1a1a1e; }
+  .pside-me small { display: block; font-size: 12px; }
+  html.has-menu.side-min body .pside { width: 72px; padding: 20px 12px; }
+  .side-min .pside-brand, .side-min .pnav-l { display: none; }
+  .side-min .pside-top { justify-content: center; }
+  .side-min .pnav, .side-min .pside-me { justify-content: center; padding-left: 0; padding-right: 0; }
+  .side-min .pside-cta { width: 40px; padding: 0; margin: 0 auto; }
+  .side-min .pside-cta svg { display: block; }
+  html.has-menu body { background: #f0f0f2; }
+</style>
+<script>/* before the first paint: no jump when the page opens */ (function () { if (/(^|[#&])menu=1(&|$)/.test(location.hash)) { var c = document.documentElement.classList; c.add("has-menu"); try { if (/(^|[#&])case=1(&|$)/.test(location.hash) || localStorage.getItem("pside-min") === "1") c.add("side-min"); } catch (e) {} } })();</script>
+</head>
+<body>
+  <aside class="pside" id="pside">
+    <div class="pside-top"><button class="pside-burger" id="pside-burger" aria-label="Collapse menu"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" stroke-width="2"/></svg></button><div class="pside-brand"><b>Advisor portal</b><small>Demo Wealth Management</small></div></div>
+    <nav class="pside-nav">
+      <button class="pnav" data-go="clients"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M2.5 19.5C2.5 16.2 5.4 14 9 14C12.6 14 15.5 16.2 15.5 19.5M16 4.8C17.6 5.3 18.6 6.6 18.6 8C18.6 9.4 17.6 10.7 16 11.2M18 14.4C20.2 15.1 21.5 16.9 21.5 19.5" stroke="currentColor" stroke-width="2"/></svg><span class="pnav-l">Clients</span></button>
+      <button class="pnav on" data-go="portfolios"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM17 14V20M14 17H20" stroke="currentColor" stroke-width="2"/></svg><span class="pnav-l">Portfolios</span></button>
+      <button class="pnav off" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M3 17L9.5 10.5L13.5 14.5L21 6.5" stroke="currentColor" stroke-width="2"/></svg><span class="pnav-l">Analytics</span></button>
+      <button class="pnav off" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M6 3H14L19 8V21H6V3Z M14 3V8H19 M9 13H16 M9 17H14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span class="pnav-l">Reports</span></button>
+    </nav>
+    <div class="pside-foot">
+      <div class="pside-me"><svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20.5C4 16.9 7.6 14.5 12 14.5C16.4 14.5 20 16.9 20 20.5" stroke="currentColor" stroke-width="2"/></svg><span class="pnav-l"><b>Lena Holm</b><small>Advisor</small></span></div>
+    </div>
+  </aside>
+  <aside class="sidebar">
+    <div class="brand">
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" title="Collapse menu" aria-label="Collapse menu"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 3H4C2.89543 3 2 3.89543 2 5V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V5C22 3.89543 21.1046 3 20 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 3V21" stroke="currentColor" stroke-width="2"/></svg></button>
+      <span class="brand-title">Advisor Portal</span>
+    </div>
+    <nav role="tablist" aria-label="Portfolio Builder sections">
+      <button class="navitem" role="tab" aria-selected="false" data-target="pane-list">Portfolios</button>
+      <button class="navitem active" role="tab" aria-selected="true" data-target="pane-builder-resizable">Portfolio Builder</button>
+    </nav>
+  </aside>
+  <div class="content">
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" title="Show menu" aria-label="Show menu"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 3H4C2.89543 3 2 3.89543 2 5V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V5C22 3.89543 21.1046 3 20 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 3V21" stroke="currentColor" stroke-width="2"/></svg></button>
+    <iframe id="pane-list"    class="pane" title="Portfolios list & create" src="about:blank"></iframe>
+    <iframe id="pane-builder-resizable" class="pane active" title="Portfolio Builder (Resizable side panel variant)" src="about:blank"></iframe>
+  </div>
+<script>
+  const tabs=document.querySelectorAll('.navitem'),panes=document.querySelectorAll('.pane');
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>{const on=x===t;x.classList.toggle('active',on);x.setAttribute('aria-selected',on?'true':'false');});
+    panes.forEach(p=>p.classList.toggle('active',p.id===t.dataset.target));
+  }));
+  let sidebarCollapsedState=false;
+  function broadcastSidebarState(collapsed){
+    sidebarCollapsedState=collapsed;
+    panes.forEach(p=>{ try{ p.contentWindow.postMessage({type:'sidebarState',collapsed:collapsed},'*'); }catch(e){} });
+  }
+  panes.forEach(p=>p.addEventListener('load',()=>broadcastSidebarState(sidebarCollapsedState)));
+  document.getElementById('sidebarCollapseBtn').addEventListener('click',()=>{document.body.classList.add('sidebar-collapsed');broadcastSidebarState(true);});
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.body.classList.remove('sidebar-collapsed');broadcastSidebarState(false);});
+
+  /* case page: load the panes, the builder in the state from the hash */
+  var hq = new URLSearchParams(location.hash.slice(1)), tab = hq.get('tab');
+  if (hq.get('side') === '0') { document.body.classList.add('sidebar-collapsed'); sidebarCollapsedState = true; }   // more room for two portfolios
+  document.getElementById('pane-list').src = 'list.html?v=mwjnyd47' + location.hash;   // a new version after every build, so the browser never shows a cached pane
+  document.getElementById('pane-builder-resizable').src = 'builder.html?v=mwjnyd47' + location.hash;
+  if (tab === 'list') document.querySelector('[data-target="pane-list"]').click();
+  /* the portal side menu (menu=1): Clients and Collect holdings go to the clients prototype, Portfolios is the library */
+  if (hq.get('menu') === '1') {
+    document.getElementById('pside-burger').addEventListener('click', function () {
+      var m = document.documentElement.classList.toggle('side-min');
+      if (hq.get('case') !== '1') try { localStorage.setItem('pside-min', m ? '1' : '0'); } catch (e) {}   // the case page never changes what the standalone remembers
+    });
+    document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () {
+      var g = b.getAttribute('data-go');
+      if (hq.get('case') === '1' && g !== 'portfolios') { if (g === 'clients' && top !== window) top.postMessage({ type: 'deck-go', to: 'clients', k: 0 }, location.origin); return; }   // on the case page: Clients moves the deck to the clients prototype
+      if (g === 'clients') location.href = '../clients-2026.html#clients';
+      if (g === 'collect') location.href = '../clients-2026.html#collect';
+      if (g === 'portfolios') document.querySelector('[data-target="pane-list"]').click();
+    }); });
+    window.addEventListener('message', function (e) {
+      if (!e.data || e.data.type !== 'pb-open-builder') return;
+      if (e.data.state) {   // the library asks for a state: one portfolio or two side by side
+        var bf = document.getElementById('pane-builder-resizable'), bq = new URLSearchParams(location.hash.slice(1));
+        bq.set('state', e.data.state); bq.set('side', '0'); bq.delete('tab');
+        bf.src = bf.src.split('#')[0] + '#' + bq.toString();
+      }
+      document.querySelector('[data-target="pane-builder-resizable"]').click();
+    });
+  }
+
+</script>
+</body>
+</html>

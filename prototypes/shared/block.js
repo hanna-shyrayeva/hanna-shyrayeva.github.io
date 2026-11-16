@@ -7,8 +7,15 @@
      el, eyebrow, title, intro, hint,
      states: [{ id, label, note }],
      webOnly,      // optional: no Web / Mobile switch (a page that only makes sense on the web)
+     themes,       // optional: false = no Light / Dark switch (an app with a light theme only)
+     webMin,       // optional: narrowest web width for this app (default 1024)
+     webH,         // optional: web screen height (default 1080); with fill, the smallest height
+     fill,         // optional: true = a web app at width webMin (wider up to 1440 when there's room) fills the stage, its height grows to the room
+     open(state),  // optional: a web-only app's own page for that state; on a phone the block links to it
+     keep,         // optional: true = a state change keeps the device; render() swaps the app inside it
      render(ctx)   // ctx: { mode: 'web'|'mob', theme, state, screen, go(id), note(text), setTheme(t) }
    })
+   returns { go(id), mark(id) }: mark moves the list to a state the app reached by itself, without a redraw
    ========================================================================== */
 (function () {
   var SIZE = { web: [1440, 1080], mob: [393, 852] };
@@ -61,6 +68,7 @@
     var controls = h('div', { class: 'pb-controls' });
     story.appendChild(controls);
     if (cfg.hint) story.appendChild(h('p', { class: 'pb-hint' }, cfg.hint));
+    if (cfg.fill) root.classList.add('pb--fill');
 
     var stage = h('div', { class: 'pb-stage' });
     root.appendChild(story);
@@ -85,6 +93,16 @@
 
     var noteEl = null;
     function drawSteps() {
+      /* built once; a state change only moves the marker, so the text never redraws (no flicker, no re-wrap) */
+      var items = steps.querySelectorAll('.pb-step');
+      if (items.length === cfg.states.length) {
+        cfg.states.forEach(function (s, i) {
+          var b = items[i], d = b.querySelector('.pb-step__d');
+          if (s.id === st.state) { b.setAttribute('aria-current', 'step'); noteEl = d; } else b.removeAttribute('aria-current');
+          if (d.hasAttribute('data-changed')) { d.innerHTML = s.note || ''; d.removeAttribute('data-changed'); }   // a note the app changed goes back
+        });
+        return;
+      }
       steps.innerHTML = '';
       cfg.states.forEach(function (s) {
         var on = s.id === st.state;
@@ -103,21 +121,38 @@
     function drawControls() {
       controls.innerHTML = '';
       if (!st.narrow && !cfg.webOnly) controls.appendChild(seg('Platform', [['web', 'Web'], ['mob', 'Mobile']], st.mode, function (m) { st.mode = m; draw(); }));
-      controls.appendChild(seg('Theme', [['light', 'Light'], ['dark', 'Dark']], st.theme, function (t) { st.theme = t; draw(); }));
+      if (cfg.themes !== false) controls.appendChild(seg('Theme', [['light', 'Light'], ['dark', 'Dark']], st.theme, function (t) { st.theme = t; draw(); }));
     }
 
     /* the whole device always fits the browser window: the window height sets the scale.
        web: the app is fluid, so its width (1024–1440) is picked to fill the room at that scale */
-    function room() { return stage.clientWidth - (st.narrow ? 32 : 48) - (st.mode === 'mob' ? 20 : 0); }
+    // the stage's own padding (a fill block sets it in its page); other blocks keep the fixed values
+    function pad() { if (!cfg.fill) return st.narrow ? 32 : 48; var cs = getComputedStyle(stage); return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight); }
+    function room() { return stage.clientWidth - pad() - (st.mode === 'mob' ? 20 : 0); }
     function heightScale(h, chrome) {
       // the stage is as tall as the window (minus the page padding); stacked layouts fall back to the window
-      var avail = root.classList.contains('is-stacked') ? viewH() * 0.86 : stage.clientHeight - (st.narrow ? 32 : 48);
+      var avail = root.classList.contains('is-stacked') ? viewH() * 0.86 : stage.clientHeight - pad();
       return Math.min(1, (avail - chrome) / h);
     }
     function webSize() {
-      var s = heightScale(SIZE.web[1], 28);
-      var w = Math.round(Math.max(WEB_MIN, Math.min(SIZE.web[0], room() / s)));
-      return [w, SIZE.web[1]];
+      if (cfg.fill && root.classList.contains('is-stacked')) {
+        /* one column (a tablet or a phone): a fixed 1024 or webMin wide picture of the app; on a phone it can
+           be opened full screen (cfg.open) */
+        var wt = st.narrow ? 1024 : (cfg.webMin || SIZE.web[0]);
+        return [wt, Math.max(cfg.webH || 0, Math.round(wt * 0.68))];   // never below webH: the Njorda app's side menu needs 920
+      }
+      if (cfg.fill) {
+        /* the app keeps its width (webMin) and fills the stage's width; it gets as tall as the room
+           left (at least webH), so the device fills the stage both ways, with no bands around it */
+        var w0 = Math.round(Math.min(SIZE.web[0], Math.max(cfg.webMin || SIZE.web[0], room()))), sw = Math.min(1, room() / w0);   // wider, up to 1440, when the stage has the room at full size
+        // a tall block the case page doesn't pin (touch screens): no window to fill, the 4:3 cap below sets the height
+        var avail = root.classList.contains('is-tall') && root.classList.contains('is-free') ? Infinity : (root.classList.contains('is-stacked') ? viewH() * 0.86 : stage.clientHeight - pad()) - 28;
+        // never taller than a 4:3 screen: on a tall, narrow window (a tablet held upright) the app would turn into a long strip
+        return [w0, Math.max(cfg.webH || 600, Math.min(Math.round(w0 * 0.75), Math.round(avail / sw)))];
+      }
+      var s = heightScale(cfg.webH || SIZE.web[1], 28);
+      var w = Math.round(Math.max(cfg.webMin || WEB_MIN, Math.min(SIZE.web[0], room() / s)));
+      return [w, cfg.webH || SIZE.web[1]];
     }
     function sizeNow() { return st.mode === 'web' ? webSize() : SIZE.mob; }
 
@@ -128,12 +163,20 @@
       var device = h('div', { class: 'pb-device pb-device--' + st.mode });
       if (st.mode === 'web') device.appendChild(h('div', { class: 'pb-bar', 'aria-hidden': 'true' }, '<i></i><i></i><i></i>'));
       clip = h('div', { class: 'pb-clip' });
-      screen = h('div', { class: 'pb-screen', 'data-theme': st.theme });
+      screen = h('div', { class: 'pb-screen', 'data-theme': st.theme, 'data-mode': st.mode });
       screen.style.width = size[0] + 'px';
       screen.style.height = size[1] + 'px';
       clip.appendChild(screen);
       device.appendChild(clip);
       stage.appendChild(device);
+      // a desktop-only app on a phone is a picture: tapping it opens the real thing full screen
+      var thumb = st.narrow && cfg.webOnly && st.mode === 'web';
+      root.classList.toggle('pb--thumb', thumb);
+      if (thumb && cfg.open) {
+        var a = h('a', { class: 'pb-open', href: cfg.open(st.state), target: '_blank', rel: 'noopener' }, 'Open the prototype');
+        stage.appendChild(a);
+        device.addEventListener('click', function () { window.open(a.href, '_blank', 'noopener'); });
+      }
       fit();
     }
 
@@ -154,7 +197,7 @@
     // the app itself can change the theme (a setting inside the prototype): the switch follows, no redraw
     function setTheme(t) { st.theme = t; drawControls(); if (screen) screen.setAttribute('data-theme', t); }
 
-    function setNote(text) { if (noteEl) noteEl.textContent = text || ''; }
+    function setNote(text) { if (noteEl) { noteEl.textContent = text || ''; noteEl.setAttribute('data-changed', ''); } }
 
     /* each draw is a new generation: timers left over from an earlier state (a typing demo, an auto
        step) can't change the note, the theme or the state any more */
@@ -164,27 +207,41 @@
       function live(fn) { return function () { if (my === gen) return fn.apply(null, arguments); }; }
       drawSteps();
       drawControls();
-      drawDevice();
+      // keep: the device stays and the app swaps its own content (see shared/pb-frame.js); else a new device
+      var size = sizeNow();
+      if (!(cfg.keep && screen && screen.isConnected && screen.getAttribute('data-mode') === st.mode &&
+            screen.style.width === size[0] + 'px' && screen.style.height === size[1] + 'px')) drawDevice();
+      var open = stage.querySelector('.pb-open'); if (open && cfg.open) open.href = cfg.open(st.state);   // a kept device: its link follows the state
       cfg.render({ mode: st.mode, theme: st.theme, state: st.state, screen: screen, go: live(go), note: live(setNote), setTheme: live(setTheme) });
     }
 
     function index() { for (var i = 0; i < cfg.states.length; i++) if (cfg.states[i].id === st.state) return i; return 0; }
     function go(id) { st.state = id; draw(); report(); if (EMBED) parent.postMessage({ type: 'pb-state', index: index() }, '*'); }
+    /* the app got to another state by itself (a click inside it): only the list follows, the screen stays as it is */
+    function mark(id) {
+      if (id === st.state || !cfg.states.some(function (s) { return s.id === id; })) return;
+      st.state = id; drawSteps(); report();
+      if (EMBED) parent.postMessage({ type: 'pb-state', index: index() }, '*');
+    }
 
+    /* a tall window (a tablet held upright): the story goes on top, in two columns, and the device gets the full width below (her call, 11 Nov) */
+    function isTall(w) { return !!cfg.fill && w >= 860 && (VH || window.innerHeight) > w; }
     function layout() {
       var w = root.clientWidth;
-      var narrow = w < 560;
+      var narrow = w < 560, tall = isTall(w);
       root.classList.toggle('is-stacked', w < 860);
+      if (tall !== root.classList.contains('is-tall')) { root.classList.toggle('is-tall', tall); draw(); return; }
       if (narrow !== st.narrow) {
         st.narrow = narrow;
-        if (narrow) st.mode = 'mob';
+        if (narrow && !cfg.webOnly) st.mode = 'mob';   // a web-only app stays in the browser frame, as a small picture
         draw();
       } else fit();
     }
 
     st.narrow = root.clientWidth < 560;
-    if (st.narrow) st.mode = 'mob';
+    if (st.narrow && !cfg.webOnly) st.mode = 'mob';
     root.classList.toggle('is-stacked', root.clientWidth < 860);
+    root.classList.toggle('is-tall', isTall(root.clientWidth));
     draw();
     if (window.ResizeObserver) new ResizeObserver(layout).observe(root);
     window.addEventListener('resize', layout);   // the window height changes the scale too
@@ -194,7 +251,7 @@
       window.addEventListener('message', function (e) {
         var m = e.data; if (!m) return;
         if (m.type === 'pb-vh') {
-          VH = m.h; PINNED = !!m.pin; document.documentElement.style.setProperty('--pb-vh', VH + 'px'); layout(); report();
+          VH = m.h; PINNED = !!m.pin; root.classList.toggle('is-free', EMBED && !PINNED); document.documentElement.style.setProperty('--pb-vh', VH + 'px'); layout(); report();
           /* on the case page the block sits on a coloured band: take its colour, drop the stage panel */
           if (m.bg) { document.documentElement.style.setProperty('--pb-page-bg', m.bg); document.documentElement.classList.add('pb-on-band'); }
           /* the site's light / dark theme: the portfolio chrome follows it, and so does the app inside */
@@ -217,9 +274,9 @@
         }
       });
       if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
-      parent.postMessage({ type: 'pb-ready', n: cfg.states.length, index: index() }, '*');
+      parent.postMessage({ type: 'pb-ready', n: cfg.states.length, index: index(), labels: cfg.states.map(function (s) { return s.label; }) }, '*');
     }
 
-    return { go: go };
+    return { go: go, mark: mark };
   };
 })();

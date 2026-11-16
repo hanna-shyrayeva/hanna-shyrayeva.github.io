@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picking two to compare — Portfolio Builder prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (pb/app.html), shown in the device as it is */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+(function () {
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Portfolio Builder',
+    title: 'Picking two portfolios to compare',
+    intro: 'Comparison starts where the portfolios already are: in the library. Tick two, and the bar above the table says what happens next. A comparison is always two portfolios of one client.',
+    fill: true,
+    webOnly: true,
+    themes: false,
+    webMin: 1280,
+    webH: 600,
+    hint: 'Pick a state, then click around: the prototype works.',
+    states: [
+      { id: 'library', label: 'The library', note: 'Filter by client and date, sort by any column, and hover the product count to see the top holdings.' },
+      { id: 'pick-one', label: 'One selected', note: 'Compare stays off, and the bar says what’s missing: one more portfolio.' },
+      { id: 'pick-two', label: 'Two selected', note: 'Compare turns on. Two portfolios of the same client, or without a client, open side by side.' },
+      { id: 'pick-three', label: 'Three selected', note: 'A comparison is always two portfolios, so the bar asks to pick exactly two.' },
+      { id: 'mismatch', label: 'Different clients', note: 'Compare explains why these two can’t open together, and how to get around it: duplicate one and change its client.' }
+    ],
+    open: function (state) { return 'pb/app.html#menu=1&tab=list&state=' + state; },
+    keep: true,
+    render: function (ctx) { PBFrame(ctx.screen, 'pb/app.html#menu=1&case=1&tab=list&state=' + ctx.state, 'Portfolio Builder prototype, the portfolio library'); }
+  });
+})();
+</script>
+</body>
+</html>

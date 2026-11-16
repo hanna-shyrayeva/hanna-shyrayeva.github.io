@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Sticky step bar (Select banks) and screen footer (Review)
+   Bar: "N banks selected" + Connect and review. Mobile: text row, then a
+   full-width button. Footer: View report + Next in one row (mobile: stacked,
+   Next on top) and the feedback line under them.
+   ========================================================================== */
+.svp-bar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg);
+  background: var(--surface-2); border-top: 0.5px solid var(--border); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.svp-bar-sum { flex: 1; min-width: 0; display: flex; }
+.svp-bar-tx { flex: 0 1 auto; min-width: 0; font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.cs-primary.svp-bar-next { flex: 1 1 100%; margin: 0; }
+@container hc (min-width: 600px) {
+  .svp-bar { flex-wrap: nowrap; }
+  .svp-bar-tx { font-size: var(--font-size-md); }
+  .cs-primary.svp-bar-next { flex: none; width: 220px; }
+}
+
+/* footer */
+.pk-footrow { display: flex; flex-direction: column-reverse; gap: var(--space-md); }
+.pk-footrow > button { flex: 1 1 0; margin: 0; min-width: 0; }
+@container hc (min-width: 600px) {
+  .pk-footrow { flex-direction: row; }
+}
+.pk-footfeed { font-size: var(--font-size-md); color: var(--text-secondary); text-align: left; margin: var(--space-md) 0 0; }

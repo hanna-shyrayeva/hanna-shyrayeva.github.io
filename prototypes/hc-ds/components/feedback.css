@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Note, toast, loader
+   ========================================================================== */
+
+/* note — grey info block (Can't find your bank?) */
+.pk-note {
+  display: flex; align-items: flex-start; gap: var(--space-md); margin-top: var(--space-xl); padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-md); line-height: 1.45; color: var(--text-secondary);
+  background: var(--surface-1); border-radius: var(--radius);
+}
+.pk-note-ico { flex: none; display: block; color: var(--text-muted); margin-top: var(--space-xxs); }   /* filled info icon, 18px */
+.pk-note b { font-weight: var(--font-weight-medium); color: var(--text-primary); }
+
+/* toast — bottom centre; a new one replaces the previous one */
+.cs-toast {
+  position: fixed; left: 50%; bottom: var(--space-2xl); transform: translateX(-50%); z-index: 60;
+  width: max-content; max-width: calc(100vw - 32px); padding: var(--space-md) var(--space-lg); text-align: center;
+  font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-primary);
+  background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-popover);
+}
+
+/* loader — spinner on the page background, no card (Connect and review -> Review) */
+.pk-sharing { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-2xl); }
+.pk-sharing-spin { font-size: 40px; color: var(--text-primary); }

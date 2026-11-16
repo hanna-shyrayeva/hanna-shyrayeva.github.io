@@ -19,6 +19,9 @@ images/case-launch-dark.png
 prototypes/diversification.html
 prototypes/risk.html
 prototypes/profile.html
+prototypes/path-previews.html
+images/path-*.png
+h3.png
 
 # system files
 Thumbs.db

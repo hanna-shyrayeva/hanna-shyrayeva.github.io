@@ -55,25 +55,27 @@
 .web-perf__area { fill: url(#web-perf-fill); }
 
 /* navigation */
-.web-nav { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--space-sm); }
+/* smaller than in Figma (16 px text, 24 px icons): on the case page the menu has to fit a lower screen,
+   and the smaller items leave a clear gap above Njorda AI and Add assets (her ask, 16 Nov) */
+.web-nav { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; }
 .web-nav__item {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: 10px;
   padding: 6px;
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-on-static);
-  font: var(--font-weight-medium) 16px/24px var(--font-family-base);
+  font: var(--font-weight-medium) 14px/20px var(--font-family-base);
   text-align: left;
 }
-.web-nav__item svg { width: 24px; height: 24px; flex: 0 0 auto; }
+.web-nav__item svg { width: 20px; height: 20px; flex: 0 0 auto; }
 .web-nav__item.is-active { color: var(--brand-on-dark); }
 .web-nav__item { cursor: default; }   /* the menu shows where things live; only pages with a prototype open */
 .web-nav__item[data-proto] { cursor: pointer; }
 @media (hover: hover) { .web-nav__item[data-proto]:hover { background: rgba(255, 255, 255, .08); } }
-.web-nav__item--profile svg { width: 20px; height: 20px; margin: 2px; }   /* the filled person reads bigger than the line icons */
+.web-nav__item--profile svg { width: 17px; height: 17px; margin: 1.5px; }   /* the filled person reads bigger than the line icons */
 
 .web-side__actions { display: flex; flex-direction: column; gap: var(--space-lg); }
 .web-side__actions .btn { justify-content: flex-start; gap: var(--space-lg); }

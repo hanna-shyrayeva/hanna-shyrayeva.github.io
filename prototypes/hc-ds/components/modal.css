@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Modals
+   .cs-modal + .cs-modalbox   base: backdrop + box (300px: confirmation)
+   .cs-welcomebox             Welcome gate (420px)
+   .cs-mf-modal               manual account / holding forms (480px)
+   .cs-report-modal           Report an issue (420px)
+   .pk-emptybox               No connections left (420px)
+   .pk-addbox                 Add bank: header, scrolling tiles, footer (860px)
+   The BankID window is the provider's and is not part of this library.
+   ========================================================================== */
+.cs-modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: var(--space-2xl); background: var(--overlay); }
+.cs-modalbox { position: relative; width: 100%; max-width: 300px; padding: var(--space-xl); background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); }
+.cs-modalbox h4 { font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); margin: 0 0 var(--space-sm); color: var(--text-primary); }
+.cs-modalbox p { font-size: var(--font-size-md); color: var(--text-secondary); margin: 0 0 var(--space-lg); line-height: 1.5; }
+
+/* Welcome */
+.cs-welcomebox { max-width: 420px; padding: var(--space-2xl); }
+.cs-welcome-title { font-size: var(--font-size-2xl); font-weight: var(--font-weight-medium); color: var(--text-primary); margin: 0 0 var(--space-md); }
+.cs-welcome-txt { font-size: var(--font-size-md); line-height: 1.55; color: var(--text-secondary); margin: 0 0 var(--space-2xl); }
+.cs-primary.cs-welcome-start { margin-bottom: var(--space-lg); }
+.cs-welcomebox .cs-tc { margin-bottom: 0; }
+
+/* forms: manual account, holding, cash */
+.cs-mf-modal .cs-modalbox { max-width: 480px; padding: var(--space-2xl); }
+.cs-mf-modal .cs-modalbox h4.cs-mf-title { font-size: var(--font-size-xl); margin: 0 0 var(--space-xs); padding-right: var(--space-3xl); }
+.cs-mf-modal .cs-modalbox p.cs-mf-sub { margin: 0 0 var(--space-lg); }
+.cs-mf-sub b { font-weight: var(--font-weight-medium); color: var(--text-primary); }
+.cs-mf-btns { display: flex; flex-direction: column; gap: var(--space-sm); }        /* stacked: primary on top */
+.cs-mf-btns .cs-primary, .cs-mf-btns .cs-secondary { margin-bottom: 0; }
+
+/* Report an issue */
+.cs-report-modal .cs-modalbox { max-width: 420px; padding: var(--space-2xl); }
+.cs-report-modal h4 { font-size: var(--font-size-xl); }
+.cs-report-modal .cs-textarea { min-height: 160px; }
+.cs-primary.cs-submit { margin-bottom: 0; }
+
+/* No connections left */
+.pk-emptybox { max-width: 420px; padding: var(--space-2xl); }
+.pk-emptybox h4 { font-size: var(--font-size-2xl); margin: 0 0 var(--space-sm); }
+.pk-empty-btns { display: flex; flex-direction: column; gap: var(--space-sm); }
+.pk-empty-btns .cs-primary, .pk-empty-btns .cs-secondary { margin: 0; }
+
+/* Add bank */
+.pk-addbox {
+  position: relative; width: 100%; max-width: 860px; max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg);
+}
+.pk-add-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-xl) var(--space-2xl) var(--space-md); }
+.pk-add-head h4 { margin: 0; font-size: var(--font-size-2xl); font-weight: var(--font-weight-medium); color: var(--text-primary); }
+.pk-add-head .cs-modal-x { position: static; }
+.pk-add-body { padding: var(--space-xs) var(--space-2xl) var(--space-2xl); overflow-y: auto; }
+.pk-add-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-lg) var(--space-2xl); border-top: 0.5px solid var(--border); }
+.cs-selcount { font-size: var(--font-size-md); color: var(--text-secondary); }
+.cs-selcount b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+.cs-primary.pk-connect-n { width: auto; min-width: 200px; margin: 0; }
+@container hc (min-width: 960px) {
+  .pk-addbox .pk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

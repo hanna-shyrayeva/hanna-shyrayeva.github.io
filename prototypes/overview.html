@@ -27,9 +27,9 @@
 <link rel="stylesheet" href="shared/web-shell.css">
 <link rel="stylesheet" href="shared/ai-chat.css">
 <link rel="stylesheet" href="shared/block.css">
+<link rel="stylesheet" href="shared/keyboard.css">
 <style>
-  :root { --pb-page-pad: 32px; }
-  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  :root { --pb-page-pad: 16px; }   /* as in the advisor portal prototypes: the same margins on both case pages (her ask, 16 Nov) */
   body { background: #fff; padding: var(--pb-page-pad); }
 
   /* page bits not in the design system (Figma Overview 2273:40224, 2273:42726) */
@@ -67,6 +67,7 @@
 <script src="shared/ai-chat.js"></script>
 <script src="shared/typo.js"></script>
 <script src="shared/block.js"></script>
+<script src="shared/keyboard.js"></script>
 <script>
 (function () {
   var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, B = window.BADGE_ICONS;
@@ -79,6 +80,9 @@
     eyebrow: 'Njorda app',
     title: 'How am I doing, at a glance',
     intro: 'With an AI-first home, the numbers got a page of their own. It reads top to bottom by importance: the totals, how they moved, then goals and monitors.',
+    fill: true,      // the web screen fills the stage, as in the advisor portal case (her ask, 16 Nov)
+    webMin: 1280,
+    webH: 920,       // the smallest height that still shows the whole side menu, with its bottom padding
     states: [
       { id: 'page', label: 'Overview', note: 'Four cards on top: net worth, total assets, loans and the return this year.' },
       { id: 'chart', label: 'Performance', note: 'Five periods, every day of the week on the axis. Hover to read any point.' },

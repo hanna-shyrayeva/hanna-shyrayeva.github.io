@@ -1,0 +1,131 @@
+/* ==========================================================================
+   Holdings Collection — tokens (light theme only, for now)
+
+   Two layers:
+   1. Brand  (--brand-*)  — the only values a white-label partner changes.
+                            Switch with data-brand on <html> (or any wrapper).
+   2. Semantic (names from Portfolio Builder facelift) — what components use.
+                            Accent tokens point at the brand layer; everything
+                            else is shared by all brands.
+   Not connected to njorda-design-system (the mobile app system).
+   ========================================================================== */
+
+/* ---- 1. Brand ---------------------------------------------------------- */
+:root,
+[data-brand="njorda"] {
+  --brand-primary: #9f59fb;          /* CTA, checkbox, selected border, chart accent */
+  --brand-primary-hover: #894dd7;
+  --brand-primary-pressed: #7241b3;
+  --brand-tint: #f3e9ff;             /* selected / hover background */
+  --brand-text: #7d33e0;             /* accent text on light backgrounds (Add bank, Add holding) */
+  --brand-on-primary: #ffffff;       /* text and icons on --brand-primary */
+}
+[data-brand="svp"] {
+  --brand-primary: #726659;
+  --brand-primary-hover: #615649;
+  --brand-primary-pressed: #51483d;
+  --brand-tint: #f1eeeb;
+  --brand-text: #5e5348;
+  --brand-on-primary: #ffffff;
+}
+/* Example partner — placeholder to check that every component follows the brand */
+[data-brand="example"] {
+  --brand-primary: #0f766e;
+  --brand-primary-hover: #0d645d;
+  --brand-primary-pressed: #0a504b;
+  --brand-tint: #e5f3f1;
+  --brand-text: #0b5c56;
+  --brand-on-primary: #ffffff;
+}
+
+/* ---- 2. Semantic ------------------------------------------------------- */
+:root {
+  /* surfaces */
+  --surface-0: #f0f0f2;              /* page background */
+  --surface-1: #f4f4f6;              /* subtle fills: hover, note, avatar */
+  --surface-2: #ffffff;              /* cards, modals, inputs */
+
+  /* text */
+  --text-primary: #1a1a1e;
+  --text-secondary: #6b6f76;
+  --text-muted: #9a9ea5;             /* placeholders, icons, disabled */
+
+  /* borders */
+  --border: #e6e6ea;
+  --border-strong: #d6d6dc;          /* inputs, tiles, secondary buttons */
+  --border-stronger: #c2c2ca;
+}
+
+/* accent (from brand) — declared on every brand scope too, so a nested
+   data-brand wrapper resolves them against its own --brand-* values */
+:root,
+[data-brand] {
+  --fill-accent: var(--brand-primary);
+  --fill-accent-hover: var(--brand-primary-hover);
+  --fill-accent-active: var(--brand-primary-pressed);
+  --on-accent: var(--brand-on-primary);
+  --border-accent: var(--brand-primary);
+  --bg-accent: var(--brand-tint);
+  --bg-accent-muted: var(--brand-tint);  /* alias kept from the prototype */
+  --text-accent: var(--brand-text);
+}
+
+:root {
+  /* status */
+  --bg-success: #e9f5ee;  --text-success: #2c7a4b;  --border-success: #a9dcbd;  --fill-success: #639922;
+  --bg-warning: #fbf1de;  --text-warning: #a3690a;  --border-warning: #f0cd85;  --fill-warning: #ef9f27;
+  --bg-danger: #fbeae8;   --text-danger: #c1382f;   --border-danger: #f0a59f;   --fill-danger: #d5443a;  --on-danger: #ffffff;
+  --bg-info: #e6f1fb;     --text-info: #185fa5;     --border-info: #85b7eb;     --fill-info: #378add;
+
+  /* disabled */
+  --fill-disabled: #eeeef0;
+  --fill-disabled-cta: #b6b7b7;      /* disabled primary button (all brands) */
+
+  /* report */
+  --rp-tile: #f9f9f9;                /* metric tiles */
+
+  /* radius */
+  --radius-xxs: 6px;                 /* checkbox, tag, legend row */
+  --radius-xs: 8px;                  /* logo, More button, menu item, tooltip */
+  --radius: 12px;                    /* buttons, inputs, tiles, rows */
+  --radius-lg: 16px;                 /* cards, modals */
+
+  /* elevation */
+  --shadow-popover: 0 8px 24px rgba(0,0,0,0.12);   /* menus, dropdowns, toast */
+  --shadow-floating: 0 12px 40px rgba(0,0,0,0.25); /* queue pill over the BankID window */
+  --overlay: rgba(0,0,0,0.45);                     /* modal backdrop */
+
+  /* spacing — 4px grid, 2px is the only micro step */
+  --space-xxs: 2px;                  /* name ↔ account types, legend rows */
+  --space-xs: 4px;                   /* hint and error under a field, small offsets */
+  --space-sm: 8px;                   /* icon ↔ text, gaps between rows and buttons */
+  --space-md: 12px;                  /* row and tile padding, logo ↔ text */
+  --space-lg: 16px;                  /* card sections, button sides, modal text */
+  --space-xl: 20px;                  /* between blocks (note, sub-headings) */
+  --space-2xl: 24px;                 /* modal padding, report meta */
+  --space-3xl: 32px;                 /* report sections, chart grid */
+  --space-4xl: 48px;                 /* page bottom */
+
+  /* type — Geologica, two weights */
+  --font-size-xs: 12px;              /* account types, hints, errors, table heads */
+  --font-size-sm: 13px;              /* report tables, legend, holdings */
+  --font-size-md: 14px;              /* body, status, inputs, small buttons */
+  --font-size-lg: 16px;              /* large buttons, section labels, report heads */
+  --font-size-xl: 18px;              /* screen and form titles */
+  --font-size-2xl: 20px;             /* Welcome, Add bank, No connections left */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  /* icon size (icons are 1em, so this is font-size) */
+  --icon-sm: 16px;                   /* rows, buttons, menu, checkbox */
+  --icon-md: 18px;                   /* primary button, manual account logo slot */
+  --icon-lg: 20px;                   /* modal Close */
+
+  /* type */
+  --font-sans: 'Geologica', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* motion */
+  --dur-fast: .12s;                  /* hover fills */
+  --dur-base: .15s;                  /* chevrons, chart dimming */
+  --dur-enter: .3s;                  /* logo swap in the queue */
+}

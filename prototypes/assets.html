@@ -27,9 +27,9 @@
 <link rel="stylesheet" href="shared/web-shell.css">
 <link rel="stylesheet" href="shared/ai-chat.css">
 <link rel="stylesheet" href="shared/block.css">
+<link rel="stylesheet" href="shared/keyboard.css">
 <style>
-  :root { --pb-page-pad: 32px; }
-  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  :root { --pb-page-pad: 16px; }   /* as in the advisor portal prototypes: the same margins on both case pages (her ask, 16 Nov) */
   body { background: #fff; padding: var(--pb-page-pad); }
 
   /* page bits not in the design system (Figma "Assets & Banks" 972:4069) */
@@ -161,6 +161,7 @@
 <script src="shared/ai-chat.js"></script>
 <script src="shared/typo.js"></script>
 <script src="shared/block.js"></script>
+<script src="shared/keyboard.js"></script>
 <script>
 (function () {
   var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, B = window.BADGE_ICONS;
@@ -215,6 +216,9 @@
     eyebrow: 'Njorda app',
     title: 'Everything you own, in one place',
     intro: 'After signing up, people add what they own: banks in one go with BankID, everything else by hand. The step can be skipped and finished later in the app.',
+    fill: true,      // the web screen fills the stage, as in the advisor portal case (her ask, 16 Nov)
+    webMin: 1280,
+    webH: 920,       // the smallest height that still shows the whole side menu, with its bottom padding
     states: [
       { id: 'start', label: 'Add what you own', note: 'Connecting banks is the quickest way to fill the app, so it comes first. Anything else can be added manually.' },
       { id: 'connect', label: 'Connect banks', note: 'Pick several banks, confirm each with BankID. Read-only: Njorda never moves money.' },

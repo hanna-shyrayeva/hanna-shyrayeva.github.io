@@ -28,10 +28,10 @@
 <link rel="stylesheet" href="shared/web-shell.css">
 <link rel="stylesheet" href="shared/ai-chat.css">
 <link rel="stylesheet" href="shared/block.css">
+<link rel="stylesheet" href="shared/keyboard.css">
 <style>
   body { background: #fff; padding: var(--pb-page-pad); }
-  :root { --pb-page-pad: 32px; }
-  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  :root { --pb-page-pad: 16px; }   /* as in the advisor portal prototypes: the same margins on both case pages (her ask, 16 Nov) */
 
   /* page bits not in the design system (Figma Goals page 690:1137) */
   .g-tabs { display: flex; gap: var(--space-md); }
@@ -92,6 +92,7 @@
 <script src="shared/ai-chat.js"></script>
 <script src="shared/typo.js"></script>
 <script src="shared/block.js"></script>
+<script src="shared/keyboard.js"></script>
 <script>
 (function () {
   var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D;
@@ -123,6 +124,9 @@
     eyebrow: 'Njorda app',
     title: 'Goals that show how far is left',
     intro: 'A goal is an amount, a date and the accounts that are contributing to the goal. Each card shows what for, how far and by when.',
+    fill: true,      // the web screen fills the stage, as in the advisor portal case (her ask, 16 Nov)
+    webMin: 1280,
+    webH: 920,       // the smallest height that still shows the whole side menu, with its bottom padding
     states: [
       { id: 'list', label: 'My goals', note: 'Active goals, completed ones and ideas for a new one. A goal past its date turns amber.' },
       { id: 'ai', label: 'Create with AI', note: 'The assistant proposes the amount, the date and the monthly saving. The draft appears in the list to save or discard.' },

@@ -1,0 +1,75 @@
+/* ==========================================================================
+   Bank row (Review): logo + status dot, name + account types, status line,
+   action, chevron, remove. Expands to accounts; an account with holdings
+   expands again (read-only). Manual account rows reuse the same shell.
+   Also: Add row (+ Add bank / + Add manual account) and the empty hint.
+   ========================================================================== */
+.cs-row { border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-sm); overflow: hidden; }
+.cs-rmain { min-height: 60px; display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); }
+.cs-rmain[data-expandable] { cursor: pointer; }
+.cs-rtx { flex: 1; min-width: 0; }
+.cs-bn { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); margin: 0 0 var(--space-xxs); color: var(--text-primary); display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.cs-bn-types { font-size: var(--font-size-xs); font-weight: var(--font-weight-regular); color: var(--text-secondary); }   /* account types inline after the name */
+.cs-chev { flex: none; color: var(--text-muted); font-size: var(--icon-sm); }
+.cs-row.dim .cs-avwrap, .cs-row.dim .cs-rtx { opacity: .55; }                        /* Temporarily unavailable */
+
+/* status line */
+.cs-st { font-size: var(--font-size-md); color: var(--text-secondary); margin: 0; display: flex; align-items: center; gap: var(--space-sm); }
+.cs-st.warn { color: var(--text-warning); }
+.cs-st.err { color: var(--text-danger); }
+
+/* status dot on the logo */
+.cs-avwrap { position: relative; flex: none; }
+.cs-dot { position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface-2); }
+.cs-dot.ok   { background: var(--fill-success); }    /* Connected */
+.cs-dot.busy { background: var(--fill-info); animation: csdot 1.4s ease-in-out infinite; }  /* Getting your holdings… */
+.cs-dot.warn { background: var(--fill-warning); }    /* Some accounts missing, Partial sync */
+.cs-dot.err  { background: var(--fill-danger); }     /* Not responding, Couldn't verify sign-in */
+.cs-dot.off  { background: var(--text-muted); }      /* Temporarily unavailable */
+@keyframes csdot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* expanded part */
+.cs-detail { border-top: 0.5px solid var(--border); padding: var(--space-md); background: var(--surface-2); }
+
+/* account line */
+.cs-al { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); font-size: var(--font-size-md); padding: var(--space-sm) 0; border-bottom: 0.5px solid var(--border); color: var(--text-primary); }
+.cs-al-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cs-al-name small { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--space-xxs); }    /* holding details: 40 × Stock, 9 940.00 USD */
+.cs-al-val { flex: none; text-align: right; }
+.cs-al-exp { cursor: pointer; }
+.cs-al-chev { flex: none; width: 16px; color: var(--text-muted); font-size: var(--icon-sm); align-self: center; }
+.cs-al-acc { align-items: center; }                    /* line with a ⋮ button */
+.cs-al.warn .cs-acc-name { color: var(--text-warning); }
+.cs-acc-name { min-width: 0; }
+.cs-acc-reason { flex: none; font-size: var(--font-size-md); color: var(--text-warning); text-align: right; }
+.cs-rowactions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+.cs-rowactions-right { justify-content: flex-end; }
+
+/* holdings of a connected account (3rd level, read-only) */
+.cs-pos { padding: 0 0 var(--space-sm) var(--space-md); border-bottom: 0.5px solid var(--border); }
+.cs-pl { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); padding: var(--space-sm) 0; color: var(--text-secondary); border-bottom: 0.5px solid var(--border); }
+.cs-pl:last-of-type { border-bottom: none; }
+.cs-pl-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cs-pl-val { flex: none; color: var(--text-primary); }
+
+/* + Add holding (inside a manual account) */
+.cs-addhold { display: inline-flex; align-items: center; gap: var(--space-sm); background: none; border: none; padding: var(--space-sm) 0 0; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-accent); cursor: pointer; }
+.cs-addhold .ic { font-size: var(--icon-sm); }
+
+/* manual account row: the ⋮ menu must escape the card */
+.cs-row.cs-man { overflow: visible; }
+.cs-row.cs-man .cs-detail { border-radius: 0 0 var(--radius) var(--radius); }
+
+/* add row — same look for Add bank and Add manual account */
+.cs-addrow {
+  display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-accent);
+  background: var(--surface-2); border: 0.5px dashed var(--border-accent); border-radius: var(--radius);
+  cursor: pointer; transition: background var(--dur-fast);
+}
+.cs-addrow:hover { background: color-mix(in srgb, var(--fill-accent) 26%, var(--surface-2)); }
+.cs-addrow.spaced { margin-top: var(--space-sm); }
+.cs-addrow .ic { font-size: var(--icon-sm); }
+
+/* empty list hint (No banks connected. Add a bank to continue.) */
+.cs-man-hint { font-size: var(--font-size-md); color: var(--text-secondary); margin: calc(-1 * var(--space-xs)) 0 var(--space-md); }

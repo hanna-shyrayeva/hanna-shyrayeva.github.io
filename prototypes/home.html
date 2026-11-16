@@ -26,9 +26,9 @@
 <link rel="stylesheet" href="shared/web-shell.css">
 <link rel="stylesheet" href="shared/ai-chat.css">
 <link rel="stylesheet" href="shared/block.css">
+<link rel="stylesheet" href="shared/keyboard.css">
 <style>
-  :root { --pb-page-pad: 32px; }
-  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  :root { --pb-page-pad: 16px; }   /* as in the advisor portal prototypes: the same margins on both case pages (her ask, 16 Nov) */
   body { background: #fff; padding: var(--pb-page-pad); }
 
   /* home (Figma 2268:25032 web, 2268:35741 mobile) */
@@ -76,6 +76,7 @@
 <script src="shared/ai-chat.js"></script>
 <script src="shared/typo.js"></script>
 <script src="shared/block.js"></script>
+<script src="shared/keyboard.js"></script>
 <script>
 (function () {
   var A = App, I = A.icon, esc = A.esc, kr = A.kr, D = A.D, T = D.totals;
@@ -93,6 +94,9 @@
     eyebrow: 'Njorda app',
     title: 'A home that starts with a question',
     intro: 'After a dashboard and a mixed home, the home became just a greeting and a question. The chat opens beside the page the answer is about.',
+    fill: true,      // the web screen fills the stage, as in the advisor portal case (her ask, 16 Nov)
+    webMin: 1280,
+    webH: 920,       // the smallest height that still shows the whole side menu, with its bottom padding
     states: [
       { id: 'home', label: 'AI-first home', note: 'Quick actions send a ready-made question, so nobody faces an empty box.' },
       { id: 'quick', label: 'A quick question', note: 'Monitors open beside the chat, with the suggested monitor already there to save or change.' },

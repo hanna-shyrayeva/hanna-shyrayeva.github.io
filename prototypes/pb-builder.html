@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder and live analytics — Portfolio Builder prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (pb/app.html), shown in the device as it is */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+(function () {
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Portfolio builder',
+    title: 'Builder and live analytics',
+    intro: 'Most of the work happens here, so the redesign kept its shape and fixed what slowed advisors down: hidden menus, unclear saving, results they had to scroll for.<span class="pb-br"></span>A light analytics panel now sits next to the table and follows every edit.',
+    fill: true,
+    webOnly: true,
+    themes: false,
+    webMin: 1360,
+    webH: 600,
+    states: [
+      { id: 'single', label: 'One portfolio', note: 'Same table, clearer controls: a named Actions menu instead of the gear, one way to save, and Risk and Quantity as switches instead of hidden columns.<span class="pb-br"></span>The value no longer has to come first, and the Total explains a mismatch in its own row instead of a popup.' },
+      { id: 'picking', label: 'Add a proposal', note: 'The second portfolio starts where the advisor wants: a copy of the first, the client’s holdings, the library or an empty table.<span class="pb-br"></span>Before, a proposal always started blank.' },
+      { id: 'compare', label: 'Side by side', note: 'Two portfolios, each in its own colour: grey on the left, purple on the right, in every row and chart.<span class="pb-br"></span>The panel compares them as you edit.' },
+      { id: 'report', label: 'Report', note: 'Built for the meeting: switch between the comparison and each portfolio, then download the view as a PDF.' }
+    ],
+    open: function (state) { return 'pb/app.html#menu=1&side=0&state=' + state; },
+    keep: true,
+    render: function (ctx) { PBFrame(ctx.screen, 'pb/app.html#menu=1&case=1&side=0&state=' + ctx.state, 'Portfolio Builder prototype'); }
+  });
+})();
+</script>
+</body>
+</html>

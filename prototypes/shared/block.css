@@ -46,7 +46,7 @@
 .pb-step:focus-visible { outline: 2px solid var(--pb-accent); outline-offset: 2px; }
 .pb-step__t { display: block; font-size: 15px; line-height: 22px; font-weight: 500; }
 .pb-step__d { display: none; margin-top: 4px; font-size: 14px; line-height: 1.5; color: var(--pb-muted); }
-.pb-step[aria-current="step"] { border-left-color: #4cff7b; color: var(--pb-ink); }   /* the bright app green, in both themes */
+.pb-step[aria-current="step"] { border-left-color: var(--pb-step-on, #4cff7b); color: var(--pb-ink); }   /* the bright app green, in both themes */
 .pb-step[aria-current="step"] .pb-step__d { display: block; }
 
 .pb-controls { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -84,10 +84,21 @@
 .pb-screen .chat-thread::-webkit-scrollbar { display: none; }
 .pb-screen .chat-thread { scrollbar-width: none; }
 
+/* --- fill: a wide desktop app gets the room (narrower story, thinner stage padding, the device fills the stage) --- */
+.pb--fill { grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); gap: 32px; }
+.pb--fill .pb-stage { padding: 16px; }
+
 /* --- narrow layouts --- */
 .pb.is-stacked { grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .pb.is-stacked .pb-story { position: static; }
 .pb.is-stacked .pb-stage { padding: 16px; height: auto; position: static; }
+
+/* tall window (a tablet held upright): story on top in one column (title, intro, the list of states; option A, her pick 11 Nov), the device below at full width */
+.pb.is-tall { display: flex; flex-direction: column; align-items: stretch; gap: 16px; height: calc(var(--pb-vh, 100vh) - 2 * var(--pb-page-pad, 32px)); }
+.pb.is-tall .pb-story { position: static; max-width: 640px; gap: 16px; }
+.pb.is-tall.is-free { height: auto; }   /* not pinned (touch screens): as tall as its content */
+.pb.is-tall.is-free .pb-stage { flex: none; }
+.pb.is-tall .pb-stage { flex: 1 1 auto; min-height: 0; height: auto; position: static; align-items: flex-start; }   /* the device right under the text; spare room goes below it */
 
 /* inside the case page: the page sizes the iframe to the block, so the block must not stretch to it */
 html.pb-embed, html.pb-embed body { height: auto; }
@@ -111,3 +122,13 @@ html.pb-embed .pb-screen .phone, html.pb-embed .pb-screen .web-main, html.pb-emb
 /* the case page in its dark theme: same chrome, dark colours */
 html.pb-site-dark .pb { --pb-ink: #e6e9e7; --pb-muted: #9aa19d; --pb-line: #2e3330; --pb-stage: #202523; --pb-accent: #5fd38a; --pb-seg-on: #2f3532; --pb-bar: #262b28; --pb-bar-dot: #3d433f; color-scheme: dark; }
 html.pb-site-dark .pb-seg { background: #1f2421; }
+
+/* a desktop-only app on a phone: a picture of the screen, tapped to open it full screen */
+.pb--thumb .pb-stage { flex-direction: column; gap: 14px; }
+.pb--thumb .pb-device { cursor: pointer; }
+.pb--thumb .pb-screen { pointer-events: none; }
+.pb--thumb .pb-hint { display: none; }   /* the screen isn't clickable here; the button says what to do */
+.pb-open { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 12px; background: var(--pb-step-on, #4cff7b); color: var(--pb-open-fg, #111312); font: 500 14px/1 'Funnel Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; text-decoration: none; }
+
+/* a paragraph break inside an intro or a state note (her ask, 16 Nov: no solid blocks of text) */
+.pb-br { display: block; height: 6px; }

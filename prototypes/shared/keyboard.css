@@ -1,0 +1,37 @@
+/* System keyboard on the phone (shared/keyboard.js), ported from the work prototype's app/proto.css.
+   The screen shrinks to the space above it: centred forms re-centre, the action button rides on top */
+/* it slides up and down as on an iPhone; the screen and the button move with it (her ask, 16 Nov) */
+.pb-screen { --kb-move: .32s cubic-bezier(.2, .8, .2, 1); }
+.pb-screen .phone { transition: height var(--kb-move); }
+.pb-screen .tabbar { transition: bottom var(--kb-move); }
+.pb-screen[data-keyboard] .phone { height: calc(100% - var(--kb-h)); }
+.pb-screen[data-keyboard] .onb { padding-bottom: var(--space-lg); }
+.pb-screen[data-keyboard] .tabbar { bottom: var(--kb-h); }
+.pb-screen[data-keyboard] .tabbar__pill, .pb-screen[data-keyboard] .tabbar__home { display: none; }
+.pb-screen[data-keyboard] .tabbar__action { margin-bottom: var(--space-sm); }
+.pb-screen[data-keyboard] .tabbar:has(.tabbar__action) { padding-top: var(--space-sm); background: var(--color-surface-primary); }   /* nothing peeks between the button and the keyboard */
+
+.kb { position: absolute; left: 0; bottom: 0; width: 100%; height: var(--kb-h, 336px); z-index: 90; display: flex; flex-direction: column; gap: 11px; padding: 0 3px; box-sizing: border-box;
+  background: #d1d3d9; font: 400 22px/1 -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #000; user-select: none;
+  transform: translateY(100%); visibility: hidden; transition: transform var(--kb-move), visibility 0s linear .32s; }
+.pb-screen[data-keyboard] .kb { transform: none; visibility: visible; transition: transform var(--kb-move), visibility 0s; }
+@media (prefers-reduced-motion: reduce) { .pb-screen .phone, .pb-screen .tabbar, .kb, .pb-screen[data-keyboard] .kb { transition: none; } }
+.kb__bar { height: 34px; flex: 0 0 auto; }   /* the predictive text bar, left empty */
+.kb__row { display: flex; gap: 6px; justify-content: center; }
+.kb__row--mid { padding: 0 18px; }
+.kb__key { flex: 1 1 0; min-width: 0; height: 42px; padding: 0; border: 0; border-radius: 5px; background: #fff; color: inherit; font: inherit; box-shadow: 0 1px 0 #898a8d; cursor: pointer; }
+.kb__key:active { background: #b4b8c1; }
+.kb__key--fn { flex: 0 0 42px; background: #abb0ba; font-size: 16px; }
+.kb__key--fn.is-on { background: #fff; }
+.kb__key--wide { flex: 0 0 88px; }
+.kb__key--space { flex: 1 1 auto; font-size: 16px; }
+.kb__key--ret { font-size: 16px; }
+.kb__pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 3px; }
+.kb__key--num { height: 46px; font-size: 24px; }
+.kb__key--done { flex: 0 0 100%; height: 40px; }
+.kb__home { margin-top: auto; height: 34px; }
+.pb-screen[data-theme="dark"] .kb { background: #2c2c2e; color: #fff; }
+.pb-screen[data-theme="dark"] .kb__key { background: #6b6b6e; box-shadow: 0 1px 0 #000; }
+.pb-screen[data-theme="dark"] .kb__key--fn { background: #464648; }
+.pb-screen[data-theme="dark"] .kb__key--fn.is-on { background: #6b6b6e; }
+.pb-screen[data-theme="dark"] .kb__key:active { background: #8e8e93; }

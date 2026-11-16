@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clients, 2026 draft</title>
+<!-- Draft: the clients list, client overview and analysis rebuilt from the 2026 design system
+     (hc-ds, the same components as the holdings collection and builder prototypes).
+     Not on the case page yet. Karl Nyström is the one client with a full profile. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500&display=swap">
+<link rel="stylesheet" href="hc-ds/styles/tokens.css">
+<link rel="stylesheet" href="hc-ds/styles/base.css">
+<link rel="stylesheet" href="hc-ds/components/buttons.css">
+<link rel="stylesheet" href="hc-ds/components/inputs.css">
+<link rel="stylesheet" href="hc-ds/components/menu.css">
+<link rel="stylesheet" href="hc-ds/components/modal.css">
+<link rel="stylesheet" href="hc-ds/components/feedback.css">
+<link rel="stylesheet" href="hc-ds/components/bank-tile.css">
+<link rel="stylesheet" href="hc-ds/components/report.css">
+<style>
+  body { margin: 0; }
+  .hc-app { min-height: 100vh; padding: var(--space-3xl) var(--space-3xl) var(--space-4xl) calc(264px + 2 * var(--space-2xl)); transition: padding var(--dur-base); }
+  span[data-i] { display: inline-block; width: 1em; height: 1em; flex: none; }   /* icon placeholders keep their size until the script draws them */
+  .hc-app.side-min { padding-left: calc(72px + 2 * var(--space-2xl)); }
+  /* portal side menu: the Njorda app web menu (floating, rounded, burger, a widget on top, nav), light */
+  .pside { position: fixed; z-index: 40; left: var(--space-2xl); top: var(--space-2xl); bottom: var(--space-2xl); width: 264px; display: flex; flex-direction: column; gap: var(--space-xl); padding: var(--space-xl) var(--space-lg); background: var(--surface-2); border-radius: var(--radius-lg); overflow: hidden; transition: width var(--dur-base), padding var(--dur-base); }
+  .pside-top { display: flex; align-items: center; gap: var(--space-md); }
+  .pside-burger { flex: none; width: 32px; height: 32px; padding: 0; border: none; background: none; border-radius: var(--radius-xs); color: var(--text-primary); font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .pside-burger:hover { background: var(--surface-1); }
+  .pside-brand b { display: block; font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .pside-brand small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); white-space: nowrap; }
+  .pside-cta { width: 100%; justify-content: center; }   /* text only; the icon shows only in the collapsed menu */
+  .pside-cta-ic { display: none; }
+  .pside-cta .pside-cta-ic .ic { font-size: 22px; }   /* bigger than a button icon: it is alone in the square */
+  .pside.min .pside-cta { width: 40px; height: 40px; padding: 0; margin: 0 auto; }
+  .pside.min .pside-cta-ic { display: flex; }
+  .pside-quick { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-md); background: var(--surface-1); border-radius: var(--radius); }
+  .pside-quick > b { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .pside-quick > small { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: calc(-1 * var(--space-xs)); }
+  .pside-quick .cs-selbtn { height: 40px; }
+  .pside-quick .cs-sellist { max-height: 240px; overflow-y: auto; }
+  .pside-quick .btn { justify-content: center; }
+  .pside-quick-ic { display: none; }
+  .pside-nav { flex: 1; display: flex; flex-direction: column; gap: var(--space-xxs); }
+  .pnav { display: flex; align-items: center; gap: var(--space-md); width: 100%; padding: 11px 10px;   /* 42 px tall */ border: none; border-radius: var(--radius-xs); background: none; color: var(--text-secondary); font: var(--font-weight-medium) var(--font-size-md) var(--font-sans); text-align: left; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); white-space: nowrap; }   /* grey until active or hovered */
+  .pnav .ic { font-size: 20px; flex: none; }
+  .pnav:hover { background: var(--surface-1); color: var(--text-primary); }
+  .pnav.on { background: var(--bg-accent); color: var(--text-accent); }
+  .pnav.off, .pnav.off:hover { color: var(--text-secondary); background: none; cursor: default; }   /* not in this prototype: looks like the others, but no hover and no click */
+  .pside-foot { display: flex; flex-direction: column; gap: var(--space-sm); padding-top: var(--space-md); border-top: 0.5px solid var(--border); }
+  .pside-me { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-xs) 10px; white-space: nowrap; }
+  .pside-me-ic { flex: none; width: 20px; display: flex; color: var(--text-secondary); font-size: 20px; }
+  .pside-me b { display: block; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .pside-me small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); }
+  /* collapsed: icons only, the quick widget becomes one icon */
+  .pside.min { width: 72px; padding: var(--space-xl) var(--space-md); }
+  .pside.min .pside-brand, .pside.min .pnav-l, .pside.min .pside-quick { display: none; }
+  .pside.min .pside-top { justify-content: center; }
+  .pside.min .pnav, .pside.min .pside-me { justify-content: center; padding-left: 0; padding-right: 0; }
+  .pside.min .pside-quick-ic { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: 0 auto; border: none; border-radius: var(--radius-xs); background: var(--bg-accent); color: var(--text-accent); font-size: 20px; cursor: pointer; }
+  .pg { max-width: none; margin: 0; }   /* fills the space next to the menu, no empty sides on wide screens */
+  .pg[hidden] { display: none; }
+
+  /* page head */
+  .ph { display: flex; align-items: flex-start; gap: var(--space-lg); margin-bottom: var(--space-lg); }   /* 16 px to the tabs */
+  .ph-tx { flex: 1; min-width: 0; }
+  .ph h1 { margin: 0; font-size: 24px; font-weight: var(--font-weight-medium); }
+  .ph-sub { margin: var(--space-xs) 0 0; font-size: var(--font-size-md); color: var(--text-secondary); }
+  .ph-act { display: flex; gap: var(--space-sm); flex: none; }
+  .btn { height: 40px; display: inline-flex; align-items: center; gap: var(--space-sm); padding: 0 var(--space-lg);
+    font: var(--font-weight-medium) var(--font-size-md)/20px var(--font-sans); border-radius: var(--radius); cursor: pointer; white-space: nowrap;
+    border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-primary); transition: background var(--dur-base), border-color var(--dur-base), color var(--dur-base); }
+  .btn:hover { background: var(--bg-accent); border-color: color-mix(in srgb, var(--fill-accent) 45%, var(--surface-2)); color: var(--text-accent); }   /* every white button with a grey outline: light purple on hover */
+  .btn.pri { background: var(--fill-accent); border-color: var(--fill-accent); color: var(--on-accent); }
+  .btn.pri:hover { background: var(--fill-accent-hover); border-color: var(--fill-accent-hover); color: var(--on-accent); }
+  /* the case page demo presses Add client by itself: hover, then a short press */
+  .btn.pri.demo-hover { background: var(--fill-accent-hover); border-color: var(--fill-accent-hover); transition: background var(--dur-base), transform .12s; }
+  .btn.pri.demo-press { transform: scale(.95); }
+  .btn.sm { height: 32px; padding: 0 var(--space-md); font-size: var(--font-size-sm); }
+  .btn .ic { font-size: var(--icon-sm); }
+
+  .crumbs { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-lg); }
+  .crumbs a { color: var(--text-secondary); text-decoration: none; cursor: pointer; }
+  .crumbs a:hover { color: var(--text-primary); }
+  .crumbs .ic { font-size: 12px; color: var(--text-muted); transform: rotate(-90deg); }
+
+  /* stat cards */
+  .stats { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: var(--space-md); margin-bottom: var(--space-2xl); }
+  .stat { text-align: left; background: var(--surface-2); border: 1px solid transparent; border-radius: var(--radius-lg); padding: var(--space-lg); font-family: var(--font-sans); color: var(--text-primary); }
+  button.stat { cursor: pointer; transition: border-color var(--dur-fast); }
+  button.stat:hover { border-color: var(--border-strong); }
+  button.stat.on { border-color: var(--text-primary); }
+  .stat-l { font-size: var(--font-size-md); color: var(--text-secondary); display: flex; align-items: center; gap: var(--space-sm); }
+  .stat-v { font-size: 22px; font-weight: var(--font-weight-medium); margin: var(--space-sm) 0 0; white-space: nowrap; }
+  .stat-v small { font-size: inherit; font-weight: inherit; color: inherit; }   /* kr: the same size and colour as the number */
+  .stat-v .aux { margin-left: var(--space-sm); font-size: var(--font-size-sm); font-weight: var(--font-weight-regular); color: var(--text-secondary); }   /* a short extra next to the number, instead of a third line */
+  .stat-s { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xs); }   /* the 4 px lives here, so cards without this line have no extra space at the bottom */
+  .stat[data-tip-tpl] { cursor: default; transition: border-color var(--dur-base); }
+  .stat[data-tip-tpl]:hover { border-color: var(--border-strong); }
+  /* card details on hover: rows with a logo, a name, a small number and the amount */
+  .tt { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-xs) 0; min-width: 260px; }
+  .tt-r { display: flex; align-items: center; gap: var(--space-sm); }
+  .tt-r img { width: 20px; height: 20px; border-radius: var(--radius-xxs); border: 0.5px solid var(--border-strong); box-sizing: border-box; flex: none; }
+  .tt-r span { flex: 1; min-width: 0; }
+  .tt-r small { color: var(--text-muted); margin-left: var(--space-xs); }
+  .tt-r b { font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .tt-r.sum { padding-top: var(--space-sm); border-top: 0.5px solid var(--border); }
+  .tt-r .neg { color: inherit; }   /* loans in black, not red (her ask, 11 Nov) */
+  .tt-r .muted { color: var(--text-muted); font-weight: var(--font-weight-regular); }
+  .stat-s.up { color: var(--text-success); font-weight: var(--font-weight-medium); }
+  .sdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  /* segmented filter */
+  .bar { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap: wrap; }
+  .seg { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+  .seg button { height: 32px; padding: 0 var(--space-md); border: none; border-radius: 999px; background: transparent; color: var(--text-secondary);
+    font: var(--font-size-sm) var(--font-sans); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg button:hover { background: var(--surface-2); color: var(--text-primary); }
+  .seg button.on { background: var(--text-primary); color: var(--surface-2); }
+  .seg button i { font-style: normal; font-size: var(--font-size-xs); opacity: .6; }
+  .seg button i.att { opacity: 1; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; line-height: 1; border-radius: 10px; background: var(--fill-accent); color: var(--on-accent); font-weight: var(--font-weight-medium); }   /* brand purple, a circle (a pill when the number has two digits) */
+  .seg.box { background: var(--surface-1); border-radius: var(--radius); padding: 3px; gap: 2px; }
+  .seg.box button { border-radius: 9px; height: 28px; }
+  .seg.box button.on { background: var(--surface-2); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .search { margin-left: auto; position: relative; width: 280px; }
+  /* the clients filter: the same underline tabs as the profile, the line runs under the search too */
+  .tabbar { align-items: flex-end; border-bottom: 0.5px solid var(--border-strong); margin-bottom: var(--space-lg); }
+  .ph-act .search { margin-left: 0; width: 260px; }   /* the search sits in the page head, next to Add client */
+  .ph-act { align-items: center; }
+  .tabs.ftabs { border-bottom: none; margin-bottom: 0; }
+  .ftabs button { display: inline-flex; align-items: center; gap: 6px; }
+  .ftabs button i { font-style: normal; font-size: var(--font-size-xs); font-weight: var(--font-weight-regular); color: var(--text-muted); }
+  .ftabs button i.att { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; background: var(--fill-accent); color: var(--on-accent); font-weight: var(--font-weight-medium); }
+  .search .cs-input { height: 40px; padding-left: 40px; padding-right: 40px; }
+  /* clear: appears once there is text */
+  .s-x { position: absolute; right: 8px; top: 8px; width: 24px; height: 24px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--text-muted); font-size: 14px; display: none; align-items: center; justify-content: center; cursor: pointer; transition: color var(--dur-fast); }
+  .s-x:hover { color: var(--text-primary); }
+  .search.has .s-x { display: flex; }
+  .search > .ic { position: absolute; left: var(--space-md); top: 12px; font-size: var(--icon-sm); color: var(--text-muted); }
+
+  /* card + table */
+  .card { background: var(--surface-2); border-radius: var(--radius-lg); }
+  .card-h { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg) var(--space-lg) var(--space-md); }
+  .card-h h2 { margin: 0; flex: 1; font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); }
+  .card-b { padding: 0 var(--space-lg) var(--space-lg); }
+  #tbl-clients { table-layout: fixed; }   /* columns keep their width on every tab, whatever the rows hold */
+  #tbl-clients td .mut { white-space: nowrap; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+  .tbl th { text-align: left; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-secondary); padding: var(--space-md); border-bottom: 0.5px solid var(--border); white-space: nowrap; user-select: none; }
+  .tbl th.sort { cursor: pointer; }
+  .tbl th.sort:hover { color: var(--text-primary); }
+  .tbl th .ic { display: inline-block; font-size: 12px; vertical-align: -2px; }
+  .tbl td { padding: var(--space-md); border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl .num { text-align: right; white-space: nowrap; }
+  .tbl tbody tr.go { cursor: pointer; transition: background var(--dur-fast); }
+  .tbl tbody tr.go:hover { background: color-mix(in srgb, var(--surface-1) 50%, var(--surface-2)); }   /* lighter than the page, so the row does not merge with it */
+  .tbl .mut { color: var(--text-muted); }
+  .who { display: flex; align-items: center; gap: var(--space-md); min-width: 0; }
+  .ava { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-1); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-secondary); }
+  .who b { display: block; font-weight: var(--font-weight-medium); font-size: var(--font-size-md); }
+  .who small { display: block; color: var(--text-secondary); font-size: var(--font-size-xs); margin-top: var(--space-xxs); }
+  .logos { display: flex; gap: var(--space-xs); }
+  .logos .cs-avatar { width: 28px; height: 28px; }
+  .logos .more { flex: none; height: 28px; min-width: 28px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--surface-1); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-secondary); cursor: default; }
+  /* tooltip: bank name on a logo, the full list on +N */
+  .tip { position: fixed; z-index: 90; pointer-events: none; padding: var(--space-sm) var(--space-md); border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); border: 0.5px solid var(--border-strong); font-size: var(--font-size-xs); white-space: nowrap; box-shadow: var(--shadow-popover);
+    opacity: 0; transform: translate(-50%, calc(-100% - 6px)); transition: opacity .15s ease, transform .15s ease; }   /* a 2 px rise, almost only a fade */
+  .tip.show { opacity: 1; transform: translate(-50%, calc(-100% - 8px)); }
+  .tip.below { transform: translate(-50%, 6px); }
+  .tip.below.show { transform: translate(-50%, 8px); }
+  .tip-note { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: 0.5px solid var(--border); color: var(--text-secondary); }
+  .tip-list { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-xs) 0; }
+  .tip-list span { display: flex; align-items: center; gap: var(--space-sm); }
+  .tip-list img { width: 20px; height: 20px; border-radius: var(--radius-xxs); border: 0.5px solid var(--border-strong); box-sizing: border-box; }   /* same outline as the logos in the table */
+  .tip-list em { font-style: normal; color: var(--text-secondary); margin-left: var(--space-md); }
+  .tip-list.rows span { justify-content: space-between; }
+  .tip-list.rows b { font-weight: var(--font-weight-medium); display: flex; align-items: center; gap: var(--space-sm); }
+  .logos .cs-avatar, .logos .more, .pill { transition: transform .18s ease, box-shadow .18s ease; }
+  .logos .cs-avatar:hover, .logos .more:hover { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+
+  /* status pill */
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: var(--font-size-xs); cursor: default; font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .pill .sdot { width: 6px; height: 6px; }
+  .pill.ok   { background: var(--bg-success); color: var(--text-success); }  .pill.ok .sdot   { background: var(--fill-success); }
+  .pill.soon { background: var(--bg-warning); color: var(--text-warning); }  .pill.soon .sdot { background: var(--fill-warning); }
+  .pill.exp  { background: var(--bg-danger);  color: var(--text-danger); }   .pill.exp .sdot  { background: var(--fill-danger); }
+  .pill.wait { background: var(--bg-info);    color: var(--text-info); }     .pill.wait .sdot { background: var(--fill-info); }
+  .pill.none { background: var(--surface-1);  color: var(--text-secondary); } .pill.none .sdot { background: var(--text-muted); }
+  .old { color: var(--text-muted); cursor: default; }   /* assets from data that is out of date or incomplete: quiet grey, the reason on hover */
+  .rowpop { min-width: 190px; }
+  .rowpop hr { border: none; border-top: 0.5px solid var(--border); margin: var(--space-xs) 0; }
+  .rowpop button.off { color: var(--text-muted); cursor: default; }
+  .rowpop button.off:hover { background: none; }
+  .st-sub { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xs); }
+  .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-sm); border-radius: var(--radius-xxs); background: var(--surface-1); font-size: var(--font-size-xs); color: var(--text-secondary); white-space: nowrap; }
+  .rowact .btn { transition: background var(--dur-base), border-color var(--dur-base), color var(--dur-base); }
+  .bk-h .btn { transition: background var(--dur-base), border-color var(--dur-base), color var(--dur-base); }
+  .rowact .btn:hover, .bk-h .btn:hover { background: var(--bg-accent); border-color: color-mix(in srgb, var(--fill-accent) 45%, var(--surface-2)); color: var(--text-accent); }   /* purple, so it stands out on a hovered row */
+  .rowact .cs-kebab { transition: background var(--dur-base), color var(--dur-base); }
+  .rowact .cs-kebab:hover, .rowact .cs-kebab.on { background: var(--bg-accent); color: var(--text-accent); }
+  .rowact { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
+  .empty { padding: var(--space-3xl); text-align: center; color: var(--text-muted); font-size: var(--font-size-md); }
+
+  /* client head + tabs */
+  /* profile head: name and actions on the page, client data in a white strip, then the page-view tabs */
+  .ch { display: flex; align-items: center; gap: var(--space-lg); margin-bottom: var(--space-xl); }
+  .ch-ava { width: 56px; height: 56px; font-size: var(--font-size-lg); background: var(--surface-2); color: var(--text-secondary); }   /* white with grey initials, like the avatars in the table */
+  .ch-tx { flex: 1; min-width: 0; }
+  .ch .ph-act { margin-left: auto; }
+  .ch-name { margin: 0; font-size: 24px; font-weight: var(--font-weight-medium); }
+  .ch-data { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-lg); font-size: var(--font-size-md); }
+  .ch-data > div { padding: 0 var(--space-lg); border-left: 0.5px solid var(--border); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch-data > div:first-child { padding-left: 0; border-left: none; }
+  .ch-data small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-bottom: var(--space-xs); }
+  .ch-meta { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-xl); margin-top: var(--space-sm); font-size: var(--font-size-sm); color: var(--text-primary); }   /* grey label, black value */
+  .ch-meta span { color: var(--text-secondary); margin-right: var(--space-xs); }
+  .tabs { display: flex; gap: var(--space-2xl); border-bottom: 0.5px solid var(--border-strong); margin-bottom: var(--space-2xl); }
+  .tabs button { position: relative; background: none; border: none; padding: var(--space-md) 0; font: var(--font-weight-medium) var(--font-size-md) var(--font-sans); color: var(--text-secondary); cursor: pointer; }
+  .tabs button:hover { color: var(--text-primary); }
+  .tabs button.on { color: var(--text-primary); }
+  .tabs button.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--text-primary); border-radius: 2px; }
+
+  /* alert */
+  .alert { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-xl);
+    background: var(--bg-danger); border-radius: var(--radius); font-size: var(--font-size-md); color: var(--text-primary); }
+  .alert > .ic { font-size: 20px; color: var(--text-danger); flex: none; }
+  .alert p { margin: 0; flex: 1; }
+  .alert b { font-weight: var(--font-weight-medium); }
+  .alert .btn { background: var(--surface-2); border-color: var(--border-danger); }
+
+  /* overview grid */
+  .ov { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--space-xl); align-items: start; }
+  .side { display: flex; flex-direction: column; gap: var(--space-xl); }
+
+  /* accounts grouped by bank */
+  .bk { border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-sm); overflow: hidden; }
+  .bk.bk-err .bk-h { cursor: default; }
+  /* expired bank: faded logo and grey name, as it is not in the totals; the red pill says why */
+  .bk.bk-err .cs-avatar { opacity: .5; }
+  .bk.bk-err .cs-dot { display: none; }
+  .bk.bk-err .bk-tx b { color: var(--text-secondary); }
+  .bk.bk-err .bk-tx small { color: var(--text-muted); }
+  .bk.bk-err .pill { margin-right: var(--space-xs); }
+  /* the row stays white, the button is a normal one and turns purple on hover, like everywhere */
+  .bk-h { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); cursor: pointer; transition: background var(--dur-fast); }
+  .bk:not(.bk-err) .bk-h:hover { background: color-mix(in srgb, var(--surface-1) 50%, var(--surface-2)); }   /* light, the same as a table row */
+  .bk-h .cs-avwrap .cs-avatar { width: 36px; height: 36px; }
+  .bk-tx { flex: 1; min-width: 0; }
+  .bk-tx b { display: block; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .bk-tx small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); }
+  .bk-tx small.err { color: var(--text-danger); }
+  .bk-v { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .bk-v.mut { color: var(--text-muted); font-weight: var(--font-weight-regular); }
+  .bk-h > .ic { font-size: var(--icon-sm); color: var(--text-muted); transition: transform var(--dur-base); }
+  .bk.open .bk-h > .ic { transform: rotate(180deg); }
+  .bk-acc { display: none; border-top: 0.5px solid var(--border); }
+  .bk.open .bk-acc { display: block; }
+  /* account rows line up with the bank row: names under the bank name (12 + 36 logo + 12), sums under the bank sum (chevron 16 + 12 + 12) */
+  .acc { display: grid; grid-template-columns: minmax(0, 1.4fr) 120px minmax(0, 1fr) 130px; align-items: center; gap: var(--space-md); padding: var(--space-sm) 40px var(--space-sm) 60px; font-size: var(--font-size-sm); border-bottom: 0.5px solid var(--border); }
+  .acc:last-child { border-bottom: none; }
+  .acc.acc-h { min-height: 39px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-secondary); white-space: nowrap; }   /* the same look as the Holdings table head, the height of a row */
+  .acc .no { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .acc .num { text-align: right; }
+  /* total, as in the builder: a grey block, Total and the sum in 16 px */
+  .tot { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); background: var(--surface-1); border-radius: var(--radius); }
+  .tot-h { display: flex; align-items: baseline; gap: var(--space-md); font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); }
+  .tot-h span { flex: 1; }
+  .tot-s { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); }
+  .tot-bar { display: flex; height: 6px; gap: 2px; border-radius: 3px; overflow: hidden; margin: var(--space-md) 0 var(--space-sm); }
+  .tot-bar i { display: block; height: 100%; }
+  .tot-leg { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); font-size: var(--font-size-xs); color: var(--text-secondary); }
+  .tot-leg span { display: flex; align-items: center; gap: 6px; }
+  .tot-leg span::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+  .tot-leg b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+
+  /* side cards */
+  /* a portfolio row: the same summary as the builder's library (date, value, products); light grey hover */
+  .pf { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-sm); margin: 0 calc(-1 * var(--space-sm)); border-radius: 0; cursor: pointer; transition: background var(--dur-fast); position: relative; }
+  .pf + .pf::before { content: ""; position: absolute; top: -0.5px; left: 0; right: 0; border-top: 0.5px solid var(--border); }   /* full-width dividers stay visible on hover */
+  .pf { margin-top: 1px; }
+  .pf:hover { background: color-mix(in srgb, var(--surface-1) 50%, var(--surface-2)); }
+  .lnk-btn { border: none; background: none; padding: 0; font: var(--font-weight-medium) var(--font-size-sm) var(--font-sans); color: var(--text-accent); cursor: pointer; }
+  .lnk-btn:hover { text-decoration: underline; }
+  .act-scroll { max-height: min(440px, calc(100vh - 220px)); overflow-y: auto; margin: 0 calc(-1 * var(--space-2xl)); padding: var(--space-xs) var(--space-2xl) 0; }   /* a long history scrolls inside the window */
+  .pfm-body { overflow-y: auto; margin: 0 calc(-1 * var(--space-2xl)); padding: 0 var(--space-2xl); }
+  .pfm-list { display: flex; flex-direction: column; }
+  .pfm-list .pf { margin: 0; }
+  .pf-ic { flex: none; width: 36px; height: 36px; border-radius: var(--radius-xs); background: var(--bg-accent); color: var(--text-accent); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .pf-tx { flex: 1; min-width: 0; }
+  .pf-tx b { display: block; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pf-tx small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); }
+  .pf > .ic { font-size: var(--icon-sm); color: var(--text-muted); }
+  .pf-v { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .side .card-b .btn { width: 100%; justify-content: center; margin-top: var(--space-md); }
+  .tl { list-style: none; margin: 0; padding: 0; }
+  .tl li { position: relative; padding: 0 0 var(--space-lg) var(--space-xl); font-size: var(--font-size-sm); }
+  .tl li:last-child { padding-bottom: 0; }
+  .tl li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--border-stronger); }
+  .tl li::after { content: ""; position: absolute; left: 7px; top: 18px; bottom: 2px; width: 1px; background: var(--border); }
+  .tl li:last-child::after { display: none; }
+  .tl li.acc-ev::before { background: var(--fill-accent); }
+  .tl li.err-ev::before { background: var(--fill-danger); }
+  .tl li.ok-ev::before { background: var(--fill-success); }
+  .tl small { display: block; color: var(--text-secondary); font-size: var(--font-size-xs); margin-top: var(--space-xxs); }
+
+  /* analysis */
+  .an-bar { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+  .an-bar .cs-select { width: 220px; }
+  .an-bar .cs-selbtn { height: 40px; }
+  .cs-select:not(.open) .cs-sellist { display: none; }
+  .an-bar #b-pdf { margin-left: auto; }
+  .sec-t #seg-period { margin-left: auto; background: var(--border); font-size: var(--font-size-md); font-weight: var(--font-weight-regular); }
+  .sec-t #seg-period button:hover:not(.on) { background: color-mix(in srgb, var(--surface-2) 50%, transparent); }
+  .an-bar .seg.box { background: var(--border); }   /* on the grey page the track is darker, so it does not blend */
+  .an-bar .seg.box button:hover:not(.on) { background: color-mix(in srgb, var(--surface-2) 50%, transparent); }
+  .sec-t { font-size: var(--font-size-xl); font-weight: var(--font-weight-medium); margin: var(--space-3xl) 0 var(--space-md); display: flex; align-items: center; gap: var(--space-md); }
+  .sec-t:first-child { margin-top: 0; }
+  .sec-t .seg { margin-left: auto; }
+  /* insight cards under their section: white, a bolt, a short title and line, one action */
+  /* pie and map hover (report-charts.js): white, like every tooltip in this prototype */
+  .rp-tip { background: var(--surface-2); color: var(--text-primary); border: 0.5px solid var(--border-strong); }
+  .rp-tip span:not(:first-child), .rp-tip > :not(b) { color: var(--text-secondary); }
+  .ins-sec { margin-bottom: var(--space-md); align-items: center; }   /* an insight opens its section; the link sits on the right, then a close */
+  .ins-sec .ins-tx { flex: 1; flex-direction: row; align-items: baseline; gap: var(--space-xs); flex-wrap: wrap; }   /* all in one line: title, detail, link */
+  .ins-sec .ins-tx span { font-size: var(--font-size-md); }   /* the same size as the title, so the line reads as one sentence */
+  .ins-sec .ins-tx .lnk-btn { margin: 0 0 0 auto; padding-left: var(--space-lg); white-space: nowrap; }
+  .ins { display: flex; gap: var(--space-md); padding: var(--space-lg); background: var(--surface-2); border-radius: var(--radius-lg); }
+  .ins-ic { flex: none; display: flex; align-items: center; color: var(--text-accent); font-size: 20px; }   /* the bolt alone, no tile */
+  .ins-x { flex: none; width: 28px; height: 28px; padding: 0; border: none; background: none; border-radius: var(--radius-xs); color: var(--text-muted); font-size: var(--icon-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color var(--dur-fast); }
+  .ins-x:hover { color: var(--text-primary); }
+  .ins-tx { display: flex; flex-direction: column; gap: var(--space-xxs); min-width: 0; }
+  .ins-tx b { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .ins-tx span { font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .ins-tx .lnk-btn { align-self: flex-start; margin-top: var(--space-sm); }
+  .insight { display: flex; gap: var(--space-sm); align-items: flex-start; margin: var(--space-lg) 0 0; padding: var(--space-md); background: var(--surface-2); border-radius: var(--radius); font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.45; }
+  .insight .ic { flex: none; font-size: var(--icon-sm); color: var(--text-accent); margin-top: 1px; }
+  .insight b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+  .insight .lnk { margin-left: auto; flex: none; color: var(--text-accent); font-weight: var(--font-weight-medium); cursor: pointer; white-space: nowrap; }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; }
+  .chart text { font: 11px var(--font-sans); fill: var(--text-secondary); }   /* axis and point labels: readable grey */
+  .chart .grid { stroke: var(--border); stroke-width: 1; }
+  .ctip { position: absolute; top: 0; pointer-events: none; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-xs); background: var(--surface-2); color: var(--text-primary); border: 0.5px solid var(--border-strong); font-size: var(--font-size-xs); white-space: nowrap; box-shadow: var(--shadow-popover); display: flex; flex-direction: column; gap: var(--space-xxs); transform: translateX(-50%); }
+  .ctip[hidden] { display: none; }
+  .ctip b { font-weight: var(--font-weight-medium); }
+  .ctip i b { margin-left: auto; padding-left: var(--space-md); }   /* numbers line up on the right */
+  .ctip i { font-style: normal; display: flex; align-items: center; gap: 6px; }
+  .ctip i::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .legend { display: flex; justify-content: center; gap: var(--space-xl); font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: var(--space-md); flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: var(--space-sm); }
+  .legend span::before { content: ""; width: 14px; height: 3px; border-radius: 2px; background: var(--c); }
+  .legend span.pt::before { width: 10px; height: 10px; border-radius: 50%; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); }
+  .alloc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+  .alloc .card { padding: var(--space-lg); }
+  svg.rp-map path[fill="var(--surface-1)"] { fill: #e6e6ea; }   /* the world map: land with no holdings in a visible light grey, as in every report */
+  .rp-legend > .rp-leg-row { padding-top: 7px !important; padding-bottom: 7px !important; }   /* dividers between the legend rows of every allocation chart (her ask, 10 Nov) */
+  .rp-legend > .rp-leg-row:not(:first-child) { position: relative; }   /* the divider is a straight line drawn above the row, not the border of the rounded hover row */
+  .rp-legend > .rp-leg-row:not(:first-child)::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 0.5px solid #e6e6ea; }
+  .rp-legend > .rp-leg-head { padding-bottom: 8px !important; }
+  .rp-leg-row[data-l="No info"] .rp-leg-dot { background: #cbd5e1 !important; box-shadow: none; }   /* No info and Other: the same greys in every legend, pies and the region map alike (her ask, 10 Nov) */
+  .rp-leg-row[data-l="Other"] .rp-leg-dot { background: #94a3b8 !important; box-shadow: none; }
+  /* one spacing inside every section of the Analysis tab, the same as in the builder report (her ask, 10 Nov): 16 px between cards across and down */
+  #tab-analysis .stats, #tab-analysis .two, #tab-analysis .alloc, #tab-analysis .wi-grid { gap: 16px; }
+  #tab-analysis .stats { margin-bottom: 16px; }
+  #tab-analysis .ins-sec { margin-bottom: 16px; }
+  #tab-analysis .two + .stats { margin-top: 16px !important; }
+  .alloc .rp-alloc-title { font-size: var(--font-size-md); color: var(--text-secondary); font-weight: var(--font-weight-regular); }
+  /* What if: calm, no red; minus in grey, plus in purple, a bar that grows from the middle */
+  .card-sub { font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .wi-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); align-items: stretch; }   /* equal width and height */
+  .wi-grid .card-h { padding-bottom: 2px; min-height: 54px; }   /* 2 px under the head; the same head height with or without the switcher, so the rows line up */
+  .exp-r { display: grid; grid-template-columns: 140px minmax(0, 1fr) 44px; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; font-size: var(--font-size-sm); }
+  .exp-t { height: 6px; border-radius: 3px; background: var(--surface-1); overflow: hidden; }
+  .exp-t i { display: block; height: 100%; border-radius: 3px; background: var(--fill-accent); }   /* the brand purple, like the charts */
+  .exp-r b { text-align: right; font-weight: var(--font-weight-medium); }
+  .exp-n { margin: var(--space-md) 0 0; font-size: var(--font-size-xs); color: var(--text-secondary); line-height: 1.5; }
+  @media (max-width: 1100px) { .wi-grid { grid-template-columns: minmax(0, 1fr); } }
+  .wi-tbl { table-layout: fixed; }
+  #tab-analysis .wi-tbl { width: calc(100% + 16px); margin: 0 -8px; }   /* row hover in the report tables, as in the builder and holdings collection reports */
+  #tab-analysis .wi-tbl tr > :first-child { padding-left: 8px; }
+  #tab-analysis .wi-tbl tr > :last-child { padding-right: 8px; }
+  #tab-analysis .wi-tbl tbody tr:hover td { background: #fafafa; }
+  #tab-analysis .wi-tbl tbody tr:hover td:first-child { border-radius: 8px 0 0 8px; }
+  #tab-analysis .wi-tbl tbody tr:hover td:last-child { border-radius: 0 8px 8px 0; }   /* fixed columns: nothing moves when the switcher changes the numbers */
+  .wi-tbl th:first-child, .wi-tbl td:first-child { padding-left: 0; }
+  .wi-tbl th:last-child, .wi-tbl td:last-child { padding-right: 0; }
+  .wi-mini { width: 120px; }   /* a mini line, just to compare the rows */
+  .wi-mini svg { display: block; margin-left: auto; }
+  .wi-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); background: var(--surface-1); color: var(--text-primary); }
+  .wi-pill.up { background: var(--bg-accent); color: var(--text-accent); }
+  #seg-wi { margin-left: auto; }
+  .wi-tbl .wi-p { width: 80px; }
+  .wi-tbl .wi-k { width: 130px; }
+  .wi-own, .wi-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 64px 120px 16px; align-items: center; gap: var(--space-lg); }
+  .wi-own { padding: var(--space-md); margin: 0 calc(-1 * var(--space-md)) var(--space-md); background: var(--surface-1); border-radius: var(--radius); font-size: var(--font-size-sm); }   /* the same columns as the rows below */
+  .wi-ctl { display: flex; align-items: center; gap: var(--space-md); min-width: 0; }
+  .wi-ctl label { white-space: nowrap; }
+  .wi-ctl input { flex: 1; min-width: 60px; accent-color: var(--fill-accent); }
+  .wi-ctl b { width: 40px; text-align: right; font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .wi-row { padding: var(--space-md) 0; border-top: 0.5px solid var(--border); font-size: var(--font-size-sm); cursor: pointer; }
+  .wi-row:first-child { border-top: none; }
+  .wi-row > .ic { color: var(--text-muted); font-size: var(--icon-sm); transition: transform var(--dur-base); }
+  .wi-item.open .wi-row > .ic { transform: rotate(180deg); }
+  .wi-bar { position: relative; height: 8px; border-radius: 4px; background: var(--surface-1); }
+  .wi-own .wi-bar { background: var(--surface-2); }
+  .wi-bar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--border-stronger); }
+  .wi-bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; transition: left var(--dur-base), width var(--dur-base); }
+  .wi-bar i.dn { background: var(--border-stronger); }
+  .wi-bar i.up { background: var(--fill-accent); }
+  .wi-p { text-align: right; color: var(--text-secondary); white-space: nowrap; }
+  .wi-k { text-align: right; font-weight: var(--font-weight-medium); white-space: nowrap; }
+  .wi-k.up { color: var(--text-accent); }
+  .wi-det { display: none; padding: 0 0 var(--space-md) var(--space-lg); font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .wi-item.open .wi-det { display: block; }
+  .wi-det div { display: flex; justify-content: space-between; max-width: 420px; padding: 2px 0; }
+  .wi-det div b { font-weight: var(--font-weight-regular); color: var(--text-primary); }
+  .wi-det p { margin: var(--space-xs) 0 0; }
+
+  /* "What changed" notes on top of the screens */
+  .notes-btn { position: fixed; right: var(--space-2xl); bottom: var(--space-2xl); z-index: 80; height: 40px; padding: 0 var(--space-lg); border-radius: 999px; border: none; cursor: pointer;
+    background: var(--text-primary); color: var(--surface-2); font: var(--font-weight-medium) var(--font-size-sm) var(--font-sans); box-shadow: var(--shadow-popover); display: flex; align-items: center; gap: var(--space-sm); }
+  .notes-btn b { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center; background: var(--fill-accent); font-weight: var(--font-weight-medium); font-size: 11px; }
+  [data-note] { position: relative; }
+  body.notes [data-note] { outline: 2px dashed var(--fill-accent); outline-offset: 4px; border-radius: var(--radius); }
+  body.notes [data-note]::before { content: attr(data-note); position: absolute; z-index: 40; top: -14px; left: 8px; max-width: 360px; width: max-content;
+    padding: 6px 10px; border-radius: var(--radius-xs); background: var(--fill-accent); color: var(--on-accent); font: var(--font-size-xs)/1.4 var(--font-sans); white-space: normal; box-shadow: var(--shadow-popover); pointer-events: none; }
+
+  /* build portfolio: starting point (same choice as in the builder's Add portfolio) */
+  .bp .cs-modalbox { max-width: 580px; max-height: min(640px, calc(100vh - 48px)); display: flex; flex-direction: column; }   /* two heights only: fits its content, or 640 px with the list scrolling inside */
+  .bp #bp-body { overflow-y: auto; margin: 0 calc(-1 * var(--space-2xl)); padding: 0 var(--space-2xl); }
+  .bp-head { display: flex; align-items: center; gap: var(--space-sm); padding-right: var(--space-3xl); }
+  .bp-head h4 { margin: 0; padding: 0; }
+  .bp-back { width: 28px; height: 28px; margin: -3px 0 -3px -4px;   /* no taller than the title, so the 12 px below it stays */ padding: 0; border: none; background: none; border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--icon-md); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .bp-back:hover { background: var(--surface-1); color: var(--text-primary); }
+  .md.bp .md-sub { margin: var(--space-md) 0; }   /* 12 px: title, description, For line */
+  .md.bp .bp-head h4 { margin: 0; }
+  .bp-for { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-lg); }
+  .bp-for b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+  .opt { display: flex; align-items: center; gap: var(--space-md); width: 100%; padding: var(--space-lg); margin-bottom: var(--space-md); text-align: left; font-family: var(--font-sans); color: var(--text-primary);
+    background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; transition: background var(--dur-base), border-color var(--dur-base); }
+  .opt:last-child { margin-bottom: 0; }
+  .opt:hover { background: var(--surface-1); }
+  .opt-ic { flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--surface-1); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .opt-tx { flex: 1; min-width: 0; }
+  .opt-tx b { display: block; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .opt-tx small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); }
+  .opt-tag { flex: none; font-size: var(--font-size-xs); padding: 3px 9px; border-radius: 999px; background: var(--surface-1); color: var(--text-secondary); }
+  .opt-go { flex: none; font-size: var(--icon-sm); color: var(--text-muted); }
+  .opt.off { cursor: default; }
+  .opt.off:hover { background: var(--surface-2); }
+  .opt.off .opt-ic, .opt.off .opt-tx { opacity: .55; }
+  /* starting point cards (her ask, 11 Nov): no count tags, bare icons without a tile, all three cards grey (no purple Start from holdings) */
+  .opt .opt-tag { display: none; }
+  .opt .opt-ic, .opt.acc .opt-ic { width: 24px; height: 24px; background: none; border-radius: 0; }
+  .bp-all { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-xs) 0 var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary); cursor: pointer; user-select: none; }
+  .bp-bank { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-md) 0 var(--space-sm); font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .bp-bank .cs-avatar { width: 24px; height: 24px; }
+  .bp-bank small { font-weight: var(--font-weight-regular); font-size: var(--font-size-xs); color: var(--text-muted); }
+  .bp-accs { border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .bp-acc { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border-top: 0.5px solid var(--border); cursor: pointer; user-select: none; transition: background var(--dur-fast); }
+  .bp-acc:first-child { border-top: none; }
+  .bp-acc:hover { background: var(--surface-1); }
+  .bp-acc .tx { flex: 1; min-width: 0; font-size: var(--font-size-md); }
+  .bp-acc .tx small { display: block; font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--space-xxs); }
+  .bp-acc .v { font-size: var(--font-size-md); white-space: nowrap; }
+  .bp-sum { flex: 1; font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .bp-sum b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+  .bp .search { margin: 0 0 var(--space-md); width: 100%; }
+  .lib { border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .lib-row { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border-top: 0.5px solid var(--border); cursor: pointer; transition: background var(--dur-fast); }
+  .lib-row:first-child { border-top: none; }
+  .lib-row:hover { background: var(--surface-1); }
+  .lib-row .tx { flex: 1; min-width: 0; font-size: var(--font-size-md); }
+  .lib-row .tx small { display: block; font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-xxs); }
+  .lib-row .v { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); white-space: nowrap; }   /* bold sum, an arrow after it */
+  .lib-row > .ic { flex: none; font-size: var(--icon-sm); color: var(--text-muted); }
+  .lib-row .tx b { font-weight: var(--font-weight-medium); }
+
+  #md-1 .md-sub { margin-bottom: var(--space-xl); }   /* no steps any more: 20 px from the text to the fields */
+  .cs-toast { display: flex; align-items: center; gap: var(--space-sm); }
+  .cs-toast[hidden] { display: none; }
+  .toast-ok { font-size: var(--icon-sm); color: var(--text-success); }
+
+  /* add client + link modal */
+  .cs-modal[hidden], .md [hidden] { display: none !important; }
+  .md .cs-modalbox { max-width: 540px; padding: var(--space-2xl); }
+  .md h4 { font-size: var(--font-size-xl); font-weight: var(--font-weight-medium); margin: 0 0 var(--space-sm); padding-right: var(--space-3xl); }
+  .md .md-sub { font-size: var(--font-size-md); color: var(--text-secondary); margin: 0 0 var(--space-md); line-height: 1.5; }   /* 12 px to the steps, the same on both steps */
+  .md .md-sub b { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+  .md-steps { padding-right: var(--space-3xl); display: flex; gap: var(--space-sm); margin-bottom: var(--space-xl); }
+  .md-steps span { flex: 1; display: flex; flex-direction: column; gap: var(--space-sm); font-size: var(--font-size-xs); color: var(--text-muted); }
+  .md-steps span::before { content: ""; height: 4px; border-radius: 2px; background: var(--fill-disabled); }
+  .md-steps span.on { color: var(--text-primary); }
+  .md-steps span.on::before, .md-steps span.done::before { background: var(--fill-accent); }
+  .md-steps span.done { color: var(--text-secondary); }
+  .md-steps span.ok-step { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: var(--space-xs); color: var(--text-success); }
+  .md-steps span.ok-step::before { flex: 0 0 100%; }
+  .md-steps span.ok-step .ic { font-size: 12px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+  .md .cs-fld { margin-bottom: var(--space-lg); }
+  .md-foot { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-2xl); }   /* no divider above the buttons in any modal */
+  .md-foot .sp { flex: 1; font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; align-items: center; gap: var(--space-sm); }
+  .md-foot .sp .ic { color: var(--text-success); font-size: var(--icon-sm); }
+  .btn:disabled, .btn:disabled:hover { background: var(--fill-disabled-cta); border-color: var(--fill-disabled-cta); color: var(--on-accent); cursor: default; }
+  .dup { display: flex; align-items: center; gap: var(--space-md); margin-top: var(--space-sm); padding: var(--space-md); border-radius: var(--radius); background: var(--bg-warning); font-size: var(--font-size-sm); }
+  .dup p { margin: 0; flex: 1; color: var(--text-primary); }
+  .dup a { color: var(--text-primary); font-weight: var(--font-weight-medium); text-decoration: underline; cursor: pointer; white-space: nowrap; }
+  .done-h { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-xl); }
+  .done-h .ok { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-success); color: var(--text-success); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .done-h h4 { margin: 0; padding: 0; }
+  .done-h p { margin: var(--space-xxs) 0 0; font-size: var(--font-size-md); color: var(--text-secondary); }
+  /* link window: 12 px between every block */
+  #md-2 .md-steps, #md-2 .done-h, #md-2 .scope, #md-2 .seg.box { margin-bottom: var(--space-md); }
+  #md-2 .done-h p { margin-top: var(--space-md); }
+  .md-pick { margin-bottom: var(--space-md); }
+  .md-pick .cs-sellist { max-height: 220px; overflow-y: auto; }
+  #md-2 .md-foot { margin-top: var(--space-xl); }
+  #md-2 #md-state { visibility: hidden; }   /* no "Link copied / Code shown" line: the Copied button says it */
+  .scope { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-md); }
+  .md .seg.box { margin-bottom: var(--space-lg); }
+  .md .seg.box button { flex: 1; justify-content: center; }
+  .lnk-f { display: flex; gap: var(--space-sm); }
+  .lnk-f .cs-input { flex: 1; background: var(--surface-1); border-color: var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .lnk-f .btn { height: 44px; justify-content: center; }
+  /* Copy as an icon inside the link field */
+  .lnk-in { flex: 1; position: relative; min-width: 0; }
+  .lnk-in .cs-input { width: 100%; padding-right: 44px; color: var(--text-secondary); }   /* the link in grey */
+  .lnk-ic { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; padding: 0; border: none; border-radius: var(--radius-xs); background: none; color: var(--text-secondary); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
+  .lnk-ic:hover { background: var(--surface-2); color: var(--text-accent); }
+  .lnk-ic.copied, .lnk-ic.copied:hover { background: none; color: var(--text-success); }   /* only the green check, no fill on the grey field */
+  .lnk-f .btn:hover { background: var(--bg-accent); border-color: color-mix(in srgb, var(--fill-accent) 45%, var(--surface-2)); color: var(--text-accent); }
+  .lnk-f .btn { transition: background var(--dur-base), border-color var(--dur-base), color var(--dur-base); }
+  .lnk-f .btn.copied { background: var(--bg-success); border-color: var(--border-success); color: var(--text-success); }
+  .qr-btn { display: inline-flex; align-items: center; gap: var(--space-xs); margin-top: var(--space-md); padding: 0; border: none; background: none; font: var(--font-weight-medium) var(--font-size-sm) var(--font-sans); color: var(--text-accent); cursor: pointer; }
+  .qr-btn .ic { font-size: var(--icon-sm); transition: transform var(--dur-base); }
+  .qr-btn.on .ic { transform: rotate(180deg); }
+  #w-meet { margin-top: var(--space-md); }
+  .meet p { margin: 0; font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.5; }
+  .md .hint { font-size: var(--font-size-xs); color: var(--text-secondary); margin: var(--space-sm) 0 0; line-height: 1.5; }
+  .mail { border: 0.5px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; }
+  .mail-to { display: flex; gap: var(--space-sm); padding: var(--space-md); font-size: var(--font-size-sm); border-bottom: 0.5px solid var(--border); }
+  .mail-to span { color: var(--text-secondary); }
+  .mail .cs-textarea { border: none; border-radius: 0; margin: 0; min-height: 120px; }
+  .mail-btn { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); font-size: var(--font-size-xs); color: var(--text-secondary); background: var(--surface-1); }
+  .meet { display: flex; flex-direction: column; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--surface-1); border-radius: var(--radius); text-align: center; }   /* grey panel, QR centred, caption under it */
+  .meet #qr { flex: none; width: 128px; height: 128px; padding: var(--space-sm); border-radius: var(--radius-xs); background: #fff; }
+  .meet ol { margin: 0; padding-left: 18px; font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.6; }
+  .meet .btn { margin-top: var(--space-md); }
+  tr.fresh td { animation: fresh 2.4s ease-out; }
+  @keyframes fresh { 0%, 40% { background: var(--bg-accent); } 100% { background: transparent; } }
+
+  body.notes .ph-act[data-note]::before { left: auto; right: 0; }   /* notes on the right edge open to the left */
+
+  @media (max-width: 1100px) {
+    .ov { grid-template-columns: minmax(0, 1fr); }
+    .alloc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .two { grid-template-columns: minmax(0, 1fr); }
+    .col-id, .col-upd { display: none; }
+  }
+</style>
+</head>
+<body class="hc-app">
+
+<!-- ============ Portal side menu: the Njorda app menu, light ============ -->
+<script>/* before the first paint: the menu opens as it was left. On the case page (case=1 in the hash) it is always collapsed, and nothing is remembered */
+var CASE = /(^|[#&])case=1(&|$)/.test(location.hash);
+try { if (CASE || localStorage.getItem('pside-min') === '1') document.body.classList.add('side-min'); } catch (e) {}</script>
+<aside class="pside" id="pside">
+  <div class="pside-top"><button class="pside-burger" onclick="toggleSide()" aria-label="Collapse menu"><span data-i="menu"></span></button><div class="pside-brand"><b>Advisor portal</b><small>Demo Wealth Management</small></div></div>
+  <nav class="pside-nav">
+    <button class="pnav on" data-nav="clients"><span data-i="users"></span><span class="pnav-l">Clients</span></button>
+    <button class="pnav" data-nav="portfolios"><span data-i="builder"></span><span class="pnav-l">Portfolios</span></button>   <!-- the library; a portfolio opens in the builder -->
+    <button class="pnav off" data-nav="-" aria-disabled="true" tabindex="-1"><span data-i="chart"></span><span class="pnav-l">Analytics</span></button>
+    <button class="pnav off" data-nav="-" aria-disabled="true" tabindex="-1"><span data-i="file"></span><span class="pnav-l">Reports</span></button>
+  </nav>
+  <div class="pside-foot">
+    <div class="pside-me"><span class="pside-me-ic"><span data-i="user"></span></span><span class="pnav-l"><b>Lena Holm</b><small>Advisor</small></span></div>
+  </div>
+</aside>
+<script>if (document.body.classList.contains('side-min')) document.getElementById('pside').classList.add('min');</script>
+
+<!-- ============ 1. Clients ============ -->
+<main class="pg" id="pg-clients">
+  <div class="ph">
+    <div class="ph-tx">
+      <h1>Clients</h1>
+    </div>
+    <div class="ph-act" data-note="8. Adding a client ends with the link to connect banks: copy it, email it or show a QR code in a meeting"><div class="search"><span data-i="search"></span><input class="cs-input" id="q" type="text" placeholder="Search clients"><button class="s-x" aria-label="Clear search"><span data-i="close"></span></button></div><button class="btn pri" onclick="openAdd()"><span data-i="plus"></span>Add client</button></div>
+  </div>
+
+  <div class="bar tabbar" data-note="1. One filter row: the tabs show how many clients need something, Needs attention in purple">
+    <div class="tabs ftabs" id="seg-f"></div>
+  </div>
+
+  <div class="card">
+    <table class="tbl" id="tbl-clients">
+      <colgroup><col style="width:21%"><col class="col-id" style="width:13%"><col style="width:16%"><col style="width:12%"><col style="width:15%"><col class="col-upd" style="width:11%"><col style="width:12%"></colgroup>
+      <thead><tr>
+        <th class="sort" data-s="name">Client <span id="s-name"></span></th>
+        <th class="col-id">Personal ID</th>
+        <th>Banks</th>
+        <th class="sort num" data-s="value">Assets <span id="s-value"></span></th>
+        <th class="sort" data-s="att" data-note="2. One status per client instead of four counters: what is wrong and with which bank">Data <span id="s-att"></span></th>
+        <th class="sort col-upd" data-s="upd">Updated <span id="s-upd"></span></th>
+        <th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No clients match.</div>
+  </div>
+</main>
+
+<!-- ============ 2 + 3. Client: overview and analysis ============ -->
+<main class="pg" id="pg-client" hidden>
+  <div class="crumbs"><a onclick="go('clients')">Clients</a><span data-i="chevron-down"></span><span>Karl Nyström</span></div>
+  <div class="ch">
+    <div class="ch-tx"><h1 class="ch-name">Karl Nyström</h1>
+      <div class="ch-meta"><div><span>Email:</span>karl.nystrom@gmail.com</div><div><span>Personal ID:</span>19850312-4471</div><div><span>Advisor:</span>Lena Holm</div><div><span>Client since:</span>Jun 2023</div></div></div>
+    <div class="ph-act" data-note="5. The next step is right in the profile: collect data again or build a portfolio">
+      <button class="btn" onclick="openLink(CL[0], 'all')">Request data</button>
+      <button class="btn pri" onclick="openBuild(CL[0])">Build portfolio</button>
+    </div>
+  </div>
+  <div class="tabs"><button data-t="overview">Overview</button><button data-t="analysis">Analysis</button></div>
+
+  <!-- Overview -->
+  <section id="tab-overview">
+
+    <div class="stats" style="--n:5">
+      <div class="stat" data-tip-tpl="tt-net"><div class="stat-l">Net value</div><div class="stat-v">1 639 267 <small>kr</small></div></div>
+      <div class="stat" data-tip-tpl="tt-inv"><div class="stat-l">Invested</div><div class="stat-v">1 909 036 <small>kr</small></div></div>
+      <div class="stat" data-tip-tpl="tt-cash"><div class="stat-l">Cash</div><div class="stat-v">30 886 <small>kr</small></div></div>
+      <div class="stat" data-tip-tpl="tt-loan"><div class="stat-l">Loans</div><div class="stat-v">−300 655 <small>kr</small></div></div>
+      <div class="stat" data-tip-tpl="tt-col"><div class="stat-l">Last collection</div><div class="stat-v">28 Oct 2026</div></div>
+    </div>
+    <!-- details shown on hover over the cards above -->
+    <template id="tt-net"><div class="tt"><div class="tt-r"><span>Invested</span><b>1 909 036 kr</b></div><div class="tt-r"><span>Cash</span><b>30 886 kr</b></div><div class="tt-r"><span>Loans</span><b class="neg">−300 655 kr</b></div><div class="tt-r sum"><span>Net value</span><b>1 639 267 kr</b></div></div></template>
+    <template id="tt-inv"><div class="tt"><div class="tt-r"><span>Invested 1 year ago</span><b>1 760 516 kr</b></div><div class="tt-r"><span>Deposits</span><b>+30 000 kr</b></div><div class="tt-r"><span>Market growth</span><b style="color:var(--text-success)">+126 920 kr</b></div><div class="tt-r"><span>Fees</span><b>−8 400 kr</b></div><div class="tt-r sum"><span>Invested</span><b>1 909 036 kr</b></div></div></template>
+    <template id="tt-cash"><div class="tt"><div class="tt-r"><img src="hc-ds/assets/logos/avanza.png" alt=""><span>Sparkonto<small>9552-221 0418</small></span><b>18 500 kr</b></div><div class="tt-r"><img src="hc-ds/assets/logos/seb.png" alt=""><span>Lönekonto<small>5212 10 448 91</small></span><b>12 386 kr</b></div></div></template>
+    <template id="tt-loan"><div class="tt"><div class="tt-r"><img src="hc-ds/assets/logos/seb.png" alt=""><span>Privatlån<small>5212 47 118 06</small></span><b class="neg">−300 655 kr</b></div></div></template>
+    <template id="tt-col"><div class="tt"><div class="tt-r"><img src="hc-ds/assets/logos/avanza.png" alt=""><span>Avanza</span><b>28 Oct 2026</b></div><div class="tt-r"><img src="hc-ds/assets/logos/skandia.png" alt=""><span>Skandia</span><b>28 Oct 2026</b></div><div class="tt-r"><img src="hc-ds/assets/logos/seb.png" alt=""><span>SEB</span><b>28 Oct 2026</b></div><div class="tt-r"><img src="hc-ds/assets/logos/nordnet.png" alt=""><span>Nordnet<small>consent expired</small></span><b class="neg">12 Jun 2026</b></div></div></template>
+
+    <div class="ov">
+      <div class="card" data-note="4. Accounts and holdings reports in one list: each bank with its status, accounts inside">
+        <div class="card-h"><h2>Assets</h2><div class="seg box" id="seg-assets"><button data-a="acc" class="on">Accounts</button><button data-a="pos">Holdings</button></div></div>
+        <div class="card-b" id="assets"></div>
+      </div>
+      <div class="side">
+        <div class="card" data-note="6. Portfolios from the builder are part of the client profile">
+          <div class="card-h"><h2>Portfolios</h2><button class="lnk-btn" id="pf-all" onclick="openPfAll()">Show all</button></div>
+          <div class="card-b">
+            <div id="pf-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Activity</h2><button class="lnk-btn" id="act-all" onclick="openActAll()">Show all</button></div>
+          <div class="card-b"><ul class="tl" id="act-list"></ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analysis -->
+  <section id="tab-analysis" hidden>
+    <div class="an-bar">
+      <div class="cs-select" id="acc-sel">
+        <button class="cs-input cs-selbtn" onclick="this.parentNode.classList.toggle('open')"><span id="acc-lbl">All accounts</span><span data-i="chevron-down"></span></button>
+        <div class="cs-sellist" id="acc-list"></div>
+      </div>
+      <button class="btn" id="b-pdf" onclick="exportPdf()">Download PDF</button>   <!-- exports the whole Analysis for the accounts chosen on the left -->
+    </div>
+
+    <div class="sec-t">Performance<div class="seg box" id="seg-period"></div></div>   <!-- the period changes only this section -->
+    <div class="stats" style="--n:4">
+      <div class="stat"><div class="stat-l">Value change</div><div class="stat-v" id="p-chg"></div></div>
+      <div class="stat"><div class="stat-l">Return (TWR)</div><div class="stat-v" id="p-twr"></div></div>
+      <div class="stat"><div class="stat-l">Deposits</div><div class="stat-v" id="p-dep"></div></div>
+      <div class="stat"><div class="stat-l">Fees paid</div><div class="stat-v" id="p-fee"></div></div>
+    </div>
+    <div class="card"><div class="card-h"><h2 id="perf-t">Invested value</h2><div class="seg box" id="seg-perf"><button data-m="val" class="on">Value</button><button data-m="ret">Return</button></div></div>
+      <div class="card-b"><div class="chart" id="ch-perf"></div></div></div>
+
+    <div class="sec-t">Allocations</div>
+    <div class="ins ins-sec"><span class="ins-ic"><span data-i="bolt"></span></span><div class="ins-tx"><b>36% is in five single stocks,</b><span>Evolution AB alone is 10%</span><a class="lnk-btn" onclick="openBuild(CL[0])">Rebalance in the builder</a></div><button class="ins-x" onclick="this.closest('.ins').remove()" aria-label="Hide"><span data-i="close"></span></button></div>
+    <div class="alloc" id="alloc"></div>
+
+    <div class="sec-t">Risk and return</div>
+    <div class="ins ins-sec"><span class="ins-ic"><span data-i="bolt"></span></span><div class="ins-tx"><b>Same return with less risk:</b><span>a 70/30 mix has 3 points less downside</span><a class="lnk-btn" onclick="openBuild(CL[0])">Make a proposal</a></div><button class="ins-x" onclick="this.closest('.ins').remove()" aria-label="Hide"><span data-i="close"></span></button></div>
+    <!-- the report kit (9 Nov): Risk level and the three outcomes in one year are in every report (builder, holdings collection);
+         Volatility and Sharpe ratio need the history, so only here. Risk first, the outcomes on the second line -->
+    <div class="stats" style="--n:3">
+      <div class="stat"><div class="stat-l">Risk level</div><div class="stat-v">4.2 <small>of 7</small><span class="aux">Medium</span></div></div>
+      <div class="stat"><div class="stat-l">Volatility</div><div class="stat-v">14.2%<span class="aux">last 3 years</span></div></div>
+      <div class="stat"><div class="stat-l">Sharpe ratio</div><div class="stat-v">0.71</div></div>
+    </div>
+    <div class="two">
+      <div class="card"><div class="card-h"><h2>Possible value in 10 years</h2></div>
+        <div class="card-b"><div class="chart" id="ch-fan"></div>
+          <div class="legend"><span style="--c:var(--fill-success)">Optimistic outcome</span><span style="--c:var(--fill-accent)">Expected outcome</span><span style="--c:var(--fill-danger)">Pessimistic outcome</span></div></div></div>
+      <div class="card"><div class="card-h"><h2>Compared with benchmark portfolios</h2></div>
+        <div class="card-b"><div class="chart" id="ch-bench"></div>
+          <div class="legend"><span class="pt" style="--c:var(--text-muted)">Benchmark mix of stocks and bonds</span><span class="pt" style="--c:var(--fill-accent)">Karl Nyström’s portfolio</span></div></div></div>
+    </div>
+    <div class="stats" style="--n:3;margin-top:var(--space-2xl)">   <!-- the outcomes in one year under the charts (her ask, 10 Nov) -->
+      <div class="stat"><div class="stat-l">Expected outcome, 1 year</div><div class="stat-v">+6.1%<span class="aux">116 500 kr</span></div></div>
+      <div class="stat"><div class="stat-l">Optimistic outcome, 1 year</div><div class="stat-v">+27.8%<span class="aux">530 700 kr</span></div></div>
+      <div class="stat"><div class="stat-l">Pessimistic outcome, 1 year</div><div class="stat-v">−21.4%<span class="aux">−350 800 kr</span></div></div>
+    </div>
+
+    <div class="sec-t">Scenarios</div>
+    <div class="wi-grid">   <!-- the what-if table and, next to it, what the moves depend on -->
+      <div class="card"><div class="card-h"><h2>If markets move</h2><div class="seg box" id="seg-wi"><button data-wm="5">5%</button><button data-wm="10" class="on">10%</button><button data-wm="20">20%</button></div></div>
+        <div class="card-b">
+          <div id="scen"></div>
+        </div></div>
+      <div class="card"><div class="card-h"><h2>Exposure</h2></div>
+        <div class="card-b"><table class="tbl wi-tbl"><colgroup><col style="width:150px"><col><col style="width:60px"></colgroup>
+          <thead><tr><th>Market</th><th></th><th class="num">Share</th></tr></thead><tbody>
+          <tr><td>Stocks</td><td><div class="exp-t"><i style="width:91%"></i></div></td><td class="num">91%</td></tr>
+          <tr><td>Foreign currency</td><td><div class="exp-t"><i style="width:51%"></i></div></td><td class="num">51%</td></tr>
+          <tr><td>Swedish stocks</td><td><div class="exp-t"><i style="width:30%"></i></div></td><td class="num">30%</td></tr>
+          <tr><td>Interest rate funds</td><td><div class="exp-t"><i style="width:6%"></i></div></td><td class="num">6%</td></tr>
+          </tbody></table></div></div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ Add client / link to connect banks ============ -->
+<div class="cs-modal md" id="md" hidden>
+  <div class="cs-modalbox" role="dialog" aria-modal="true">
+    <button class="cs-modal-x" onclick="closeMd()" aria-label="Close"><span data-i="close"></span></button>
+
+    <!-- step 1: the client -->
+    <div id="md-1">
+      <h4>Add client</h4>
+      <p class="md-sub">Enter the client’s details. Then you get their holdings collection link.</p>
+      <div class="row2">
+        <div class="cs-fld"><label class="cs-fieldlbl" for="f-first">First name</label><input class="cs-input" id="f-first" autocomplete="off"></div>
+        <div class="cs-fld"><label class="cs-fieldlbl" for="f-last">Last name</label><input class="cs-input" id="f-last" autocomplete="off"></div>
+      </div>
+      <div class="cs-fld"><label class="cs-fieldlbl" for="f-pid">Personal ID</label><input class="cs-input" id="f-pid" placeholder="YYYYMMDD-XXXX" inputmode="numeric" autocomplete="off">
+        <p class="cs-ferr" id="e-pid"></p><div id="dup"></div></div>
+      <div class="cs-fld"><label class="cs-fieldlbl" for="f-mail">Email</label><input class="cs-input" id="f-mail" placeholder="name@domain.com" autocomplete="off"><p class="cs-ferr" id="e-mail"></p></div>
+      <div class="cs-fld" style="margin-bottom:0"><label class="cs-fieldlbl">Advisor</label>
+        <div class="cs-select" id="adv-sel"><button class="cs-input cs-selbtn" onclick="this.parentNode.classList.toggle('open')"><span id="adv-lbl">Lena Holm (you)</span><span data-i="chevron-down"></span></button>
+          <div class="cs-sellist"><div class="cs-mitem" data-adv>Lena Holm (you)</div><div class="cs-mitem" data-adv>Johan Sandberg</div><div class="cs-mitem" data-adv>Mikaela Ström</div></div></div></div>
+      <div class="md-foot"><span class="sp"></span><button class="btn" onclick="closeMd()">Cancel</button><button class="btn pri" id="b-add" disabled onclick="addClient()">Add client</button></div>
+    </div>
+
+    <!-- step 2: the link -->
+    <div id="md-2" hidden>
+      <div class="done-h" id="md-done"><div><h4 id="md-t"></h4><p id="md-s"></p></div></div>
+      <div class="md-pick" id="md-pick"><div class="cs-select" id="q-sel"><button class="cs-input cs-selbtn" onclick="this.parentNode.classList.toggle('open')"><span id="q-lbl" class="cs-selph">Choose a client</span><span data-i="chevron-down"></span></button><div class="cs-sellist" id="q-list"></div></div></div>
+      <div id="w-link">
+      <div class="lnk-f"><div class="lnk-in"><input class="cs-input" id="lnk" readonly><button class="lnk-ic" id="b-copy" onclick="copyLink()" aria-label="Copy link" data-tip="Copy link"><span data-i="copy"></span></button></div><button class="btn" id="b-open" onclick="openHere()">Open on this computer</button></div>
+        <button class="qr-btn" id="b-qr" onclick="toggleQr()"><span data-i="chevron-down"></span><span id="qr-lbl">Show QR code</span></button>
+      </div>
+      <div id="w-meet" hidden>
+        <div class="meet"><svg id="qr" viewBox="0 0 25 25" shape-rendering="crispEdges"></svg>
+          <p id="meet-1"></p></div>
+      </div>
+
+      <div class="md-foot"><span class="sp" id="md-state"></span><button class="btn" id="b-later" onclick="closeMd()">Cancel</button><button class="btn pri" id="b-done" onclick="doneMd()">Done</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Build portfolio: the builder's starting point, for one client ============ -->
+<div class="cs-modal md bp" id="bp" hidden>
+  <div class="cs-modalbox" role="dialog" aria-modal="true">
+    <button class="cs-modal-x" onclick="closeBuild()" aria-label="Close"><span data-i="close"></span></button>
+    <div class="bp-head"><button class="bp-back" id="bp-back" onclick="bpGo('source')" aria-label="Back"><span data-i="back"></span></button><h4 id="bp-t"></h4></div>
+    <p class="md-sub" id="bp-s"></p>
+    <div class="bp-for" id="bp-for"></div>
+    <div id="bp-body"></div>
+    <div class="md-foot" id="bp-foot"></div>
+  </div>
+</div>
+
+<!-- ============ All of the client's activity ============ -->
+<div class="cs-modal md bp" id="actm" hidden>
+  <div class="cs-modalbox" role="dialog" aria-modal="true">
+    <button class="cs-modal-x" onclick="$('actm').hidden = true" aria-label="Close"><span data-i="close"></span></button>
+    <div class="bp-head"><h4>Activity</h4></div>
+    <p class="md-sub">Everything that happened with Karl Nyström’s data and portfolios, newest first.</p>
+    <div class="act-scroll"><ul class="tl" id="actm-list"></ul></div>
+  </div>
+</div>
+
+<!-- ============ All the client's portfolios ============ -->
+<div class="cs-modal md bp" id="pfm" hidden>
+  <div class="cs-modalbox" role="dialog" aria-modal="true">
+    <button class="cs-modal-x" onclick="$('pfm').hidden = true" aria-label="Close"><span data-i="close"></span></button>
+    <div class="bp-head"><h4>Portfolios</h4></div>
+    <p class="md-sub">Saved in the portfolio builder for Karl Nyström, newest first.</p>
+    <div class="pfm-body"><div class="pfm-list" id="pfm-list"></div></div>
+  </div>
+</div>
+
+<div class="cs-toast" id="toast" hidden></div>
+<div class="tip" id="tip"></div>
+
+<script src="hc-ds/components/icons.js"></script>
+<script src="hc-ds/components/report-charts.js"></script>
+<script>
+/* extra icons in the same style: 24 grid, 2px lines */
+Object.assign(HC_ICONS, {
+  'send': '<path d="M4 11.5L20 4L14.5 20L11.5 13L4 11.5Z M11.5 13L20 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  'builder': '<path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM17 14V20M14 17H20" stroke="currentColor" stroke-width="2"/>',
+  'arrow': '<path d="M9 5.5L15.5 12L9 18.5" stroke="currentColor" stroke-width="2"/>',
+  'pencil-plus': '<path d="M4 20H8L18.5 9.5L14.5 5.5L4 16V20Z M12.5 7.5L16.5 11.5 M16 18H22 M19 15V21" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  'folder': '<path d="M3 6.5C3 5.7 3.7 5 4.5 5H9.5L11.5 7.5H19.5C20.3 7.5 21 8.2 21 9V18C21 18.8 20.3 19.5 19.5 19.5H4.5C3.7 19.5 3 18.8 3 18V6.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  'bolt': '<path d="M13 3L5 13.5H11.5L10.5 21L19 10.5H12.5L13 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  'link': '<path d="M10 14C11.3 15.3 13.4 15.3 14.7 14L18.2 10.5C19.5 9.2 19.5 7.1 18.2 5.8C16.9 4.5 14.8 4.5 13.5 5.8L12.6 6.7 M14 10C12.7 8.7 10.6 8.7 9.3 10L5.8 13.5C4.5 14.8 4.5 16.9 5.8 18.2C7.1 19.5 9.2 19.5 10.5 18.2L11.4 17.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  'menu': '<path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" stroke-width="2"/>',
+  'users': '<circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M2.5 19.5C2.5 16.2 5.4 14 9 14C12.6 14 15.5 16.2 15.5 19.5M16 4.8C17.6 5.3 18.6 6.6 18.6 8C18.6 9.4 17.6 10.7 16 11.2M18 14.4C20.2 15.1 21.5 16.9 21.5 19.5" stroke="currentColor" stroke-width="2"/>',
+  'file': '<path d="M6 3H14L19 8V21H6V3Z M14 3V8H19 M9 13H16 M9 17H14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  'settings': '<circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2.5V5M12 19V21.5M21.5 12H19M5 12H2.5M18.7 5.3L17 7M7 17L5.3 18.7M18.7 18.7L17 17M7 7L5.3 5.3" stroke="currentColor" stroke-width="2"/>',
+  'user': '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20.5C4 16.9 7.6 14.5 12 14.5C16.4 14.5 20 16.9 20 20.5" stroke="currentColor" stroke-width="2"/>',
+  'copy': '<path d="M8 8V4H20V16H16M4 8H16V20H4V8Z" stroke="currentColor" stroke-width="2"/>'
+});
+document.querySelectorAll('[data-i]').forEach(function (el) { el.outerHTML = HCIcon(el.getAttribute('data-i')); });
+
+var $ = function (id) { return document.getElementById(id); };
+function grp(n) { var s = Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (n < 0 ? '−' : '') + s; }
+function kr(n) { return grp(n) + ' kr'; }
+var tt;
+function toast(t, ok) { var el = $('toast'); el.innerHTML = ''; if (ok) el.innerHTML = HCIcon('check', 'toast-ok'); el.appendChild(document.createTextNode(t)); el.hidden = false; clearTimeout(tt); tt = setTimeout(function () { el.hidden = true; }, 2600); }
+function logo(b) { return '<div class="cs-avatar" data-tip="' + BANK[b] + '"><img src="hc-ds/assets/logos/' + b + '.png" alt="' + BANK[b] + '"></div>'; }
+/* up to 4 logos; with more, 3 and +N (the list on hover) */
+function logos(bs) {
+  if (bs.length <= 4) return '<div class="logos">' + bs.map(logo).join('') + '</div>';
+  var rest = bs.slice(3);
+  return '<div class="logos">' + bs.slice(0, 3).map(logo).join('') + '<span class="more" data-tip-list="' + rest.join(',') + '">+' + rest.length + '</span></div>';
+}
+var BANK = { avanza: 'Avanza', skandia: 'Skandia', seb: 'SEB', nordnet: 'Nordnet', handelsbanken: 'Handelsbanken', swedbank: 'Swedbank', nordea: 'Nordea',
+  lansforsakringar: 'Länsförsäkringar', revolut: 'Revolut', carnegie: 'Carnegie', savr: 'Savr', sbab: 'SBAB' };
+
+/* ---------- 1. Clients ---------- */
+/* status = the state of the data, seen by the system; sending or copying a link never changes it */
+var ST = { ok: 'Up to date', soon: 'Expires soon', exp: 'Consent expired', wait: 'In progress', none: 'No data yet' };
+var ACT = { soon: 'Send link', exp: 'Send link', wait: 'Send link', none: 'Send link' };   // one action, one name: the window says what the link asks for
+var CL = [
+  { n: 'Karl Nyström', e: 'karl.nystrom@gmail.com', id: '19850312-4471', b: ['avanza', 'skandia', 'seb', 'nordnet'], v: 1939922, old: 'Nordnet not included', st: 'exp', sub: 'Nordnet, since 2 Oct', rows: 'nordnet|Expired 2 Oct 2026', u: '2026-10-28' },
+  { n: 'Maria Lindgren', e: 'maria.lindgren@outlook.com', id: '19790521-3382', b: ['handelsbanken'], v: 2412800, st: 'wait', sub: 'Avanza, link sent 27 Oct', rows: 'avanza|Not connected yet', lk: 'Link opened 27 Oct 2026', u: '2026-10-27' },
+  { n: 'Erik Johansson', e: 'erik.johansson@telia.se', id: '19620907-1156', b: ['seb', 'swedbank', 'nordnet'], v: 4870150, st: 'ok', sub: '3 banks', u: '2026-10-24' },
+  { n: 'Sofia Berg', e: 'sofia.berg@gmail.com', id: '19920114-2840', b: [], v: null, st: 'none', sub: 'No banks connected yet', lk: 'No link created yet', u: null },
+  { n: 'Anders Wikström', e: 'anders@wikstrom.se', id: '19581130-5719', b: ['nordea', 'lansforsakringar'], v: 3105400, old: 'As of 14 Mar 2026', st: 'exp', sub: 'Both banks, since 14 Sep', lk: 'Link created 20 Sep 2026, not opened yet', rows: 'nordea|Expired 14 Sep 2026;lansforsakringar|Expired 21 Sep 2026', u: '2026-03-14' },
+  { n: 'Elin Holmqvist', e: 'elin.holmqvist@icloud.com', id: '19880603-4126', b: ['avanza'], v: 612300, st: 'soon', sub: 'Avanza, in 9 days', rows: 'avanza|Expires 14 Nov 2026', u: '2026-08-14' },
+  { n: 'Johan Ek', e: 'johan.ek@gmail.com', id: '19710419-6633', b: [], v: null, st: 'none', sub: 'No banks connected yet', lk: 'Link created 30 Oct 2026, not opened yet', u: null },
+  { n: 'Ingrid Sjöberg', e: 'ingrid.sjoberg@outlook.com', id: '19540826-2208', b: ['handelsbanken'], v: 5980000, old: 'As of 1 Feb 2026', st: 'exp', sub: 'Handelsbanken, since 1 Aug', rows: 'handelsbanken|Expired 1 Aug 2026', u: '2026-02-01' },
+  { n: 'Oskar Dahl', e: 'oskar.dahl@hotmail.com', id: '19950228-7341', b: ['avanza', 'nordnet', 'revolut'], v: 284600, st: 'ok', sub: '3 banks', u: '2026-10-31' },
+  { n: 'Linnéa Forsberg', e: 'linnea.forsberg@gmail.com', id: '19830715-4902', b: ['skandia'], v: 1120900, st: 'wait', sub: 'SEB, link sent 21 Oct', rows: 'seb|Not connected yet', lk: 'Link opened 21 Oct 2026', u: '2026-10-21' },
+  { n: 'Per-Olof Strand', e: 'po.strand@telia.se', id: '19490102-3517', b: ['handelsbanken', 'carnegie'], v: 8450200, st: 'ok', sub: '2 banks', u: '2026-10-29' },
+  { n: 'Ebba Nordin', e: 'ebba.nordin@gmail.com', id: '19970911-1285', b: ['avanza', 'savr'], v: 198400, st: 'ok', sub: '2 banks', u: '2026-10-12' },
+  { n: 'Gustav Engström', e: 'gustav.engstrom@outlook.com', id: '19660324-5590', b: ['seb', 'nordea', 'carnegie', 'skandia', 'avanza', 'handelsbanken'], v: 6230700, st: 'soon', sub: 'Carnegie, in 5 days', rows: 'carnegie|Expires 10 Nov 2026', u: '2026-08-10' },
+  { n: 'Astrid Holm', e: 'astrid.holm@icloud.com', id: '19900807-6042', b: [], v: null, st: 'wait', sub: 'Opened the link, no banks connected yet', lk: 'Link opened 3 Nov 2026', u: null },
+  { n: 'Nils Åberg', e: 'nils.aberg@gmail.com', id: '19750630-2194', b: ['lansforsakringar', 'avanza'], v: 2760300, st: 'ok', sub: '2 banks', u: '2026-10-19' },
+  { n: 'Klara Lindberg', e: 'klara.lindberg@outlook.com', id: '19860219-5527', b: ['sbab', 'avanza'], v: 1380500, st: 'ok', sub: '2 banks', u: '2026-10-08' }
+];
+var F = { f: 'all', q: '', s: null, dir: 1 };   // s null: no column picked, the default order (by status) with no arrow
+var FILT = [['all', 'All'], ['att', 'Needs attention'], ['wait', 'In progress'], ['none', 'No data yet'], ['ok', 'Up to date']];
+var RANK = { exp: 0, soon: 1, wait: 2, none: 3, ok: 4 };
+function inF(c, f) { return f === 'all' || (f === 'att' ? (c.st === 'exp' || c.st === 'soon') : c.st === f); }
+function ini(n) { return n.split(/[\s-]+/).map(function (w) { return w[0]; }).slice(0, 2).join(''); }
+function fd(iso) { if (!iso) return ''; var d = new Date(iso); return d.getDate() + ' ' + d.toLocaleString('en', { month: 'short' }) + ' ' + d.getFullYear(); }
+
+
+function counts() {
+  $('seg-f').innerHTML = FILT.map(function (f) { return '<button data-f="' + f[0] + '">' + f[1] + ' <i' + (f[0] === 'att' ? ' class="att"' : '') + '>' + CL.filter(function (c) { return inF(c, f[0]); }).length + '</i></button>'; }).join('');
+}
+function renderClients() {
+  counts();
+  document.querySelectorAll('[data-f]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-f') === F.f); });
+  var q = F.q.toLowerCase();
+  var list = CL.filter(function (c) { return inF(c, F.f) && (!q || (c.n + ' ' + c.e + ' ' + c.id).toLowerCase().indexOf(q) >= 0); });
+  list.sort(function (a, b) {
+    if (!F.s) return (b === CL[0]) - (a === CL[0]) || (b.added ? 1 : 0) - (a.added ? 1 : 0) || RANK[a.st] - RANK[b.st] || a.n.localeCompare(b.n);   // Karl (the one full profile in this draft) first   // default and sorting off: new clients on top, then by status, urgent first
+    if (F.s === 'att') return (b.added ? 1 : 0) - (a.added ? 1 : 0) || (RANK[a.st] - RANK[b.st]) * F.dir || a.n.localeCompare(b.n);   // new clients stay on top, names A to Z inside a status
+    var r = F.s === 'name' ? a.n.localeCompare(b.n) : F.s === 'value' ? (a.v || 0) - (b.v || 0) : F.s === 'upd' ? (a.u || '').localeCompare(b.u || '') : 0;
+    return r * F.dir;
+  });
+  ['name', 'value', 'att', 'upd'].forEach(function (k) { $('s-' + k).innerHTML = F.s === k ? HCIcon(F.dir > 0 ? 'chevron-up' : 'chevron-down') : ''; });
+  $('rows').innerHTML = list.map(function (c) {
+    var fr = c.fresh; c.fresh = false; return '<tr class="go' + (fr ? ' fresh' : '') + '" data-n="' + c.n + '">'
+      + '<td><div class="who"><b>' + c.n + '</b></div></td>'   // no initials circle
+      + '<td class="col-id">' + c.id + '</td>'
+      + '<td>' + (c.b.length ? logos(c.b) : '<span class="mut">No banks connected</span>') + '</td>'
+      + '<td class="num">' + (!c.v ? '<span class="mut">—</span>' : c.old ? '<span class="old" data-tip="' + c.old + '">' + kr(c.v) + '</span>' : kr(c.v)) + '</td>'
+      + '<td><span class="pill ' + c.st + '" ' + (c.rows ? 'data-tip-rows="' + c.rows + '"' : 'data-tip="' + (c.st === 'ok' ? 'All ' + c.sub + ' connected' : c.sub) + '"') + (c.lk ? ' data-tip-note="' + c.lk + '"' : '') + '>' + ST[c.st] + '</span></td>'
+      + '<td class="col-upd">' + (c.u ? fd(c.u) : '<span class="mut">—</span>') + '</td>'
+      + '<td><div class="rowact">' + (ACT[c.st] ? '<button class="btn sm" data-act="' + c.st + '">' + ACT[c.st] + '</button>' : '')
+      + '<div class="cs-kebab-wrap"><button class="cs-kebab" data-k>' + HCIcon('more') + '</button></div></div></td></tr>';
+  }).join('');
+  $('empty').hidden = list.length > 0;
+}
+document.addEventListener('click', function (e) {
+  var f = e.target.closest('[data-f]'); if (f) { F.f = f.getAttribute('data-f'); renderClients(); return; }
+  var s = e.target.closest('th[data-s]'); if (s) { var k = s.getAttribute('data-s'), d0 = k === 'name' || k === 'att' ? 1 : -1; if (F.s !== k) { F.s = k; F.dir = d0; } else if (F.dir === d0) F.dir = -d0; else F.s = null; renderClients(); return; }
+  var a = e.target.closest('[data-act]'); if (a) { var c = CL.filter(function (x) { return x.n === a.closest('tr').getAttribute('data-n'); })[0];
+    var st = a.getAttribute('data-act'), bank = c.rows ? c.rows.split(';').map(function (x) { return BANK[x.split('|')[0]]; }).join(' and ') : '';
+    openLink(c, (st === 'exp' || st === 'soon') && bank ? bank : 'all'); return; }
+  var adv = e.target.closest('[data-adv]'); if (adv) { $('adv-lbl').textContent = adv.textContent; $('adv-sel').classList.remove('open'); return; }
+  var mi = e.target.closest('[data-mi]'); if (mi) { rowMenuAct(mi.getAttribute('data-mi'), mi.closest('tr').getAttribute('data-n')); return; }
+  var k = e.target.closest('[data-k]'); if (k) { rowMenu(k); return; }
+  if (e.target.closest('.rowpop')) return;
+  closeMenus();
+  var r = e.target.closest('tr.go'); if (r) { go('overview'); return; }   // every row opens the one full profile, Karl Nyström's (her ask, 11 Nov)
+  var t = e.target.closest('[data-t]'); if (t) { go(t.getAttribute('data-t')); return; }
+  var as = e.target.closest('[data-a]'); if (as) { assetsMode = as.getAttribute('data-a'); renderAssets(); return; }
+  var pf = e.target.closest('[data-pf]'); if (pf) { $('pfm').hidden = true; goBuilder(); return; }
+  if (e.target.closest('[data-banklink]')) {   // the same link for all expired banks, the text names them all
+    openLink(CL[0], BK.filter(function (k) { return k.st === 'err'; }).map(function (k) { return BANK[k.b]; }).join(' and ')); return; }
+  var bh = e.target.closest('.bk-h'); if (bh && bh.nextElementSibling) { bh.parentNode.classList.toggle('open'); return; }
+  var wm = e.target.closest('[data-wm]'); if (wm) { WI_M = +wm.getAttribute('data-wm'); renderWhatIf(); return; }
+  var p = e.target.closest('[data-p]'); if (p) { period = p.getAttribute('data-p'); renderPerf(); return; }
+  var m = e.target.closest('[data-m]'); if (m) { perfMode = m.getAttribute('data-m'); renderPerf(); return; }
+  var ai = e.target.closest('[data-acc]'); if (ai) { $('acc-sel').classList.remove('open'); na('figures for one account'); return; }
+  if (!e.target.closest('.cs-select')) document.querySelectorAll('.cs-select.open').forEach(function (s) { s.classList.remove('open'); });
+});
+$('q').addEventListener('input', function () { F.q = this.value; renderClients(); });
+document.addEventListener('input', function (e) { var sr = e.target.closest('.search'); if (sr) sr.classList.toggle('has', !!e.target.value); });
+document.addEventListener('click', function (e) {   // the clear button of any search field
+  var x = e.target.closest('.s-x'); if (!x) return;
+  var inp = x.parentNode.querySelector('input'); inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus();
+});
+
+/* ---------- 2. Overview ---------- */
+var BK = [
+  { b: 'avanza', st: 'ok', note: 'Updated 28 Oct 2026, consent until 28 Jan 2027', acc: [['ISK', 'ISK', '9552-104 8773', 456100], ['Sparkonto', 'Savings', '9552-221 0418', 18500]] },
+  { b: 'skandia', st: 'ok', note: 'Updated 28 Oct 2026, consent until 28 Jan 2027', acc: [['Kapitalförsäkring', 'KF', '5541-208 337', 388400], ['Tjänstepension', 'Pension', '5541-610 092', 412300], ['Fondförsäkring', 'Insurance', '5541-773 105', 240000]] },
+  { b: 'seb', st: 'ok', note: 'Updated 28 Oct 2026, consent until 28 Jan 2027', acc: [['Lönekonto', 'Bank account', '5212 10 448 91', 12386], ['ISK', 'ISK', '5212 10 902 33', 298200], ['Fondkonto', 'Fund account', '5212 11 305 70', 114036], ['Privatlån', 'Loan', '5212 47 118 06', -300655]] },
+  { b: 'nordnet', st: 'err', note: 'Not in the totals, last data 12 Jun 2026', acc: [] }
+];
+var POS = [
+  ['Länsförsäkringar Global Indexnära', 'Fund', 'Avanza ISK', 342800], ['Handelsbanken Sverige Index Criteria', 'Fund', 'Skandia Tjänstepension', 252300],
+  ['Skandia Time Global', 'Fund', 'Skandia Fondförsäkring', 240000], ['Atlas Copco A', 'Stock', 'Skandia KF', 198400], ['Evolution AB', 'Stock', 'Skandia KF', 190000],
+  ['AMF Aktiefond Global', 'Fund', 'Skandia Tjänstepension', 160000], ['Investor AB ser. B', 'Stock', 'SEB ISK', 121400], ['SEB Hållbarhetsfond Sverige', 'Fund', 'SEB Fondkonto', 114036],
+  ['Avanza Zero', 'Fund', 'Avanza ISK', 113300], ['Volvo AB ser. B', 'Stock', 'SEB ISK', 88600], ['Nordea Bank Abp', 'Stock', 'SEB ISK', 88200]
+];
+var assetsMode = 'acc';
+function renderAssets() {
+  document.querySelectorAll('[data-a]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-a') === assetsMode); });
+  if (assetsMode === 'pos') {
+    var inv = 1909036;
+    $('assets').innerHTML = '<table class="tbl"><thead><tr><th style="padding-left:0">Holding</th><th>Type</th><th>Account</th><th class="num">Value</th><th class="num" style="padding-right:0">Share</th></tr></thead><tbody>'
+      + POS.map(function (p) { return '<tr><td style="padding-left:0">' + p[0] + '</td><td><span class="tag">' + p[1] + '</span></td><td style="color:var(--text-secondary)">' + p[2] + '</td><td class="num">' + kr(p[3]) + '</td><td class="num" style="padding-right:0">' + (p[3] / inv * 100).toFixed(1) + '%</td></tr>'; }).join('')
+      + '</tbody></table>';   // no total: Invested above already says it
+    return;
+  }
+  var firstOk = BK.filter(function (k) { return k.st !== 'err'; })[0];
+  $('assets').innerHTML = BK.map(function (k) {   // the bank order as collected; the expired one (Nordnet) is last for now
+    var sum = k.acc.reduce(function (s, a) { return s + a[3]; }, 0);
+    return '<div class="bk' + '' + (k.st === 'err' ? ' bk-err' : '') + '"><div class="bk-h"><div class="cs-avwrap">' + logo(k.b) + '<span class="cs-dot ' + k.st + '"></span></div>'
+      + '<div class="bk-tx"><b>' + BANK[k.b] + '</b><small>' + k.note + '</small></div>'
+      + (k.st === 'err' ? '<span class="pill exp" data-tip="Expired on 2 Oct 2026">Consent expired</span><button class="btn sm" data-banklink data-note="3. The fix sits on the bank that needs it: one link, it opens all banks">Send link</button>' : '')   // one link covers every expired bank
+      + (k.acc.length ? '<span class="bk-v">' + kr(sum) + '</span>' + HCIcon('chevron-down') : '') + '</div>'   // no accounts: no sum, no chevron, nothing to open
+      + (!k.acc.length ? '' : '<div class="bk-acc"><div class="acc acc-h"><span>Account</span><span>Type</span><span>Number</span><span class="num">Value</span></div>' + (k.acc.length ? k.acc.map(function (a) { return '<div class="acc"><span>' + a[0] + '</span><span><span class="tag">' + a[1] + '</span></span><span class="no">' + a[2] + '</span><span class="num">' + kr(a[3]) + '</span></div>'; }).join('')
+        : '') + '</div>') + '</div>';
+  }).join('');   // no total: Net value above already says it, and the Nordnet row says it is left out
+}
+
+/* Karl's portfolios in the builder (date, value, products: as in the builder's library) */
+var KP = [
+  ['Karl — proposal 29 Oct', '2026-10-29', 965000, 14], ['Karl — current portfolio', '2026-10-28', 965000, 18],
+  ['Portfolio 07.04/2', '2026-04-07', 1890000, 8], ['Portfolio 07.04/1', '2026-04-07', 540000, 2], ['Low risk alloc-2', '2025-11-26', 540000, 2]
+];
+function pfRow(p) { return '<div class="pf" data-pf="' + p[0] + '"><div class="pf-tx"><b>' + p[0] + '</b><small>' + fd(p[1]) + ', ' + p[3] + ' products</small></div><span class="pf-v">' + kr(p[2]) + '</span>' + HCIcon('arrow') + '</div>'; }   // no icon, the value on the right like a table
+function renderPf() {   // the card shows the 3 newest; Show all opens the full list
+  $('pf-list').innerHTML = KP.slice(0, 3).map(pfRow).join('');
+  $('pf-all').hidden = KP.length <= 3;
+}
+/* activity: who did what, always with the full name; the card shows the 5 newest */
+var ACTS = [
+  ['acc-ev', 'Proposal created in the builder', '29 Oct 2026, by Lena Holm'],
+  ['ok-ev', 'Holdings collected: Avanza, Skandia, SEB', '28 Oct 2026, by Karl Nyström'],
+  ['', 'Holdings collection link created', '27 Oct 2026, by Lena Holm'],
+  ['err-ev', 'Nordnet consent expired', '2 Oct 2026'],
+  ['ok-ev', 'Holdings collected: Nordnet', '12 Jun 2026, by Karl Nyström'],
+  ['acc-ev', 'Portfolio 07.04/2 created in the builder', '7 Apr 2026, by Lena Holm'],
+  ['acc-ev', 'Portfolio 07.04/1 created in the builder', '7 Apr 2026, by Lena Holm'],
+  ['acc-ev', 'Low risk alloc-2 created in the builder', '26 Nov 2025, by Lena Holm'],
+  ['', 'Report shared with Karl Nyström', '14 Jun 2023, by Lena Holm'],
+  ['ok-ev', 'Holdings collected: 4 banks', '12 Jun 2023, by Karl Nyström'],
+  ['', 'Client added', '10 Jun 2023, by Lena Holm']
+];
+function actRow(a) { return '<li' + (a[0] ? ' class="' + a[0] + '"' : '') + '>' + a[1] + '<small>' + a[2] + '</small></li>'; }
+function renderAct() { $('act-list').innerHTML = ACTS.slice(0, 5).map(actRow).join(''); $('act-all').hidden = ACTS.length <= 5; }
+function openActAll() { $('actm-list').innerHTML = ACTS.map(actRow).join(''); $('actm').hidden = false; }
+function openPfAll() {   // the same list layout as Load from library in Build portfolio
+  $('pfm-list').innerHTML = '<div class="lib">' + KP.map(function (p) { return '<div class="lib-row" data-pf="' + p[0] + '"><span class="tx"><b>' + p[0] + '</b><small>' + fd(p[1]) + ', ' + p[3] + ' products</small></span><span class="v">' + kr(p[2]) + '</span>' + HCIcon('arrow') + '</div>'; }).join('') + '</div>';
+  $('pfm').hidden = false;
+}
+
+/* ---------- 3. Analysis ---------- */
+var PER = {
+  '1M': { n: 22, chg: 21340, twr: 1.2, dep: 0, fee: 690, lab: 'in October' },
+  '3M': { n: 64, chg: 52800, twr: 2.9, dep: 0, fee: 2100, lab: 'since 5 Aug' },
+  'YTD': { n: 210, chg: 121900, twr: 7.9, dep: 20000, fee: 7000, lab: 'since 1 Jan' },
+  '1Y': { n: 252, chg: 148520, twr: 9.8, dep: 30000, fee: 8400, lab: 'since 5 Nov 2025' },
+  '3Y': { n: 156, chg: 512400, twr: 31.6, dep: 150000, fee: 23900, lab: 'since Nov 2023' },
+  'Max': { n: 180, chg: 598700, twr: 34.2, dep: 180000, fee: 27100, lab: 'since Jun 2023' }
+};
+var period = '1Y', perfMode = 'val';
+$('seg-period').innerHTML = Object.keys(PER).map(function (k) { return '<button data-p="' + k + '">' + k + '</button>'; }).join('');
+$('acc-list').innerHTML = ['All accounts', 'Avanza ISK', 'Skandia KF', 'Skandia Tjänstepension', 'Skandia Fondförsäkring', 'SEB ISK', 'SEB Fondkonto'].map(function (a) { return '<div class="cs-mitem" data-acc>' + a + '</div>'; }).join('');
+
+function rnd(seed) { return function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; }; }
+function series(n, a, b, amp, seed) {   // a walk pinned to a at the start and b at the end
+  var r = rnd(seed), c = [0];
+  for (var i = 1; i < n; i++) c.push(c[i - 1] + r());
+  return c.map(function (x, i) { var t = i / (n - 1); return a + (b - a) * t + (x - c[n - 1] * t) * amp; });
+}
+function nice(lo, hi, k) { var st = (hi - lo) / k, m = Math.pow(10, Math.floor(Math.log10(st))); st = [1, 2, 2.5, 5, 10].map(function (x) { return x * m; }).find(function (x) { return x >= st; }); var a = Math.floor(lo / st) * st, t = []; for (var v = a; v <= hi + st * .999; v += st) t.push(v); return t; }
+
+/* line chart: lines = [{v:[...], c:color, name, area}], xs = labels, fmt */
+function lineChart(el, o) {
+  var W = el.clientWidth || 600, H = o.h || 260, L = 64, R = 8, T = 12, B = 28;
+  var all = [].concat.apply([], o.lines.map(function (l) { return l.v; })).concat(o.extra || []);
+  var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), pad = (hi - lo) * .08 || 1;
+  var ticks = nice(lo - pad, hi + pad, 4); lo = ticks[0]; hi = ticks[ticks.length - 1];
+  var n = o.lines[0].v.length, X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '"><defs><linearGradient id="g' + el.id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9f59fb" stop-opacity=".18"/><stop offset="1" stop-color="#9f59fb" stop-opacity="0"/></linearGradient></defs>';
+  ticks.forEach(function (t) { s += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '"/><text x="' + (L - 10) + '" y="' + (Y(t) + 4) + '" text-anchor="end">' + o.tick(t) + '</text>'; });
+  (o.xt || []).forEach(function (x) { s += '<text x="' + X(x[0]) + '" y="' + (H - 8) + '" text-anchor="' + (x[0] === 0 ? 'start' : x[0] === n - 1 ? 'end' : 'middle') + '">' + x[1] + '</text>'; });
+  if (o.band) { var bp = o.band[0].map(function (v, i) { return X(i) + ',' + Y(v); }).join(' ') + ' ' + o.band[1].map(function (v, i) { return X(i) + ',' + Y(v); }).reverse().join(' '); s += '<polygon points="' + bp + '" fill="#9f59fb" fill-opacity=".08"/>'; }
+  if (o.zero != null && lo < o.zero && hi > o.zero) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(o.zero) + '" y2="' + Y(o.zero) + '" stroke="var(--border-stronger)" stroke-dasharray="3 3"/>';
+  o.lines.forEach(function (l) {
+    var d = l.v.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join('');
+    if (l.area) s += '<path d="' + d + 'L' + X(n - 1) + ' ' + (H - B) + 'L' + L + ' ' + (H - B) + 'Z" fill="url(#g' + el.id + ')"/>';
+    s += '<path d="' + d + '" fill="none" stroke="' + l.c + '" stroke-width="2" stroke-linejoin="round"' + (l.dash ? ' stroke-dasharray="5 4"' : '') + '/>';
+  });
+  s += '<line id="' + el.id + '-x" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--border-stronger)" visibility="hidden"/>';
+  o.lines.forEach(function (l, j) { s += '<circle id="' + el.id + '-d' + j + '" r="4" fill="' + l.c + '" stroke="#fff" stroke-width="2" visibility="hidden"/>'; });
+  el.innerHTML = s + '</svg><div class="ctip" hidden></div>';
+  var svg = el.querySelector('svg'), tip = el.querySelector('.ctip');
+  svg.onmousemove = function (e) {
+    var bx = svg.getBoundingClientRect(), x = (e.clientX - bx.left) * W / bx.width, i = Math.max(0, Math.min(n - 1, Math.round((x - L) / (W - L - R) * (n - 1))));
+    var xl = el.querySelector('#' + el.id + '-x'); xl.setAttribute('x1', X(i)); xl.setAttribute('x2', X(i)); xl.setAttribute('visibility', 'visible');
+    o.lines.forEach(function (l, j) { var c = el.querySelector('#' + el.id + '-d' + j); c.setAttribute('cx', X(i)); c.setAttribute('cy', Y(l.v[i])); c.setAttribute('visibility', 'visible'); });
+    tip.innerHTML = '<span>' + o.xl(i) + '</span>' + o.lines.map(function (l) { return '<i style="--c:' + l.c + '">' + (l.name ? l.name + ' ' : '') + '<b>' + o.fmt(l.v[i]) + '</b></i>'; }).join('');
+    tip.hidden = false; tip.style.left = Math.max(70, Math.min(bx.width - 70, X(i) * bx.width / W)) + 'px'; tip.style.top = '-8px';
+  };
+  svg.onmouseleave = function () { tip.hidden = true; el.querySelectorAll('[visibility]').forEach(function (n) { n.setAttribute('visibility', 'hidden'); }); };
+}
+var NOW = new Date('2026-11-05');
+function renderPerf() {
+  document.querySelectorAll('[data-p]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-p') === period); });
+  document.querySelectorAll('[data-m]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === perfMode); });
+  var p = PER[period];
+  $('p-chg').innerHTML = '+' + grp(p.chg) + ' <small>kr</small>'; 
+  $('p-twr').textContent = '+' + p.twr.toFixed(1) + '%'; $('p-dep').innerHTML = grp(p.dep) + ' <small>kr</small>'; $('p-fee').innerHTML = grp(p.fee) + ' <small>kr</small>';
+  $('perf-t').textContent = perfMode === 'val' ? 'Invested value' : 'Return (TWR)';
+  var end = 1909036, days = { '1M': 31, '3M': 92, 'YTD': 309, '1Y': 365, '3Y': 1096, 'Max': 1242 }[period];
+  var v = perfMode === 'val' ? series(p.n, end - p.chg, end, end * .012, 7 + p.n) : series(p.n, 0, p.twr, 1.1 * Math.sqrt(p.twr + 1) / 2, 7 + p.n);
+  var dt = function (i) { return new Date(NOW - (days * (1 - i / (p.n - 1))) * 864e5); };
+  var xt = [0, .25, .5, .75, 1].map(function (f) { var i = Math.round(f * (p.n - 1)), d = dt(i); return [i, d.toLocaleString('en', { month: 'short' }) + (days > 400 ? ' ' + String(d.getFullYear()).slice(2) : days < 100 ? ' ' + d.getDate() : '')]; });
+  lineChart($('ch-perf'), { lines: [{ v: v, c: '#9f59fb', area: true, name: perfMode === 'val' ? 'Invested value' : 'Return' }], xt: xt, zero: perfMode === 'ret' ? 0 : null,
+    tick: perfMode === 'val' ? function (t) { return (t / 1e6).toFixed(2) + ' M'; } : function (t) { return t.toFixed(0) + '%'; },
+    fmt: perfMode === 'val' ? kr : function (x) { return (x >= 0 ? '+' : '') + x.toFixed(1) + '%'; },
+    xl: function (i) { return dt(i).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } });
+}
+function renderRisk() {
+  var v0 = 1639267, mu = Math.log(1.061), sg = .142, z = 1.28, yr = [], ex = [], gd = [], bd = [];
+  for (var t = 0; t <= 10; t++) { yr.push(t); ex.push(v0 * Math.exp(mu * t)); gd.push(v0 * Math.exp(mu * t + z * sg * Math.sqrt(t))); bd.push(v0 * Math.exp(mu * t - z * sg * Math.sqrt(t))); }
+  lineChart($('ch-fan'), { h: 240, lines: [{ v: gd, c: 'var(--fill-success)', name: 'Optimistic' }, { v: ex, c: '#9f59fb', name: 'Expected' }, { v: bd, c: 'var(--fill-danger)', name: 'Pessimistic' }], band: [gd, bd],
+    xt: yr.filter(function (y) { return y % 2 === 0; }).map(function (y) { return [y, y ? y + ' yr' : 'Now']; }),
+    tick: function (t) { return (t / 1e6).toFixed(1) + ' M'; }, fmt: kr, xl: function (i) { return i ? 'In ' + i + ' year' + (i > 1 ? 's' : '') : 'Now'; } });
+  // benchmark: downside risk (x) vs expected return (y)
+  var el = $('ch-bench'), W = el.clientWidth || 600, H = 240, L = 48, R = 16, T = 12, B = 36;
+  var pts = [[2, 2.1, '0/100'], [6.5, 3.4, '20/80'], [11, 4.5, '40/60'], [15.5, 5.5, '60/40'], [20, 6.4, '80/20'], [24.5, 7.1, '100/0']], me = [21.4, 6.1];
+  var X = function (x) { return L + (W - L - R) * x / 28; }, Y = function (y) { return T + (H - T - B) * (1 - y / 8); };
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '">';
+  [0, 2, 4, 6, 8].forEach(function (y) { s += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(y) + '" y2="' + Y(y) + '"/><text x="' + (L - 10) + '" y="' + (Y(y) + 4) + '" text-anchor="end">' + y + '%</text>'; });
+  [0, 7, 14, 21, 28].forEach(function (x) { s += '<text x="' + X(x) + '" y="' + (H - 18) + '" text-anchor="middle">' + (x ? '−' + x : 0) + '%</text>'; });
+  s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 2) + '" text-anchor="middle">Pessimistic outcome, 1 year</text>';
+  var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p[0]) + ' ' + Y(p[1]); }).join('');
+  s += '<path d="' + d + '" fill="none" stroke="var(--text-muted)" stroke-width="2"/>';
+  pts.forEach(function (p) { s += '<circle cx="' + X(p[0]) + '" cy="' + Y(p[1]) + '" r="4" fill="var(--surface-2)" stroke="var(--text-muted)" stroke-width="2"/><text x="' + X(p[0]) + '" y="' + (Y(p[1]) - 10) + '" text-anchor="middle">' + p[2] + '</text>'; });
+  var same = 18.3;
+  s += '<line x1="' + X(same) + '" x2="' + (X(me[0]) - 8) + '" y1="' + Y(me[1]) + '" y2="' + Y(me[1]) + '" stroke="#9f59fb" stroke-dasharray="3 3"/>';
+  s += '<circle cx="' + X(me[0]) + '" cy="' + Y(me[1]) + '" r="7" fill="#9f59fb" stroke="#fff" stroke-width="2"/><text x="' + X(me[0]) + '" y="' + (Y(me[1]) + 22) + '" text-anchor="middle" style="fill:var(--text-accent);font-weight:500">Current, 6.1%</text>';
+  el.innerHTML = s + '</svg>';
+  renderWhatIf();
+}
+/* PDF of the Analysis tab */
+function exportPdf() {
+  var b = $('b-pdf'); if (b.dataset.busy) return;
+  b.dataset.busy = '1'; b.textContent = 'Preparing…';
+  setTimeout(function () { delete b.dataset.busy; b.textContent = 'Download PDF'; na('here you would choose where to save the PDF'); }, 1400);
+}
+
+/* What if: simple market moves and their effect on the invested value; a row opens to show what drives it */
+var INV = 1909036, EQ = 0.91, WI_OPEN = {};   // open rows survive a redraw (resize)   // 91% of the invested value is in equity (funds and stocks)
+var WI = [
+  ['Stock markets fall 10%', -173700, [['Länsförsäkringar Global Indexnära', -34300], ['Handelsbanken Sverige Index Criteria', -25200], ['Skandia Time Global', -24000]]],
+  ['Stock markets rise 10%', 173700, [['Länsförsäkringar Global Indexnära', 34300], ['Handelsbanken Sverige Index Criteria', 25200], ['Skandia Time Global', 24000]]],
+  ['Swedish stocks fall 20%', -114500, [['Handelsbanken Sverige Index Criteria', -50500], ['Atlas Copco A', -39700], ['Investor AB ser. B', -24300]]],
+  ['SEK gets 10% stronger', -97400, [['Länsförsäkringar Global Indexnära', -34300], ['Skandia Time Global', -24000], ['AMF Aktiefond Global', -16000]], 'Half of the holdings are in EUR and USD.'],
+  ['Interest rates rise 1 point', -5700, [], 'Interest funds lose a little. The loan at SEB costs about 3 000 kr more a year.'],
+  ['Evolution AB falls 30%', -57000, [['Evolution AB, Skandia KF', -57000]], 'One stock is 10% of the invested value.']
+];
+function wiBar(pct) {   // 10% of the invested value fills half the bar
+  var w = Math.min(Math.abs(pct) / 10 * 50, 50);
+  return '<div class="wi-bar"><i class="' + (pct < 0 ? 'dn' : 'up') + '" style="left:' + (pct < 0 ? 50 - w : 50) + '%;width:' + w + '%"></i></div>';
+}
+function sgn(n) { return (n > 0 ? '+' : '') + kr(n); }
+function pc(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toFixed(1) + '%'; }
+var WI_M = 10;   // the size of the move, from the switcher in the card corner
+function wiSpark(eff, span) {   // a tiny line: today's value, a wobble, then where the move leaves it
+  var W = 96, H = 28, n = 9, rnd0 = rnd(17 + Math.round(Math.abs(eff) / 1000)), lo = INV - span, hi = INV + span;   // one scale for all rows, set by the biggest move
+  var y = function (v) { return (H - 3 - (v - lo) / (hi - lo) * (H - 6)).toFixed(1); };
+  var pts = []; for (var i = 0; i < n; i++) { var t = i / (n - 1); pts.push(INV + eff * t + (i && i < n - 1 ? rnd0() * span * 0.25 : 0)); }
+  return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><line x1="0" x2="' + W + '" y1="' + y(INV) + '" y2="' + y(INV) + '" stroke="var(--border)" stroke-dasharray="2 2"/>'
+    + '<path d="' + pts.map(function (v, i) { return (i ? 'L' : 'M') + (i / (n - 1) * (W - 4) + 2).toFixed(1) + ' ' + y(v); }).join('') + '" fill="none" stroke="' + (eff < 0 ? 'var(--text-muted)' : 'var(--fill-accent)') + '" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+}
+function renderWhatIf() {   // B's rows: the change as a soft pill and the invested value after it; a mini line per row
+  document.querySelectorAll('[data-wm]').forEach(function (b) { b.classList.toggle('on', +b.getAttribute('data-wm') === WI_M); });
+  var m = WI_M / 100, pts = WI_M / 10, k = function (x) { return Math.round(x / 100) * 100; };
+  var rows = [   // one row per line in Exposure, same order
+    ['Stock markets fall ' + WI_M + '%', k(-INV * EQ * m)],
+    ['SEK gets ' + WI_M + '% stronger', k(-INV * 0.51 * m)],
+    ['Swedish stocks fall ' + WI_M + '%', k(-INV * 0.30 * m)],
+    ['Interest rates rise ' + pts + ' point' + (pts === 1 ? '' : 's'), k(-INV * 0.003 * pts)]
+  ];
+  $('scen').innerHTML = '<table class="tbl wi-tbl"><colgroup><col><col style="width:120px"><col style="width:130px"></colgroup><thead><tr><th>Scenario</th><th class="num">Change</th><th class="num">Invested after</th></tr></thead><tbody>'
+    + rows.map(function (w) { return '<tr><td>' + w[0] + '</td><td class="num wi-k' + (w[1] > 0 ? ' up' : '') + '">' + sgn(w[1]) + '</td><td class="num">' + kr(k(INV + w[1])) + '</td></tr>'; }).join('')
+    + '</tbody></table>';
+}
+
+function renderAlloc() {
+  var inv = 1909036;
+  $('alloc').innerHTML = [
+    HCCharts.pie('Instrument type', [{ label: 'Funds', pct: 64.0 }, { label: 'Stocks', pct: 36.0 }], inv),
+    HCCharts.pie('Asset class', [{ label: 'Global equity', pct: 42.6 }, { label: 'Swedish equity', pct: 26.0 }, { label: 'European equity', pct: 12.5 }, { label: 'Emerging markets', pct: 9.9 }, { label: 'Interest rate', pct: 6.1 }, { label: 'Other', pct: 2.9 }], inv),
+    HCCharts.pie('Currency', [{ label: 'SEK', pct: 49.0 }, { label: 'EUR', pct: 30.0 }, { label: 'USD', pct: 21.0 }], inv),
+    HCCharts.map('Region', [{ label: 'Sweden', pct: 38.0 }, { label: 'North America', pct: 25.0 }, { label: 'Europe', pct: 22.1 }, { label: 'Asia-Pacific', pct: 9.9 }, { label: 'Other', pct: 5.0 }], inv),
+    HCCharts.pie('Sector', [{ label: 'Technology', pct: 24.1 }, { label: 'Industrials', pct: 18.6 }, { label: 'Financials', pct: 16.2 }, { label: 'Healthcare', pct: 11.7 }, { label: 'Consumer cyclical', pct: 10.4 }, { label: 'Other', pct: 19.0 }], inv),
+    HCCharts.pie('Fees', [{ label: 'Index funds, 0.20%', pct: 41.1 }, { label: 'Active funds, 1.15%', pct: 22.9 }, { label: 'Stocks, no fee', pct: 36.0 }], inv)
+  ].map(function (h) { return '<div class="card">' + h + '</div>'; }).join('');
+}
+
+/* ---------- row menu ---------- */
+function closeMenus() { document.querySelectorAll('.cs-pop.rowpop').forEach(function (m) { m.parentNode.querySelector('.cs-kebab').classList.remove('on'); m.remove(); }); }
+function rowMenu(k) {
+  var open = k.classList.contains('on'); closeMenus(); if (open) return;
+  var c = CL.filter(function (x) { return x.n === k.closest('tr').getAttribute('data-n'); })[0], has = !!c.b.length && !!c.u;
+  var it = function (a, ic, l, cls) { return '<button data-mi="' + a + '"' + (cls ? ' class="' + cls + '"' : '') + '>' + HCIcon(ic) + l + '</button>'; };
+  var m = document.createElement('div'); m.className = 'cs-pop rowpop';
+  m.innerHTML = it('open', 'arrow', 'Open profile') + it('req', 'link', 'Request data') + it('build', 'builder', 'Build portfolio')
+    + '<hr>' + it('edit', 'edit', 'Edit client') + it('del', 'delete', 'Delete client', 'danger');
+  k.classList.add('on'); k.parentNode.appendChild(m);
+}
+function rowMenuAct(a, n) {
+  closeMenus(); var c = CL.filter(function (x) { return x.n === n; })[0], f = first(c);
+  if (a === 'open') go('overview');   // the one full profile for every client
+  if (a === 'req') openLink(c, 'all');
+  if (a === 'build') openBuild(c);
+  if (a === 'edit') na('editing a client');
+  if (a === 'del') na('deleting ' + c.n);
+}
+
+/* ---------- build portfolio: starting point ---------- */
+var BP = {};   // { c, step: source | holdings | library, sel: {} }
+var LIB = [
+  { n: 'Karl — proposal 29 Oct', for: 'Karl Nyström', v: 965000, d: '2026-10-29' },
+  { n: 'Karl — current portfolio', for: 'Karl Nyström', v: 965000, d: '2026-10-28' },
+  { n: 'Growth tilt v2', for: 'Maria Lindgren', v: 1420000, d: '2026-09-30' },
+  { n: 'Conservative baseline', for: null, v: 980000, d: '2026-09-18' },
+  { n: 'Balanced 60/40, index funds', for: null, v: 1000000, d: '2026-08-04' },
+  { n: 'Low risk alloc-2', for: 'Karl Nyström', v: 540000, d: '2025-11-26' }
+];
+function bpAccounts(c) {   // the client's accounts that can go into a portfolio (loans can't)
+  if (c === CL[0]) return BK.filter(function (k) { return k.acc.length; }).map(function (k) {
+    return { b: k.b, acc: k.acc.filter(function (a) { return a[3] > 0; }).map(function (a) { return { id: a[2], n: a[0], no: a[2], v: a[3] }; }) }; });
+  var n = c.b.length, t = c.v || 0;
+  return c.b.map(function (b, i) { return { b: b, acc: [{ id: b + i, n: 'ISK', no: '', v: Math.round(t / n / 100) * 100 }] }; });
+}
+function openBuild(c) { BP = { c: c, sel: {} }; bpAccounts(c).forEach(function (g) { g.acc.forEach(function (a) { BP.sel[a.id] = true; }); }); $('bp').hidden = false; bpGo('source'); }
+function closeBuild() { $('bp').hidden = true; }
+function bpGo(step) {
+  BP.step = step; var c = BP.c, f = first(c), has = !!c.b.length && !!c.v;
+  $('bp-back').hidden = step === 'source';
+  $('bp-t').textContent = { source: 'Choose a starting point', holdings: 'Select accounts', library: 'Load from library' }[step];
+  $('bp-s').textContent = { source: 'Choose what to start from. Everything can be changed later in the builder.', holdings: 'The accounts to combine into one portfolio. Matching holdings are merged.', library: 'A copy of the saved portfolio opens in the builder for ' + f + '.' }[step];
+  $('bp-for').innerHTML = 'For: <b>' + c.n + '</b>';
+  var foot = $('bp-foot'); foot.innerHTML = ''; foot.hidden = step !== 'holdings';
+  if (step === 'source') {
+    var nAcc = bpAccounts(c).reduce(function (s, g) { return s + g.acc.length; }, 0);
+    var opt = function (cls, ic, t, sub, tag, go) { return '<button class="opt ' + cls + '"' + (go ? ' onclick="' + go + '"' : '') + '><span class="opt-ic">' + HCIcon(ic) + '</span><span class="opt-tx"><b>' + t + '</b><small>' + sub + '</small></span>' + (tag || '') + HCIcon('arrow', 'opt-go') + '</button>'; };   // an arrow on the right, as in the builder
+    $('bp-body').innerHTML = (has
+        ? opt('acc', 'wallet', 'Start from holdings', 'The accounts collected from the client’s banks', '<span class="opt-tag">' + nAcc + ' account' + (nAcc > 1 ? 's' : '') + '</span>', 'bpGo(\'holdings\')')
+        : '<div class="opt acc off"><span class="opt-ic">' + HCIcon('wallet') + '</span><span class="opt-tx"><b>Start from holdings</b><small>No holdings collected for ' + f + ' yet</small></span><button class="btn sm" onclick="closeBuild();openLink(BP.c, \'all\')">Request data</button></div>')
+      + opt('', 'pencil-plus', 'Start from scratch', 'An empty portfolio to fill in', '', 'closeBuild();na(\'an empty builder\')')
+      + opt('', 'folder', 'Load from library', 'Start from a saved portfolio', '<span class="opt-tag">' + LIB.length + ' saved</span>', 'bpGo(\'library\')');
+  }
+  if (step === 'holdings') bpHoldings();
+  if (step === 'library') {
+    $('bp-body').innerHTML = '<div class="search"><span data-i="search"></span><input class="cs-input" id="bp-q" placeholder="Search by name"><button class="s-x" aria-label="Clear search">' + HCIcon('close') + '</button></div><div class="lib" id="bp-lib"></div>';
+    $('bp-body').querySelector('[data-i]').outerHTML = HCIcon('search');
+    $('bp-q').oninput = bpLib; bpLib();
+  }
+}
+function bpHoldings() {
+  var gs = bpAccounts(BP.c), all = [].concat.apply([], gs.map(function (g) { return g.acc; }));
+  var on = all.filter(function (a) { return BP.sel[a.id]; }), tot = on.reduce(function (s, a) { return s + a.v; }, 0), allOn = on.length === all.length;
+  var box = function (x) { return '<span class="cs-cbox' + (x ? ' on' : '') + '">' + HCIcon('check') + '</span>'; };
+  $('bp-body').innerHTML = '<div class="bp-all" onclick="bpAll()">' + box(allOn) + 'Select all accounts</div>'
+    + gs.map(function (g) { return '<div class="bp-bank">' + logo(g.b) + BANK[g.b] + ' <small>' + g.acc.length + ' account' + (g.acc.length > 1 ? 's' : '') + '</small></div><div class="bp-accs">'
+      + g.acc.map(function (a) { return '<div class="bp-acc" onclick="bpToggle(\'' + a.id + '\')">' + box(BP.sel[a.id]) + '<span class="tx">' + a.n + (a.no ? '<small>' + a.no + '</small>' : '') + '</span><span class="v">' + kr(a.v) + '</span></div>'; }).join('') + '</div>'; }).join('');
+  $('bp-foot').innerHTML = '<span class="bp-sum">' + (on.length ? '<b>' + on.length + '</b> account' + (on.length > 1 ? 's' : '') + ', <b>' + kr(tot) + '</b>' : 'No accounts selected') + '</span>'
+    + '<button class="btn pri" ' + (on.length ? '' : 'disabled ') + 'onclick="closeBuild();goBuilder()">Open in builder</button>';
+}
+function bpToggle(id) { BP.sel[id] = !BP.sel[id]; bpHoldings(); }
+function bpAll() { var all = [].concat.apply([], bpAccounts(BP.c).map(function (g) { return g.acc; })), v = !all.every(function (a) { return BP.sel[a.id]; }); all.forEach(function (a) { BP.sel[a.id] = v; }); bpHoldings(); }
+function bpLib() {
+  var q = ($('bp-q').value || '').toLowerCase(), c = BP.c;
+  var rows = LIB.filter(function (p) { return p.n.toLowerCase().indexOf(q) >= 0; }).sort(function (a, b) { return (b.for === c.n) - (a.for === c.n) || b.d.localeCompare(a.d); });   // the client's own first
+  $('bp-lib').innerHTML = rows.length ? rows.map(function (p) {
+    return '<div class="lib-row' + (p.for === c.n ? ' mine' : '') + '" onclick="closeBuild();goBuilder()"><span class="tx"><b>' + p.n + '</b><small>' + (p.for ? (p.for === c.n ? 'This client' : 'Created for ' + p.for) : 'No client') + ', ' + fd(p.d) + '</small></span><span class="v">' + kr(p.v) + '</span>' + HCIcon('arrow') + '</div>';
+  }).join('') : '<div class="empty">No portfolios match</div>';
+}
+
+/* ---------- tooltips ---------- */
+var tipEl = null;
+document.addEventListener('mouseover', function (e) {
+  var el = e.target.closest('[data-tip], [data-tip-list], [data-tip-rows], [data-tip-tpl]'), tip = $('tip');
+  if (!el) { tip.classList.remove('show'); tipEl = null; return; }
+  if (el === tipEl) return;
+  tipEl = el;
+  var img = function (b) { return '<img src="hc-ds/assets/logos/' + b + '.png" alt="">'; };
+  var l = el.getAttribute('data-tip-list'), rows = el.getAttribute('data-tip-rows'), tpl = el.getAttribute('data-tip-tpl');
+  tip.innerHTML = tpl ? $(tpl).innerHTML : l ? '<div class="tip-list">' + l.split(',').map(function (b) { return '<span>' + img(b) + BANK[b] + '</span>'; }).join('') + '</div>'
+    : rows ? '<div class="tip-list rows">' + rows.split(';').map(function (x) { x = x.split('|'); return '<span><b>' + img(x[0]) + BANK[x[0]] + '</b><em>' + x[1] + '</em></span>'; }).join('') + '</div>'
+    : el.getAttribute('data-tip');
+  var note = el.getAttribute('data-tip-note'); if (note) tip.innerHTML += '<div class="tip-note">' + note + '</div>';   // what happened to the link
+  // above the element, or below when there is no room; never past the window's sides
+  var r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, below = el.hasAttribute('data-tip-tpl') || r.top - th - 12 < 0;   // the summary cards: always below, so they all open the same way
+  // jump to the new side with no transition (otherwise it slides from above to below), then fade in
+  tip.style.transition = 'none'; tip.classList.remove('show'); tip.classList.toggle('below', below);
+  tip.style.left = Math.max(tw / 2 + 8, Math.min(innerWidth - tw / 2 - 8, r.left + r.width / 2)) + 'px';
+  tip.style.top = (below ? r.bottom : r.top) + 'px';
+  void tip.offsetWidth; tip.style.transition = ''; tip.classList.add('show');
+});
+document.addEventListener('scroll', function () { $('tip').classList.remove('show'); tipEl = null; }, true);
+
+/* ---------- add client + link to connect banks ---------- */
+var BANK_NAMES = Object.keys(BANK).map(function (k) { return BANK[k]; });
+var MD = {};   // { c: client, isNew, scope, did: null | 'copied' | 'mailed' | 'shown' }
+function first(c) { return c.n.split(' ')[0]; }
+function openAdd() {
+  ['f-first', 'f-last', 'f-pid', 'f-mail'].forEach(function (id) { $(id).value = ''; $(id).classList.remove('err'); });
+  $('e-pid').textContent = $('e-mail').textContent = ''; $('dup').innerHTML = ''; $('adv-lbl').textContent = 'Lena Holm (you)';
+  $('md-1').hidden = false; $('md-2').hidden = true; $('md').hidden = false; checkForm();
+  autofill();
+  caseState('add');
+}
+/* the form fills itself, as if typed: one made-up client per run, a new one each time */
+var DEMO = [['Hedvig', 'Sandell', '199104227713', 'hedvig.sandell@gmail.com'], ['Oliver', 'Bergström', '198706153390', 'oliver.bergstrom@outlook.com'], ['Freja', 'Lund', '199511028214', 'freja.lund@icloud.com']];
+var AF = 0;   // run id: a new run or the advisor's own typing stops the previous one
+function autofill() {
+  var run = ++AF, d = DEMO.filter(function (x) { return !CL.some(function (c) { return c.id === x[2].slice(0, 8) + '-' + x[2].slice(8); }); })[0];
+  if (!d) { $('f-first').focus(); return; }
+  var steps = [['f-first', d[0]], ['f-last', d[1]], ['f-pid', d[2]], ['f-mail', d[3]]], i = 0;
+  (function field() {
+    if (run !== AF || $('md').hidden) return;
+    if (i >= steps.length) { $('f-mail').blur(); checkForm('f-mail-blur'); if (CASE) press(run); return; }
+    var el = $(steps[i][0]), txt = steps[i][1], k = 0; el.focus();
+    (function key() {
+      if (run !== AF || $('md').hidden) return;
+      el.value += txt[k]; el.dispatchEvent(new Event('input'));
+      if (++k < txt.length) setTimeout(key, 45 + Math.random() * 45); else { i++; setTimeout(field, 280); }
+    })();
+  })();
+}
+/* on the case page the demo goes on: the cursor rests on Add client, presses it, and the link window opens */
+function press(run) {
+  var b = $('b-add'), live = function () { return run === AF && !$('md').hidden && !b.disabled; };
+  setTimeout(function () {
+    if (!live()) return; b.classList.add('demo-hover');
+    setTimeout(function () {
+      if (!live()) { b.classList.remove('demo-hover'); return; } b.classList.add('demo-press');
+      setTimeout(function () { b.classList.remove('demo-hover', 'demo-press'); if (live()) b.click(); }, 160);
+    }, 500);
+  }, 450);
+}
+['f-first', 'f-last', 'f-pid', 'f-mail'].forEach(function (id) { $(id).addEventListener('keydown', function () { AF++; }); });   // typing yourself stops the demo
+function checkForm(touched) {
+  var pid = $('f-pid').value, mail = $('f-mail').value.trim(), okPid = /^(19|20)\d{6}-\d{4}$/.test(pid), okMail = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(mail);
+  var dup = okPid && CL.filter(function (c) { return c.id === pid; })[0];
+  $('dup').innerHTML = dup ? '<div class="dup">' + HCIcon('info') + '<p><b style="font-weight:500">' + dup.n + '</b> is already a client with this personal ID.</p><a onclick="closeMd();' + (dup.n === 'Karl Nyström' ? 'go(\'overview\')' : 'toast(\'Opens ' + dup.n + '\')') + '">Open profile</a></div>' : '';
+  if (touched === 'f-pid' || touched === 'f-pid-blur') { $('e-pid').textContent = (pid.length >= 13 || (touched === 'f-pid-blur' && pid)) && !okPid ? 'Use the format YYYYMMDD-XXXX' : ''; $('f-pid').classList.toggle('err', !!$('e-pid').textContent); }
+  if (touched === 'f-mail' && okMail) { $('e-mail').textContent = ''; $('f-mail').classList.remove('err'); }
+  if (touched === 'f-mail-blur') { $('e-mail').textContent = mail && !okMail ? 'Check the email address' : ''; $('f-mail').classList.toggle('err', !!$('e-mail').textContent); }
+  $('b-add').disabled = !($('f-first').value.trim() && $('f-last').value.trim() && okPid && okMail && !dup);
+}
+['f-first', 'f-last', 'f-mail'].forEach(function (id) { $(id).addEventListener('input', function () { checkForm(id); }); });
+$('f-mail').addEventListener('blur', function () { checkForm('f-mail-blur'); });
+$('f-pid').addEventListener('blur', function () { checkForm('f-pid-blur'); });
+$('f-pid').addEventListener('input', function () {   // 12 digits get the dash on their own
+  var d = this.value.replace(/\D/g, '').slice(0, 12); this.value = d.length > 8 ? d.slice(0, 8) + '-' + d.slice(8) : d; checkForm('f-pid');
+});
+function addClient() {
+  var c = { n: $('f-first').value.trim() + ' ' + $('f-last').value.trim(), e: $('f-mail').value.trim(), id: $('f-pid').value, b: [], v: null, st: 'none', sub: 'No banks connected yet', lk: 'No link created yet', u: null, fresh: true, added: true };
+  CL.push(c); openLink(c, 'all', true);
+}
+function token() { var s = 'abcdefghjkmnpqrstuvwxyz23456789', t = ''; for (var i = 0; i < 8; i++) t += s[Math.floor(Math.random() * s.length)]; return t.slice(0, 4) + '-' + t.slice(4); }
+function openLink(c, scope, isNew, picked) {
+  // from the menu: no client yet, the window starts with the picker and no link
+  $('md-pick').hidden = !(c === null || picked);
+  if (!c) {
+    MD = { c: null, scope: 'all', isNew: false, did: null }; Q = null;
+    $('q-lbl').textContent = 'Choose a client'; $('q-lbl').classList.add('cs-selph');
+    $('md-t').textContent = 'Holdings collection link'; $('md-s').textContent = 'Choose the client to send the link to.';
+    $('w-link').hidden = true; $('w-meet').hidden = true;
+    $('md-1').hidden = true; $('md-2').hidden = false; $('md').hidden = false; state(); return;
+  }
+  $('w-link').hidden = false;
+  MD = { c: c, scope: scope, isNew: !!isNew, did: null };
+  var f = first(c);
+  $('md-t').textContent = 'Holdings collection link';
+  // the link always opens all banks; when a consent is the reason, the text names the bank for the advisor to pass on
+  var soon = c.st === 'soon', many = scope.indexOf(' and ') > 0;
+  if (isNew) toast(c.n + ' is added', true);   // no steps in the window: the toast says the client is in
+  $('md-s').textContent = scope === 'all'
+    ? 'Send this link to ' + c.n + ' to collect their holdings.'
+    : 'The consent for ' + scope + (soon ? ' expires soon' : ' has expired') + '. Ask ' + c.n + ' to connect ' + (many ? 'them' : scope) + ' again with this link.';
+  $('lnk').value = 'connect.njorda.se/' + token();
+  $('meet-1').innerHTML = 'For the client to scan in a meeting<br>and open the holdings collection link';
+  $('b-qr').classList.remove('on'); $('qr-lbl').textContent = 'Show QR code'; $('w-meet').hidden = true;
+  $('b-copy').classList.remove('copied'); $('b-copy').innerHTML = HCIcon('copy'); $('b-copy').setAttribute('data-tip', 'Copy link');
+  $('md-1').hidden = true; $('md-2').hidden = false; $('md').hidden = false;
+  state();
+}
+function toggleQr() {   // the QR code: the same link, for the client's phone in a meeting
+  var on = $('w-meet').hidden; $('w-meet').hidden = !on; $('b-qr').classList.toggle('on', on);
+  $('qr-lbl').textContent = on ? 'Hide QR code' : 'Show QR code';
+  if (on) { qr(); MD.did = MD.did || 'shown'; linkMade(); state(); }
+}
+function openHere() {   // the advisor opens the flow on their own screen; the client signs in with BankID there
+  if (CASE && top !== window) {   // on the case page: no new tab, the page goes on to the holdings collection prototype
+    MD.did = MD.did || 'opened'; linkMade(); closeMd(true);   // quiet: the block must not pull the page back to the list
+    deckGo('holdings', 0); return;
+  }
+  window.open('hc/app.html', '_blank'); MD.did = MD.did || 'opened'; linkMade(); state();
+}
+function copyLink() {
+  try { navigator.clipboard.writeText('https://' + $('lnk').value); } catch (e) {}
+  $('b-copy').classList.add('copied'); $('b-copy').innerHTML = HCIcon('check'); $('b-copy').setAttribute('data-tip', 'Copied'); if (tipEl === $('b-copy')) $('tip').textContent = 'Copied';
+  MD.did = 'copied'; linkMade(); state();
+}
+function state() {
+  var t = { copied: 'Link copied', mailed: 'Email sent', shown: 'Code shown' }[MD.did];
+  $('md-state').innerHTML = t ? HCIcon('check') + t : '';
+}
+function doneMd() { closeMd(); }
+function linkMade() { MD.c.lk = 'Link created 5 Nov 2026, not opened yet'; }   // the portal knows a link exists, not that it was sent
+function closeMd(quiet) {
+  AF++; $('md').hidden = true; document.querySelectorAll('#md .cs-select.open').forEach(function (s) { s.classList.remove('open'); });
+  if (MD.c) { MD.c.fresh = MD.isNew || MD.did; renderClients(); MD = {}; }
+  if ($('pg-client').hidden && quiet !== true) caseState('list');
+}
+document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (!$('md').hidden) closeMd(); if (!$('bp').hidden) closeBuild(); $('pfm').hidden = true; $('actm').hidden = true; });
+function qr() {   // a made-up code: three finder squares and noise
+  var r = rnd(4242), s = '', fin = function (x, y) { return '<path d="M' + x + ' ' + y + 'h7v7h-7z M' + (x + 1) + ' ' + (y + 1) + 'v5h5v-5z" fill-rule="evenodd"/><rect x="' + (x + 2) + '" y="' + (y + 2) + '" width="3" height="3"/>'; };
+  for (var y = 0; y < 25; y++) for (var x = 0; x < 25; x++) {
+    if ((x < 8 && y < 8) || (x > 16 && y < 8) || (x < 8 && y > 16)) continue;
+    if (r() > 0.02) s += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>';
+  }
+  $('qr').innerHTML = '<g fill="#1a1a1e">' + s + fin(0, 0) + fin(18, 0) + fin(0, 18) + '</g>';
+}
+
+/* ---------- portal side menu ---------- */
+function toggleSide() {
+  var m = $('pside').classList.toggle('min'); document.body.classList.toggle('side-min', m);
+  if (!CASE) try { localStorage.setItem('pside-min', m ? '1' : '0'); } catch (e) {}
+  setTimeout(function () { if (!$('tab-analysis').hidden) { renderPerf(); renderRisk(); } }, 200);
+}
+var Q = null;   // the client picked in Collect holdings
+function quickList() {
+  $('q-list').innerHTML = CL.slice().sort(function (a, b) { return a.n.localeCompare(b.n); }).map(function (c) { return '<div class="cs-mitem" data-q="' + c.id + '">' + c.n + '</div>'; }).join('')
+    + '<div class="cs-mitem" data-q="new" style="color:var(--text-accent);font-weight:500">+ New client</div>';
+}
+function quickLink() { if (Q) openLink(Q, 'all'); }   // (kept for the old widget; the menu button now opens the link window with a client picker)
+document.addEventListener('click', function (e) {
+  var q = e.target.closest('[data-q]');
+  if (q) {
+    $('q-sel').classList.remove('open');
+    if (q.getAttribute('data-q') === 'new') { openAdd(); return; }
+    Q = CL.filter(function (c) { return c.id === q.getAttribute('data-q'); })[0];
+    $('q-lbl').textContent = Q.n; $('q-lbl').classList.remove('cs-selph'); openLink(Q, 'all', false, true); return;
+  }
+  var n = e.target.closest('[data-nav]'); if (!n) return;
+  var to = n.getAttribute('data-nav');
+  if (to === 'clients') go('clients');
+  else if (to === 'portfolios' && CASE) deckGo('portfolios', 0);
+  else if (to === 'portfolios') location.href = 'pb/app.html#tab=list&menu=1';   // the library, with the same side menu
+  // pages not in the prototype are shown but do nothing
+});
+quickList();
+
+/* ---------- routing ---------- */
+var drawn = false;
+function go(v) {
+  location.hash = v;
+  $('pg-clients').hidden = v !== 'clients';
+  $('pg-client').hidden = v === 'clients';
+  $('tab-overview').hidden = v !== 'overview';
+  $('tab-analysis').hidden = v !== 'analysis';
+  document.querySelectorAll('[data-t]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-t') === v); });
+  if (v === 'analysis') { renderPerf(); renderRisk(); if (!drawn) { renderAlloc(); drawn = true; } }
+  window.scrollTo(0, 0);
+  caseState(v === 'clients' ? 'list' : v);
+}
+/* the charts are drawn at their box's width; when the box changes width after the tab opens (scrollbar, side menu,
+   the case page's frame settling), they are drawn again, else the old drawing is scaled and leaves margins on the sides */
+var chW = {};
+if (window.ResizeObserver) new ResizeObserver(function () {
+  if ($('tab-analysis').hidden) return;
+  var p = $('ch-perf').clientWidth, r = $('ch-fan').clientWidth;
+  if (p && p !== chW.p) { chW.p = p; renderPerf(); }
+  if (r && r !== chW.r) { chW.r = r; renderRisk(); }
+}).observe($('tab-analysis'));
+else window.addEventListener('resize', function () { if (!$('tab-analysis').hidden) { renderPerf(); renderRisk(); } });
+renderClients(); renderAssets(); renderPf(); renderAct();
+/* the case page block (prototypes/cl-portal.html) opens a state from the hash (#list, #add, #overview, #analysis, with &case=1)
+   and hears where a click inside took the prototype, so its list of states follows */
+/* limits of the prototype (her ask, 10 Nov): what isn't built says so in one toast; what another prototype shows goes there.
+   On the case page "there" is the deck's prototype (deckGo), standalone it is the page itself */
+function na(what) { toast('Not available in the prototype: ' + what); }
+function deckGo(to, k) { if (CASE && top !== window) top.postMessage({ type: 'deck-go', to: to, k: k || 0 }, location.origin); }
+function goBuilder() { if (CASE && top !== window) deckGo('builder', 0); else location.href = 'pb/app.html#menu=1&side=0&state=single'; }
+var BOOT = true;   // the state from the hash is the one the block asked for: telling it back would make the deck jump
+function caseState(id) { if (CASE && !BOOT && parent !== window) parent.postMessage({ type: 'cl-state', id: id }, '*'); }
+var H0 = location.hash, V0 = H0.slice(1).split('&')[0];   // read before go() rewrites it
+go(['overview', 'analysis'].indexOf(V0) >= 0 ? V0 : 'clients');
+if (V0 === 'add') openAdd();
+BOOT = false;
+if (H0 === '#collect') openLink(null, 'all');   // Collect holdings from the builder's menu   // Collect holdings from the builder's menu
+</script>
+</body>
+</html>

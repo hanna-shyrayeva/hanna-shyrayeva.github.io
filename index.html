@@ -112,9 +112,8 @@
   .tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 4px 0 10px; padding: 0; }
   .tags li { padding: 4px 10px; border-radius: 8px; background: var(--surface); font-size: 13px; }
   .case__more { margin-top: auto; align-self: flex-start; }   /* a span styled as .btn--main: the whole card is the link */
-  .soon { margin-top: 16px; padding: 24px 28px; border-radius: 20px; border: 1.5px dashed var(--line); display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; }
-  .soon b { font-weight: 600; }
-  .soon span { color: var(--muted); font-size: 15px; }
+  .case + .case { margin-top: 24px; }
+  .case__img--portal { background: #9f59fb; }   /* the advisor portal card: brand lavender, as in images/pb-card.png */
 
   /* experience */
   .xp { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -221,7 +220,16 @@
         <span class="btn btn--main case__more">View case study</span>
       </div>
     </a>
-    <div class="soon"><b>Advisor platform for wealth managers</b><span>B2B case study in progress</span></div>
+    <a class="case" href="portfolio-builder.html">
+      <div class="case__img case__img--portal"><img src="images/pb-card.png" width="1800" height="1000" alt="The Njorda advisor portal: the client list, and the portfolio builder comparing a client’s current portfolio with a proposal" loading="lazy"></div>
+      <div class="case__body">
+        <p class="case__meta">Njorda, 2022 to 2026</p>
+        <h3>Advisor portal and portfolio builder</h3>
+        <p>From a client’s bank accounts to a ready proposal: a B2B tool for wealth advisors, with live prototypes of the 2026 redesign.</p>
+        <ul class="tags"><li>B2B</li><li>Wealth management</li><li>Web portal</li></ul>
+        <span class="btn btn--main case__more">View case study</span>
+      </div>
+    </a>
   </section>
 
   <section class="wide section" id="experience">

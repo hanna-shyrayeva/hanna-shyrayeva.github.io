@@ -20,9 +20,9 @@
 <link rel="stylesheet" href="ds/components/onboarding.css">
 <link rel="stylesheet" href="shared/web-shell.css">
 <link rel="stylesheet" href="shared/block.css">
+<link rel="stylesheet" href="shared/keyboard.css">
 <style>
-  :root { --pb-page-pad: 32px; }
-  @media (max-width: 600px) { :root { --pb-page-pad: 16px; } }
+  :root { --pb-page-pad: 16px; }   /* as in the advisor portal prototypes: the same margins on both case pages (her ask, 16 Nov) */
   body { background: #fff; padding: var(--pb-page-pad); }
 
   /* web onboarding (Figma Onboarding 1361:4880): white nav bar, a 480 card centred on the page */
@@ -66,6 +66,7 @@
 <script src="shared/app-shell.js"></script>
 <script src="shared/typo.js"></script>
 <script src="shared/block.js"></script>
+<script src="shared/keyboard.js"></script>
 <script>
 (function () {
   var A = App, I = A.icon, esc = A.esc, D = A.D;
@@ -103,6 +104,9 @@
     eyebrow: 'Njorda app',
     title: 'Getting in',
     intro: 'In Sweden people sign in to anything with money through BankID, so the app opens on it. Other ways wait under “More options”.',
+    fill: true,      // the web screen fills the stage, as in the advisor portal case (her ask, 16 Nov)
+    webMin: 1280,
+    webH: 920,       // the smallest height that still shows the whole side menu, with its bottom padding
     states: [
       { id: 'bankid', label: 'Log in with BankID', note: 'On a computer BankID on another device comes first, with a QR code. On a phone, this device.' },
       { id: 'email', label: 'Log in with email', note: 'For people without BankID. An empty field says what is missing.' },

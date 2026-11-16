@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolios: the library and a new portfolio — Advisor portal prototype</title>
+<link rel="stylesheet" href="shared/block.css">
+<style>
+  body { margin: 0; background: #fff; padding: var(--pb-page-pad); }
+  :root { --pb-page-pad: 16px; --pb-step-on: #9f59fb; --pb-open-fg: #fff; --pb-accent: #7a3fe0; }
+
+  /* the app is its own page (pb/app.html), shown in the device as it is */
+  .pb-screen { background: #f0f0f2; }
+  /* a new state loads hidden on top and fades in when ready (shared/pb-frame.js) */
+  .pb-app { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .pb-app.is-shown { opacity: 1; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .pb-app { transition: none; } }
+</style>
+</head>
+<body>
+<div id="block"></div>
+
+<script src="shared/typo.js"></script>
+<script src="shared/block.js"></script>
+<script src="shared/pb-frame.js"></script>
+<script>
+/* one block for the library and a new portfolio (10 Nov, replaces pb-compare.html and pb-add.html on the case page) */
+(function () {
+  Block({
+    el: document.getElementById('block'),
+    eyebrow: 'Portfolios',
+    title: 'The library and a new portfolio',
+    intro: 'One library for every portfolio. Clearer to scan, quicker to compare, and new portfolios start from the client.',
+    fill: true,
+    webOnly: true,
+    themes: false,
+    webMin: 1280,
+    webH: 600,
+    states: [
+      { id: 'library', label: 'The library', note: 'New columns (client, products, risk level, expected return) show what a portfolio is without opening it.<span class="pb-br"></span>Filter by client and date, sort by any column.' },
+      { id: 'pick-two', label: 'Two selected', note: 'Comparing got simpler: tick two and Compare turns on.<span class="pb-br"></span>Portfolios of different clients can’t be compared, only a copy made for the same client.' },
+      { id: 'add-client', label: 'Client first', note: 'The new portfolio flow was rebuilt to start with the client, not a blank form. Search by name, or continue without one.' },
+      { id: 'add-source', label: 'Starting point', note: 'Then the starting point: the client’s collected holdings, an empty portfolio or one from the library.' },
+      { id: 'add-holdings', label: 'Choosing accounts', note: 'Starting from holdings, pick the accounts to use. Products held in several accounts merge into one line.' }
+    ],
+    open: function (state) { return 'pb/app.html#menu=1&tab=list&state=' + state; },
+    keep: true,
+    render: function (ctx) { PBFrame(ctx.screen, 'pb/app.html#menu=1&case=1&tab=list&state=' + ctx.state, 'Advisor portal prototype, portfolios'); }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Builder — list & create</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.11.0/tabler-icons.min.css">
+<style>
+
+  :root{
+    --surface-0:#f4f4f4; --surface-1:#f9f9f9; --surface-2:#ffffff;
+    --text-primary:#1b1f1d; --text-secondary:#767977; --text-muted:#989a99;
+    --border:#e6e6e6; --border-strong:#d1d2d2; --border-stronger:#b6b7b7; --border-accent:#989a99;
+    --bg-accent:#f4f4f4; --text-accent:#1b1f1d;
+    --bg-warning:#fcf4e4; --text-warning:#e9a21a; --border-warning:#f0d28a;
+    --bg-danger:#fbe9e8; --text-danger:#de4a40; --border-danger:#f0afab; --fill-danger:#de4a40; --on-danger:#ffffff;
+    --bg-success:#e6f3eb; --text-success:#2e9e5b; --border-success:#b7dfc6;
+    --fill-primary:#1b1f1d; --on-primary:#ffffff;
+    --fill-disabled:#e6e6e6; --fill-accent:#9f59fb; --fill-accent-hover:#894dd7; --on-accent:#ffffff; --seg-on-bg:#e6e6e6; --seg-on-fg:#1b1f1d; --bg-holdings:#f3ebff; --text-holdings:#9f59fb; --border-holdings:#d8c8fb; --bg-selected:#e6e6e6; --bg-row-selected:#f4f4f4;
+    --radius:12px;
+    --shadow-popover:0 8px 24px rgba(0,0,0,0.12);
+    --font-sans:'Geologica',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --font-voice:Georgia,'Times New Roman',serif;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--surface-0); color:var(--text-primary);
+    font-family:var(--font-sans); -webkit-font-smoothing:antialiased;
+    padding:2rem 1rem;
+  }
+  body.outer-sidebar-collapsed{padding-top:56px;} /* clears the outer shell's floating sidebar-toggle icon */
+  input,select,button,textarea{font-family:inherit;}
+  input[type=text],input[type=number],input[type=date],textarea{
+    border:0.5px solid var(--border-strong); border-radius:var(--radius);
+    padding:0 12px; background:var(--surface-2); color:var(--text-primary);
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--border-accent);}
+  button{
+    border:0.5px solid var(--border-strong); border-radius:var(--radius);
+    background:var(--surface-2); color:var(--text-primary); cursor:pointer;
+  }
+  button:hover{background:var(--surface-1);}
+  select{
+    border:0.5px solid var(--border-strong); border-radius:var(--radius);
+    background:var(--surface-2); color:var(--text-primary); padding:0 10px;
+  }
+  h1,h2,h3{color:var(--text-primary);font-weight:500;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+  .wrap-create{max-width:640px;margin:0 auto;}
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-bottom:1rem;}
+  .crumbs .cur{color:var(--text-secondary);}
+  .wrap{max-width:none;margin:0 auto;}
+  /* Products hover tooltip — matches the info-icon .tipbub style. Rendered fixed (shared #prodTip)
+     so the table card's overflow:hidden never clips it on bottom rows. */
+  .prodtip{cursor:help;border-bottom:1px dotted var(--border-stronger);}
+  #prodTip{display:none;position:fixed;max-width:220px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12px;font-weight:400;color:var(--text-secondary);line-height:1.4;text-align:left;white-space:normal;z-index:200;box-shadow:var(--shadow-popover);pointer-events:none;}
+</style>
+<style>/* case prototypes: the library looks like the clients table */
+  body { background: #f0f0f2 !important; }
+  /* fields and search boxes: a darker border on hover, purple when active (as in the clients prototype) */
+  input[type=text]:not([style*="border:none"]), div:has(> input[type=text][style*="border:none"]) { transition: border-color .15s; }
+  input[type=text]:not([style*="border:none"]):hover, div:has(> input[type=text][style*="border:none"]):hover { border-color: #a9a9b2 !important; }
+  input[type=text]:not([style*="border:none"]):focus, div:has(> input[type=text][style*="border:none"]):focus-within { border-color: #9f59fb !important; outline: none; }
+  #view-list div[style*="border-radius:12px;overflow:hidden"] { border: none !important; border-radius: 16px !important; }
+  #view-list thead th { padding-top: 12px !important; padding-bottom: 12px !important; color: #6b6f76 !important; }
+  #view-list thead tr, #rows tr { border-bottom-color: #e6e6ea !important; }
+  #rows td { padding-top: 18px !important; padding-bottom: 18px !important; color: #1a1a1e; }
+  #rows td:nth-child(2) { font-size: 14px !important; font-weight: 500 !important; }
+  :root { --bg-row-selected: #fafafa; }   /* selected rows a bit lighter than the hover (her ask, 8 Nov) */
+  .prodtip { border-bottom: none !important; cursor: default !important; }
+  #prodTip { background: #fff !important; color: #1a1a1e !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; padding: 8px 12px !important; font-size: 13px !important; line-height: 1.6 !important; max-width: 280px !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; }
+  #prodTip .pt-n { color: #6b6f76; font-size: 12px; margin-bottom: 2px; }
+  #rows td:first-child > span { width: 20px !important; height: 20px !important; border-radius: 6px !important; }
+  #rows td:first-child { line-height: 0; }   /* the checkbox keeps the row height: empty or ticked, it sits the same */
+  #rows td:first-child > span { vertical-align: middle; }
+  #rows td:first-child > span i { line-height: 1; }
+  #rows td:first-child > span[style*="background:#1b1f1d"] { background: #9f59fb !important; border-color: #9f59fb !important; }
+  #view-list div[style*="position:relative"] > button[onclick^="PB.pop"] { height: 40px !important; }
+  /* date popover: Cancel and Apply the same size; Cancel white with the light purple hover */
+  #datePop > div:last-child > button { height: 32px !important; padding: 0 14px !important; font-size: 13px !important; border-radius: 8px !important; }
+  #datePop > div:last-child > button:first-child { background: #fff !important; border: 0.5px solid #d6d6dc !important; }
+  #datePop > div:last-child > button:first-child:hover { background: #f3e9ff !important; border-color: #c9a6fb !important; }
+  #datePop > div:last-child > button:last-child:hover { background: #894dd7 !important; }
+  #datePop input.bad { border-color: #c1382f !important; }
+  /* the row ⋮ and its menu: the same as in the clients table (filled dots, purple on hover; white menu with 14 px items) */
+  #rows i.ti-dots-vertical { display: inline-flex !important; width: 28px; height: 28px; border-radius: 8px; vertical-align: middle; font-size: 0 !important; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%239a9ea5'%3E%3Ccircle cx='12' cy='6' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='12' cy='18' r='2'/%3E%3C/g%3E%3C/svg%3E") center / 16px no-repeat; transition: background-color .12s; }
+  #rows i.ti-dots-vertical::before { content: none !important; }
+  #rows td:last-child:hover i.ti-dots-vertical { background: #f3e9ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%237d33e0'%3E%3Ccircle cx='12' cy='6' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='12' cy='18' r='2'/%3E%3C/g%3E%3C/svg%3E") center / 16px no-repeat; }
+  .pbmenu { top: 44px !important; right: 12px !important; min-width: 170px !important; padding: 4px !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; }
+  .pbmenu > div[onclick] { gap: 8px !important; padding: 8px 12px !important; font-size: 14px !important; border-radius: 8px !important; }
+  .pbmenu > div[onclick]:hover { background: #f4f4f6 !important; }
+  .pbmenu > div[onclick] i { font-size: 16px !important; }
+  .pbmenu > div[onclick][style*="text-danger"] { color: #c1382f !important; }   /* the same red as Delete client */
+  .pbmenu > div:not([onclick]) { margin: 4px 0 !important; background: #e6e6ea !important; }
+</style>
+</head>
+<body>
+
+<div id="view-list" class="wrap">
+<h2 class="sr-only">Saved-portfolios list: checkboxes select portfolios solely to compare, a persistent Compare button with a live hint guides selecting exactly two, and delete lives only in each row's actions menu.</h2>
+<div style="font-family:var(--font-sans);color:var(--text-primary);position:relative;">
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <div style="position:relative;">
+      <button onclick="PB.pop('cli')" style="height:34px;padding:0 10px;font-size:13px;display:flex;align-items:center;gap:8px;min-width:150px;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:6px;"><i class="ti ti-user" style="font-size:15px;color:var(--text-muted);"></i><span id="cliLabel">All clients</span></span>
+        <i class="ti ti-chevron-down" style="font-size:14px;color:var(--text-muted);"></i>
+      </button>
+      <div id="cliPop" style="display:none;position:absolute;left:0;top:38px;width:230px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-popover);z-index:30;overflow:hidden;">
+        <div style="padding:8px;border-bottom:0.5px solid var(--border);"><input id="cliSearch" type="text" placeholder="Search clients" oninput="PB.cliList()" style="width:100%;height:32px;font-size:13px;"></div>
+        <div id="cliItems" style="max-height:210px;overflow-y:auto;"></div>
+      </div>
+    </div>
+    <div style="position:relative;">
+      <button onclick="PB.pop('date')" style="height:34px;padding:0 10px;font-size:13px;display:flex;align-items:center;gap:8px;min-width:130px;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:6px;"><i class="ti ti-calendar" style="font-size:15px;color:var(--text-muted);"></i><span id="dateLabel">Any time</span></span>
+        <i class="ti ti-chevron-down" style="font-size:14px;color:var(--text-muted);"></i>
+      </button>
+      <div id="datePop" style="display:none;position:absolute;left:0;top:38px;width:320px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-popover);z-index:30;padding:10px;">
+        <div id="presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Custom range</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:10px;">
+          <label style="flex:1;display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-muted);">From<input id="dFrom" type="text" inputmode="numeric" maxlength="10" placeholder="dd.mm.yyyy" autocomplete="off" oninput="PB.dateType(this)" style="width:100%;height:32px;font-size:13px;min-width:0;"></label>
+          <label style="flex:1;display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-muted);">To<input id="dTo" type="text" inputmode="numeric" maxlength="10" placeholder="dd.mm.yyyy" autocomplete="off" oninput="PB.dateType(this)" style="width:100%;height:32px;font-size:13px;min-width:0;"></label>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;"><button onclick="PB.pop('date')" style="height:30px;padding:0 10px;font-size:12px;">Cancel</button><button onclick="PB.applyCustom()" style="height:30px;padding:0 12px;font-size:12px;font-weight:500;background:#9f59fb;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;">Apply</button></div>
+      </div>
+    </div>
+    <button id="clearf" onclick="PB.clearFilters()" style="display:none;height:34px;padding:0 10px;font-size:12px;color:var(--text-secondary);align-items:center;gap:5px;"><i class="ti ti-x" style="font-size:14px;"></i>Clear</button>
+  
+    <div style="width:260px;margin-left:auto;display:flex;align-items:center;gap:8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:0 12px;height:40px;background:var(--surface-2);">
+      <i class="ti ti-search" style="font-size:18px;color:var(--text-muted);" aria-hidden="true"></i>
+      <input id="q" type="text" placeholder="Search portfolios" oninput="PB.renderTable()" style="border:none;background:transparent;height:38px;flex:1;padding:0;font-size:14px;color:var(--text-primary);">
+    </div>
+    <button onclick="AP.open()" style="height:40px;padding:0 15px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;background:var(--fill-accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;">
+      <i class="ti ti-plus" style="font-size:16px;" aria-hidden="true"></i>Add portfolio
+    </button>
+  </div>
+
+  
+
+  <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;">
+    <div id="topbar" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);min-height:40px;">
+      <span id="barLeft" style="font-size:13px;color:var(--text-secondary);display:inline-flex;align-items:center;"></span>
+      <button id="clearSelBtn" onclick="PB.clearSel()" style="display:none;width:24px;height:24px;padding:0;align-items:center;justify-content:center;line-height:0;background:transparent;border:none;color:var(--text-muted);cursor:pointer;" aria-label="Clear selection"><i class="ti ti-x" style="font-size:15px;"></i></button>
+      <span style="flex:1;"></span>
+      <span id="cmpHelp" style="font-size:12px;color:var(--text-muted);"></span>
+      <button id="cmpBtn" onclick="PB.compare()" style="height:32px;padding:0 14px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;border-radius:var(--radius);">Compare</button>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+      <thead>
+        <tr style="border-bottom:0.5px solid var(--border);">
+          <th style="width:46px;padding:11px 0 11px 16px;"></th>
+          <th onclick="PB.sort('name')" style="width:17%;padding:11px 8px;text-align:left;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Portfolio name <span id="s-name"></span></th>
+          <th onclick="PB.sort('date')" style="width:10%;padding:11px 8px;text-align:left;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Date created <span id="s-date"></span></th>
+          <th onclick="PB.sort('client')" style="width:14%;padding:11px 8px;text-align:left;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Client <span id="s-client"></span></th>
+          <th onclick="PB.sort('products')" style="width:24%;padding:11px 8px;text-align:left;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Products <span id="s-products"></span></th>
+          <th onclick="PB.sort('risk')" style="width:10%;padding:11px 8px;text-align:left;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Risk level <span id="s-risk"></span></th>
+          <th onclick="PB.sort('ret')" style="width:10%;padding:11px 8px;text-align:right;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Expected return <span id="s-ret"></span></th>
+          <th onclick="PB.sort('value')" style="width:11%;padding:11px 8px;text-align:right;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;user-select:none;white-space:nowrap;">Value <span id="s-value"></span></th>
+          <th style="width:44px;"></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="empty" style="display:none;padding:28px 16px;text-align:center;font-size:13px;color:var(--text-muted);">No portfolios match your search.</div>
+  </div>
+
+  <div id="toast" style="display:none;margin-top:12px;padding:10px 14px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);"></div>
+
+  <div id="dupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:60;">
+    <div style="width:340px;background:var(--surface-2);border-radius:12px;padding:18px;">
+      <div id="dupTitle" style="font-size:15px;font-weight:500;margin-bottom:4px;">Duplicate portfolio</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">A new independent record will be created.</div>
+      <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Name</label>
+      <input id="dupName" type="text" style="width:100%;height:36px;font-size:14px;margin-bottom:14px;">
+      <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Assign to</label>
+      <div style="position:relative;margin-bottom:16px;">
+        <button id="dupCliBtn" onclick="event.stopPropagation();PB.dupCliPop()" style="width:100%;height:36px;padding:0 12px;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);"><span id="dupCliLabel">No client</span><i class="ti ti-chevron-down" style="font-size:15px;color:var(--text-muted);"></i></button>
+        <div id="dupCliPop" style="display:none;position:absolute;left:0;right:0;top:40px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-popover);z-index:70;overflow:hidden;">
+          <div style="padding:8px;border-bottom:0.5px solid var(--border);"><input id="dupCliSearch" type="text" placeholder="Search clients" oninput="PB.dupCliList()" style="width:100%;height:32px;font-size:13px;"></div>
+          <div id="dupCliItems" style="max-height:180px;overflow-y:auto;"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;"><button onclick="PB.closeDup()" style="height:34px;padding:0 12px;font-size:13px;">Cancel</button><button id="dupConfirm" onclick="PB.confirmDup()" style="height:34px;padding:0 14px;font-size:13px;font-weight:500;background:#9f59fb;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;">Duplicate</button></div>
+    </div>
+  </div>
+
+  <div id="delOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:60;">
+    <div style="width:340px;background:var(--surface-2);border-radius:12px;padding:18px;">
+      <div style="font-size:15px;font-weight:500;margin-bottom:6px;">Delete portfolio?</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.45;">You're about to delete <span id="delName" style="color:var(--text-primary);"></span>. This can't be undone.</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;"><button onclick="PB.closeDel()" style="height:34px;padding:0 12px;font-size:13px;">Cancel</button><button onclick="PB.confirmDel()" style="height:34px;padding:0 14px;font-size:13px;font-weight:500;background:var(--fill-danger);color:var(--on-danger);border:none;border-radius:var(--radius);cursor:pointer;">Delete</button></div>
+    </div>
+  </div>
+
+  <div id="conflictOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:60;">
+    <div style="width:400px;max-width:92%;background:var(--surface-2);border-radius:12px;padding:18px;">
+      <div style="font-size:15px;font-weight:500;margin-bottom:6px;">Client mismatch</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.5;">You can only compare portfolios belonging to the same client or unassigned portfolios. To compare these items, duplicate one of them and reassign its client.</div>
+      <div style="display:flex;justify-content:flex-end;"><button onclick="PB.closeConflict()" style="height:34px;padding:0 14px;font-size:13px;font-weight:500;background:#9f59fb;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;">Got it</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  const data=[
+    {id:1,name:"Portfolio #2",date:"2026-04-10",client:"Erik Sundström",value:1250000,pos:["Volvo B","Saab","Investor B","Ericsson B","SEB A","Handelsbanken A"]},
+    {id:2,name:"Apr 10 #1",date:"2026-04-10",client:null,value:480000,pos:["Global Index Fund","Bond Fund"]},
+    {id:3,name:"Portfolio #2",date:"2026-04-09",client:"Maria Bergqvist",value:1000000,pos:["Saab","Volvo Car B","Volvo A","Volvo B"]},
+    {id:4,name:"Apr 9 #3",date:"2026-04-09",client:null,value:2120000,pos:["Global Index Fund","Emerging Markets","High Yield","Apple Inc.","Microsoft Corp.","Tesla Inc.","Nordea Stable Return"]},
+    {id:5,name:"Apr 9 #2",date:"2026-04-09",client:"Erik Sundström",value:760000,pos:["Global Index Fund","Bond Fund","Money Market"]},
+    {id:6,name:"Apr 9 #1",date:"2026-04-09",client:null,value:315000,pos:["Apple Inc."]},
+    {id:7,name:"Portfolio 07.04/2",date:"2026-04-07",client:"Karl Nyström",value:1890000,pos:["Nordea Stable Return","Global Index Fund","SEB A","Investor B","Volvo B","Ericsson B","Atlas Copco","Sandvik"]},
+    {id:8,name:"Portfolio 07.04/1",date:"2026-04-07",client:"Karl Nyström",value:540000,pos:["Bond Fund","Money Market"]},
+    {id:9,name:"Portfolio #2555",date:"2026-04-02",client:null,value:3120000,pos:["Global Index Fund","Emerging Markets","High Yield","Investor B","Handelsbanken A"]},
+    {id:10,name:"123156",date:"2026-04-02",client:"Anna Lindqvist",value:205000,pos:["Apple Inc.","Microsoft Corp."]},
+    {id:11,name:"Jonny 02.04",date:"2026-04-02",client:"Jonny Berg",value:92000,pos:["Tesla Inc."]},
+    {id:12,name:"Conservative baseline",date:"2026-02-18",client:null,value:980000,pos:["Nordea Stable Return","Bond Fund","Global Index Fund"]},
+    {id:13,name:"Growth tilt v2",date:"2026-01-30",client:"Maria Bergqvist",value:1420000,pos:["Evolution","Atlas Copco","Sandvik","Volvo B","Investor B","SEB A"]},
+    {id:14,name:"Low risk alloc-2",date:"2025-11-26",client:"Karl Nyström",value:540000,pos:["Bond Fund","Money Market"]}
+  ];
+  // demo: expected return per year and risk level for each portfolio
+  const EXT={1:[7.8,3],2:[5.2,2],3:[7.5,3],4:[7.1,3],5:[4.6,2],6:[9.2,3],7:[6.8,2],8:[3.1,1],9:[6.9,2],10:[8.9,3],11:[10.4,3],12:[4.2,1],13:[8.1,3],14:[3.1,1]};
+  data.forEach(d=>{d.ret=EXT[d.id][0];d.riskN=EXT[d.id][1];d.risk=["Low","Medium","High"][d.riskN-1];});
+  const clients=[...new Set(data.filter(d=>d.client).map(d=>d.client))].sort();
+  const S={q:"",cli:"",dateMode:"all",dFrom:"",dTo:"",sortKey:"date",sortDir:"desc",sel:[],dupId:null,delId:null,openPop:null};
+  const $=id=>document.getElementById(id);
+  const fmt=iso=>{const[y,m,d]=iso.split("-");return d+"."+m+"."+y;};
+  const fmtVal=n=>new Intl.NumberFormat("sv-SE").format(n)+" kr";
+  const byId=id=>data.find(d=>d.id===id);
+
+  function pass(d){
+    if(S.cli==="__none"){if(d.client)return false;}else if(S.cli){if(d.client!==S.cli)return false;}
+    const now=new Date("2026-04-10");
+    if(S.dateMode==="year"){if(new Date(d.date).getFullYear()!==2026)return false;}
+    else if(S.dateMode==="30"||S.dateMode==="90"){if((now-new Date(d.date))/86400000> +S.dateMode)return false;}
+    else if(S.dateMode==="custom"){if(S.dFrom&&d.date<S.dFrom)return false;if(S.dTo&&d.date>S.dTo)return false;}
+    if(S.q){const h=(d.name+" "+(d.client||"no client")+" "+fmt(d.date)+" "+d.date).toLowerCase();if(!h.includes(S.q.toLowerCase()))return false;}
+    return true;
+  }
+  function sortFn(a,b){let r;if(S.sortKey==="date")r=a.date.localeCompare(b.date);else if(S.sortKey==="name")r=a.name.localeCompare(b.name);else if(S.sortKey==="value")r=a.value-b.value;else if(S.sortKey==="products")r=a.pos.length-b.pos.length;else if(S.sortKey==="risk")r=a.riskN-b.riskN||a.ret-b.ret;else if(S.sortKey==="ret")r=a.ret-b.ret;else r=(a.client||"zzzz").localeCompare(b.client||"zzzz");return S.sortDir==="asc"?r:-r;}
+  const visible=()=>data.filter(pass).sort(sortFn);
+  const selPos=id=>S.sel.indexOf(id);
+
+  window.PB={
+    pop(w){const was=S.openPop===w;$("cliPop").style.display="none";$("datePop").style.display="none";S.openPop=was?null:w;if(!was){if(w==="cli"){$("cliPop").style.display="block";this.cliList();$("cliSearch").value="";$("cliSearch").focus();}else $("datePop").style.display="block";}},
+    cliList(){const t=($("cliSearch").value||"").toLowerCase();const row=(v,l,m)=>`<div onclick="PB.selCli('${v}',&quot;${l}&quot;)" style="padding:9px 12px;font-size:13px;cursor:pointer;${m?'color:var(--text-muted);':''}${S.cli===v?'background:var(--bg-selected);':''}" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='${S.cli===v?'var(--bg-selected)':'transparent'}'">${l}</div>`;let h=row("","All clients")+row("__none","No client");clients.filter(c=>c.toLowerCase().includes(t)).forEach(c=>h+=row(c,c));$("cliItems").innerHTML=h;},
+    selCli(v,l){S.cli=v;$("cliLabel").textContent=l;this.pop("cli");this.renderTable();},
+    dateType(el){el.classList.remove("bad");let v=el.value.replace(/\D/g,"").slice(0,8);if(v.length>4)v=v.slice(0,2)+"."+v.slice(2,4)+"."+v.slice(4);else if(v.length>2)v=v.slice(0,2)+"."+v.slice(2);el.value=v;},
+    isoDate(v){if(!v)return "";const m=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v);if(!m)return null;const d=new Date(+m[3],m[2]-1,+m[1]);if(d.getMonth()!==m[2]-1||d.getDate()!==+m[1])return null;return m[3]+"-"+m[2]+"-"+m[1];},
+    applyCustom(){const f=this.isoDate($("dFrom").value.trim()),t=this.isoDate($("dTo").value.trim());$("dFrom").classList.toggle("bad",f===null);$("dTo").classList.toggle("bad",t===null);if(f===null||t===null)return;S.dFrom=f;S.dTo=t;if(!S.dFrom&&!S.dTo){this.pop("date");return;}S.dateMode="custom";$("dateLabel").textContent=(S.dFrom?fmt(S.dFrom):"…")+" – "+(S.dTo?fmt(S.dTo):"…");this.pop("date");this.renderTable();},
+    setPreset(m,l){S.dateMode=m;S.dFrom="";S.dTo="";$("dateLabel").textContent=l;this.pop("date");this.renderTable();},
+    clearFilters(){S.q="";$("q").value="";S.cli="";$("cliLabel").textContent="All clients";S.dateMode="all";S.dFrom="";S.dTo="";$("dateLabel").textContent="Any time";this.renderTable();},
+
+    sort(k){if(S.sortKey===k)S.sortDir=S.sortDir==="asc"?"desc":"asc";else{S.sortKey=k;S.sortDir=k==="date"?"desc":"asc";}this.renderTable();},
+    toggle(id){const i=selPos(id);if(i>=0)S.sel.splice(i,1);else S.sel.push(id);this.renderTable();},
+    clearSel(){S.sel=[];this.renderTable();},
+    compare(){if(S.sel.length!==2)return;const ord=visible().filter(d=>selPos(d.id)>=0);const inOrder=ord.length===2?ord:S.sel.map(byId);const L=inOrder[0],R=inOrder[1];if(L.client&&R.client&&L.client!==R.client){this.openConflict();return;}this.toast(`Opening comparison: "${L.name}" (left) vs "${R.name}" (right)`);},
+    openConflict(){$("conflictOverlay").style.display="flex";},
+    closeConflict(){$("conflictOverlay").style.display="none";},
+
+    open(d){this.toast(`Opening "${d.name}" — ${d.client||"No client"}`);},
+    menu(id,e){document.querySelectorAll(".pbmenu").forEach(m=>m.remove());const m=document.createElement("div");m.className="pbmenu";m.style.cssText="position:absolute;right:14px;top:38px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-popover);z-index:20;min-width:150px;overflow:hidden;";const it=(ic,l,fn,dg)=>`<div onclick="event.stopPropagation();${fn}" style="display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:13px;cursor:pointer;color:${dg?'var(--text-danger)':'var(--text-primary)'};" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='transparent'"><i class="ti ti-${ic}" style="font-size:16px;"></i>${l}</div>`;m.innerHTML=it("copy","Duplicate",`PB.openDup(${id})`)+it("file-type-pdf","Export PDF",`PB.act(${id},'Exporting PDF for')`)+`<div style="height:0.5px;background:var(--border);"></div>`+it("trash","Delete",`PB.openDel(${id})`,true);e.currentTarget.appendChild(m);},
+    act(id,v){const d=byId(id);document.querySelectorAll(".pbmenu").forEach(m=>m.remove());this.toast(`${v} "${d.name}"`);},
+    openDup(id){document.querySelectorAll(".pbmenu").forEach(m=>m.remove());const src=byId(id);S.dupId=id;S.dupCli=src.client||'__none';$("dupCliLabel").textContent=src.client||"No client";$("dupCliPop").style.display="none";$("dupName").value=src.name+" (copy)";$("dupOverlay").style.display="flex";setTimeout(()=>$("dupName").focus(),30);},
+    dupCliPop(){const p=$("dupCliPop");const open=p.style.display==="none";p.style.display=open?"block":"none";if(open){$("dupCliSearch").value="";this.dupCliList();setTimeout(()=>$("dupCliSearch").focus(),20);}},
+    dupCliList(){const t=($("dupCliSearch").value||"").toLowerCase();const row=(v,l,m)=>`<div onclick="PB.dupCliSet('${v}',&quot;${l}&quot;)" style="padding:9px 12px;font-size:13px;cursor:pointer;${m?'color:var(--text-muted);':''}${S.dupCli===v?'background:var(--bg-selected);':''}" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='${S.dupCli===v?'var(--bg-selected)':'transparent'}'">${l}</div>`;let h=row("__none","No client");clients.filter(c=>c.toLowerCase().includes(t)).forEach(c=>h+=row(c,c));$("dupCliItems").innerHTML=h;},
+    dupCliSet(v,l){S.dupCli=v;$("dupCliLabel").textContent=l;$("dupCliPop").style.display="none";},
+    closeDup(){$("dupOverlay").style.display="none";$("dupCliPop").style.display="none";S.dupId=null;},
+    openDel(id){document.querySelectorAll(".pbmenu").forEach(m=>m.remove());S.delId=id;$("delName").textContent='"'+byId(id).name+'"';$("delOverlay").style.display="flex";},
+    closeDel(){$("delOverlay").style.display="none";S.delId=null;},
+    confirmDel(){const d=byId(S.delId);this.closeDel();this.toast(`Deleted "${d.name}"`);},
+    confirmDup(){const nm=$("dupName").value.trim()||"Untitled";const cliName=S.dupCli==='__none'?null:S.dupCli;this.closeDup();this.toast(`Created "${nm}" — ${cliName||"No client"}`);},
+
+    renderTable(){
+      S.q=$("q").value;
+      $("clearf").style.display=(S.cli||S.dateMode!=="all"||S.q)?"inline-flex":"none";
+      ["date","name","client","value","products","risk","ret"].forEach(k=>{$("s-"+k).innerHTML=S.sortKey===k?`<svg viewBox="0 0 24 24" fill="none" width="12" height="12" style="display:inline-block;vertical-align:-2px;"><path d="${S.sortDir==='asc'?'M6.5 14.75L12 9.25L17.5 14.75':'M6.5 9.25L12 14.75L17.5 9.25'}" stroke="currentColor" stroke-width="2"/></svg>`:"";});
+      const l=visible();
+      const tb=$("rows");tb.innerHTML="";$("empty").style.display=l.length?"none":"block";
+      l.forEach(d=>{
+        const on=selPos(d.id)>=0;
+        const tr=document.createElement("tr");
+        const bg=on?"var(--bg-row-selected)":"transparent";
+        tr.style.cssText=`border-bottom:0.5px solid var(--border);cursor:pointer;background:${bg};`;
+        tr.onmouseover=()=>tr.style.background="var(--surface-1)";tr.onmouseout=()=>tr.style.background=bg;
+        tr.innerHTML=`<td style="padding:14px 0 14px 16px;" onclick="event.stopPropagation();PB.toggle(${d.id})"><span style="display:inline-flex;width:18px;height:18px;border:1.5px solid ${on?'#1b1f1d':'var(--border-strong)'};border-radius:4px;background:${on?'#1b1f1d':'transparent'};align-items:center;justify-content:center;">${on?'<i class="ti ti-check" style="font-size:13px;color:#fff;"></i>':''}</span></td>`+
+          `<td style="padding:14px 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</td>`+
+          `<td style="padding:14px 8px;font-size:13px;">${fmt(d.date)}</td>`+
+          `<td style="padding:14px 8px;font-size:13px;${d.client?'':'color:var(--text-muted);'}white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.client||"No client"}</td>`+
+                    `<td style="padding:14px 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span class="prodtip" data-tip="${d.pos.join("|").replace(/"/g,"&quot;")}" onmouseenter="PB.prodTip(this)" onmouseleave="PB.prodTipHide()" style="display:flex;width:fit-content;max-width:100%;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">${d.pos.slice(0,2).join(", ")}</span>${d.pos.length>2?`<span style="flex:none;padding-left:4px;color:var(--text-muted);">+${d.pos.length-2} more</span>`:""}</span></td>`+
+          `<td style="padding:14px 8px;font-size:13px;white-space:nowrap;"><span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;background:${["#e1f5ee","#e6f1fb","#f3e9ff"][d.riskN-1]};color:${["#0f6e56","#185fa5","#7d33e0"][d.riskN-1]};">${d.risk}</span></td>`+
+          `<td style="padding:14px 8px;font-size:13px;text-align:right;white-space:nowrap;">${d.ret.toFixed(1)}%</td>`+
+          `<td style="padding:14px 8px;font-size:13px;text-align:right;white-space:nowrap;">${fmtVal(d.value)}</td>`+
+          `<td style="padding:14px 14px 14px 0;text-align:right;position:relative;" onclick="event.stopPropagation();PB.menu(${d.id},event)"><i class="ti ti-dots-vertical" style="font-size:18px;color:var(--text-muted);cursor:pointer;"></i></td>`;
+        tr.onclick=()=>PB.open(d);
+        tb.appendChild(tr);
+      });
+      const n=S.sel.length;
+      $("barLeft").textContent=n?`${n} selected`:`${l.length} portfolio${l.length!==1?"s":""}`;
+      $("clearSelBtn").style.display=n?"inline-flex":"none";
+      const ready=n===2;
+      $("cmpHelp").textContent=n<2?"Select two portfolios to compare":n>2?"Pick exactly two":"";
+      const b=$("cmpBtn");
+      if(ready){b.style.background="#9f59fb";b.style.color="#fff";b.style.border="none";b.style.cursor="pointer";b.style.opacity="1";}
+      else{b.style.background="transparent";b.style.color="var(--text-muted)";b.style.border="0.5px solid var(--border-strong)";b.style.cursor="default";b.style.opacity=".7";}
+    },
+    toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(this._t);this._t=setTimeout(()=>t.style.display="none",3600);},
+    prodTip(el){let t=$("prodTip");if(!t){t=document.createElement("div");t.id="prodTip";document.body.appendChild(t);}const L=el.getAttribute("data-tip").split("|");t.innerHTML="<div class=\"pt-n\">"+L.length+" product"+(L.length>1?"s":"")+"</div>"+L.map(x=>"<div>"+x+"</div>").join("");t.style.display="block";const r=el.getBoundingClientRect();t.style.left="auto";t.style.right=(window.innerWidth-r.right)+"px";const h=t.offsetHeight,below=r.bottom+6,above=r.top-h-6;t.style.top=((below+h>window.innerHeight&&above>0)?above:below)+"px";},
+    prodTipHide(){const t=$("prodTip");if(t)t.style.display="none";}
+  };
+  document.addEventListener("click",()=>document.querySelectorAll(".pbmenu").forEach(m=>m.remove()));
+  const P=[["all","Any time"],["30","Last 30 days"],["90","Last 90 days"],["year","This year"]];
+  $("presets").innerHTML=P.map(([m,l])=>`<button onclick="PB.setPreset('${m}','${l}')" style="height:30px;padding:0 10px;font-size:12px;">${l}</button>`).join("");
+  PB.renderTable();
+})();
+</script>
+
+<div id="ap-backdrop" style="display:none;position:fixed;inset:0;background:rgba(20,20,20,0.38);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:600px;max-width:100%;height:560px;max-height:calc(100vh - 40px);background:var(--surface-2);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-popover);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:0.5px solid var(--border);flex-shrink:0;">
+      <button id="ap-back" onclick="AP.back()" aria-label="Back" style="width:32px;height:32px;padding:0;display:none;align-items:center;justify-content:center;background:transparent;border:none;border-radius:var(--radius);cursor:pointer;color:var(--text-primary);"><i class="ti ti-arrow-left" style="font-size:19px;"></i></button>
+      <span id="ap-title" style="flex:1;font-size:16px;font-weight:500;color:var(--text-primary);">Add portfolio</span>
+      <button onclick="AP.close()" aria-label="Close" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:var(--radius);cursor:pointer;color:var(--text-secondary);"><i class="ti ti-x" style="font-size:19px;"></i></button>
+    </div>
+    <div id="ap-body" style="flex:1;overflow-y:auto;"></div>
+    <div id="ap-footer" style="flex-shrink:0;"></div>
+  </div>
+</div>
+<div id="ap-confirm-root"></div>
+
+<script>
+const state = { client: null };
+const clients = [
+  { n:"Karl Nyström", id:"19850312-4471", holdingsCollected:true },
+  { n:"Anna Lindqvist", id:"19910728-2210", holdingsCollected:true },
+  { n:"Erik Sundström", id:"19770903-1156", holdingsCollected:false },
+  { n:"Maria Bergqvist", id:"19880215-5533", holdingsCollected:false },
+  { n:"Johan Nyström", id:"19950601-8847", holdingsCollected:true },
+  { n:"Sofia Lindgren", id:"19820914-3320", holdingsCollected:false },
+  { n:"Lars Eriksson", id:"19690127-7781", holdingsCollected:true },
+  { n:"Emma Karlsson", id:"19930508-1194", holdingsCollected:false },
+  { n:"Oskar Andersson", id:"19871203-4402", holdingsCollected:true },
+  { n:"Linnea Johansson", id:"19960722-6650", holdingsCollected:false },
+  { n:"Gustav Pettersson", id:"19750419-2237", holdingsCollected:true },
+  { n:"Elin Svensson", id:"19901130-8813", holdingsCollected:false },
+  { n:"Mattias Olsson", id:"19831006-5529", holdingsCollected:true },
+  { n:"Hanna Persson", id:"19920215-3346", holdingsCollected:false },
+  { n:"Viktor Larsson", id:"19780824-1902", holdingsCollected:true },
+  { n:"Astrid Nilsson", id:"19940311-7758", holdingsCollected:false },
+];
+const banks = [
+  { bank:"Avanza", accounts:[
+    { id:"av1", name:"Investeringssparkonto", type:"ISK", num:"•••• 4471", mv:842000, pos:["Volvo B","Saab","Investor B","Ericsson B"], extra:5 },
+    { id:"av2", name:"Aktie- & fondkonto", type:"Depå", num:"•••• 8820", mv:156500, pos:["SEB A","Handelsbanken A"], extra:1 },
+  ]},
+  { bank:"Nordea", accounts:[
+    { id:"no1", name:"Tjänstepension", type:"Pension", num:"•••• 1193", mv:1240000, pos:["Global Index","Nordea Stable Return"], extra:3 },
+  ]},
+];
+const allAcc = banks.flatMap(g => g.accounts.map(a => ({...a, bank:g.bank})));
+const library = [
+  { name:"Portfolio #2", date:"2026-04-10", mv:1000000, origin:"Maria Bergqvist", pos:["Saab","Volvo Car B","Volvo A","Volvo B"], extra:0 },
+  { name:"Karl growth 2026", date:"2026-04-09", mv:2450000, origin:"Karl Nyström", pos:["Global Index","SEB A","Nordea"], extra:8 },
+  { name:"Portfolio #2555", date:"2026-04-02", mv:3120000, origin:null, pos:["Global Index","Emerging Markets","High Yield"], extra:11 },
+  { name:"Conservative baseline", date:"2026-03-28", mv:980000, origin:null, pos:["Nordea Stable Return","Bond Fund"], extra:3 },
+  { name:"Growth tilt v2", date:"2026-03-21", mv:1420000, origin:"Erik Sundström", pos:["Evolution","Atlas Copco","Sandvik"], extra:5 },
+  { name:"Dividend focus", date:"2026-02-18", mv:1150000, origin:"Maria Bergqvist", pos:["Investor B","Handelsbanken A","Telia"], extra:4 },
+  { name:"Nordic equity core", date:"2026-02-05", mv:2010000, origin:"Karl Nyström", pos:["Volvo B","Ericsson B","Assa Abloy"], extra:6 },
+  { name:"Balanced 60/40", date:"2026-01-12", mv:760000, origin:null, pos:["Global Index","Bond Fund"], extra:0 },
+  { name:"Pension rollover", date:"2025-11-26", mv:1890000, origin:"Erik Sundström", pos:["Nordea Stable Return","Global Index"], extra:5 },
+  { name:"Low risk alloc-2", date:"2025-08-14", mv:540000, origin:"Karl Nyström", pos:["Bond Fund","Money Market"], extra:2 },
+];
+const fmt = n => new Intl.NumberFormat("sv-SE").format(n) + " kr";
+const fmtDate = d => { const [y,m,day]=d.split("-"); return `${day}.${m}.${y}`; };
+const initials = name => name.split(" ").map(w=>w[0]).slice(0,2).join("");
+const sel = new Set();
+let curScreen='client';
+const AP_NOW=new Date('2026-04-15');
+const apDaysAgo=d=>(AP_NOW-new Date(d))/86400000;
+const libf={client:'all',time:'any',sort:'new'};
+const apTitles={client:'Add portfolio',source:'Choose a starting point',holdings:'Select holdings',library:'Load from library'};
+function EL(id){return document.getElementById(id);}
+function apDesc(t){return `<p style="margin:0 0 12px;font-size:13px;color:var(--text-secondary);line-height:1.55;">${t}</p>`;}
+function apForLine(c){return `<div style="font-size:13px;margin-bottom:16px;"><span style="color:var(--text-secondary);">For: </span><span style="font-weight:500;">${c?c.n:'No client'}</span></div>`;}
+function apHolds(p){return p.pos.join(', ')+(p.extra?` +${p.extra} more`:'');}
+function apHoldCount(p){return p.pos.length+p.extra;}
+function apBox(on){return on?`<span style="display:inline-flex;width:18px;height:18px;background:var(--fill-primary);border-radius:4px;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-check" style="font-size:12px;color:var(--on-primary);"></i></span>`:`<span style="display:inline-flex;width:18px;height:18px;border:1.5px solid var(--border-strong);border-radius:4px;flex-shrink:0;"></span>`;}
+
+window.AP={
+  open(){ state.client=null; sel.clear(); libf.client='all'; libf.time='any'; libf.sort='new'; apGo('client'); EL('ap-backdrop').style.display='flex'; },
+  close(){ EL('ap-backdrop').style.display='none'; apCancelCopy(); },
+  back(){ if(curScreen==='source') apGo('client'); else if(curScreen==='holdings'||curScreen==='library') apGo('source'); }
+};
+function apGo(step){
+  curScreen=step;
+  EL('ap-title').textContent=apTitles[step];
+  EL('ap-back').style.display=step==='client'?'none':'flex';
+  EL('ap-footer').innerHTML=''; apCloseAllDD();
+  if(step==='client') apRenderClient();
+  else if(step==='source') apRenderSource();
+  else if(step==='holdings') apRenderHoldings();
+  else if(step==='library') apRenderLibrary();
+}
+function apRenderClient(){
+  EL('ap-body').style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;';
+  EL('ap-body').innerHTML=`<div style="flex-shrink:0;padding:16px 20px 12px;">${apDesc('Choose a client to work with their bank data, or continue without one and link a client later.')}<div style="display:flex;align-items:center;gap:8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:0 12px;height:40px;margin-top:2px;"><i class="ti ti-search" style="font-size:18px;color:var(--text-muted);"></i><input id="ap-cSearch" type="text" placeholder="Search by name or Personal ID" oninput="apFilter(this.value)" style="border:none;outline:none;height:38px;flex:1;font-size:14px;color:var(--text-primary);background:transparent;"></div></div><div style="flex:1;min-height:0;overflow-y:auto;border-top:0.5px solid var(--border);"><div id="ap-cList"></div></div>`;
+  apFilter('');
+  EL('ap-footer').innerHTML=`<div style="border-top:0.5px solid var(--border);padding:14px 20px;"><div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:12px;">Client not listed? <a href="#" onclick="apAddClient(event)" style="color:var(--text-primary);text-decoration:underline;text-underline-offset:2px;font-weight:500;cursor:pointer;">Add a client</a></div><div style="display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:12px;margin-bottom:12px;"><span style="flex:1;height:0.5px;background:var(--border);"></span>or<span style="flex:1;height:0.5px;background:var(--border);"></span></div><button onclick="apNoClient()" style="width:100%;height:44px;font-size:14px;background:var(--surface-2);color:var(--text-primary);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;">Continue without a client</button></div>`;
+}
+function apFilter(q){
+  q=(q||'').toLowerCase();
+  const rows=clients.filter(c=>c.n.toLowerCase().includes(q)||c.id.includes(q));
+  EL('ap-cList').innerHTML=rows.length?rows.map((c,i)=>`<div onclick="apPick('${c.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;${i>0?'border-top:0.5px solid var(--border);':''}" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='transparent'"><div style="width:34px;height:34px;border-radius:50%;background:var(--surface-0);color:var(--text-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${initials(c.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:14px;">${c.n}</div><div style="font-size:12px;color:var(--text-muted);margin-top:1px;">${c.id}</div></div>${c.holdingsCollected?`<span style="font-size:11px;color:var(--text-holdings);background:var(--bg-holdings);padding:3px 8px;border-radius:9999px;display:flex;align-items:center;gap:4px;flex-shrink:0;"><i class="ti ti-building-bank" style="font-size:13px;"></i>Holdings collected</span>`:''}<i class="ti ti-chevron-right" style="font-size:18px;color:var(--border-stronger);flex-shrink:0;"></i></div>`).join(''):`<div style="padding:24px 20px;font-size:13px;color:var(--text-muted);text-align:center;">No clients match that search.</div>`;
+}
+function apPick(id){ state.client=clients.find(c=>c.id===id); apGo('source'); }
+function apNoClient(){ state.client=null; apGo('source'); }
+function apAddClient(e){ e.preventDefault(); PB.toast('Opens the Clients tab to add a client, then returns here.'); }
+function apCollectHoldings(e){ if(e) e.stopPropagation(); PB.toast('Opens the holdings collection flow (in development). Once complete, reopen Add portfolio to use it.'); }
+function apOption(icon,title,sub,right,onclick,disabled){
+  const accent=icon==='ti-wallet';
+  const base='display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;';
+  if(disabled){
+    const collectBtn=accent?`<button onclick="apCollectHoldings(event)" style="flex-shrink:0;height:36px;padding:0 14px;font-size:13px;font-weight:500;white-space:nowrap;border:0.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-primary);border-radius:var(--radius);cursor:pointer;" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='var(--surface-2)'">Collect holdings</button>`:'';
+    return `<div style="${base}border:0.5px solid var(--border);background:var(--surface-2);"><div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;opacity:0.55;"><div style="width:40px;height:40px;border-radius:10px;background:var(--surface-0);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ${icon}" style="font-size:20px;color:var(--text-muted);"></i></div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;">${title}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${sub}</div></div></div>${collectBtn}</div>`;
+  }
+  return `<div onclick="${onclick}" style="${base}border:0.5px solid ${accent?'var(--border-holdings)':'var(--border-strong)'};background:var(--surface-2);cursor:pointer;" onmouseover="this.style.background='${accent?'var(--bg-holdings)':'var(--surface-1)'}'" onmouseout="this.style.background='var(--surface-2)'"><div style="width:40px;height:40px;border-radius:10px;background:${accent?'var(--bg-holdings)':'var(--surface-0)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ${icon}" style="font-size:20px;color:${accent?'var(--text-holdings)':'var(--text-secondary)'};"></i></div><div style="flex:1;"><div style="font-size:14px;font-weight:500;">${title}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${sub}</div></div>${right}<i class="ti ti-chevron-right" style="font-size:18px;color:var(--border-stronger);flex-shrink:0;"></i></div>`;
+}
+function apRenderSource(){
+  EL('ap-body').style.cssText='flex:1;overflow-y:auto;padding:18px 20px;';
+  const c=state.client, cards=[];
+  if(c&&c.holdingsCollected) cards.push(apOption('ti-wallet','Start from holdings','The accounts collected from the client’s banks',`<span style="font-size:12px;color:var(--text-holdings);background:var(--bg-holdings);padding:3px 9px;border-radius:9999px;flex-shrink:0;">${allAcc.length} accounts</span>`,'apToHoldings()',false));
+  else if(c&&!c.holdingsCollected) cards.push(apOption('ti-wallet','Start from holdings','No holdings collected for this client','','',true));
+  cards.push(apOption('ti-pencil-plus','Start from scratch','An empty portfolio to fill in','','apEmpty()',false));
+  cards.push(apOption('ti-folder','Load from library','Start from a saved portfolio',`<span style="font-size:12px;color:var(--text-secondary);background:var(--surface-0);padding:3px 9px;border-radius:8px;flex-shrink:0;">102 saved</span>`,'apToLibrary()',false));
+  EL('ap-body').innerHTML=`${apDesc('Choose what to start from. Everything can be changed later in the builder.')}${apForLine(c)}<div style="display:flex;flex-direction:column;gap:12px;">${cards.join('')}</div>`;
+}
+function apToHoldings(){ apGo('holdings'); }
+function apToLibrary(){ apGo('library'); }
+function apEmpty(){ AP.close(); PB.toast('Opens the builder with an empty portfolio.'); }
+function apRenderHoldings(){
+  EL('ap-body').style.cssText='flex:1;overflow-y:auto;padding:18px 20px 8px;';
+  EL('ap-body').innerHTML=`${apDesc('Choose accounts to combine into one portfolio.')}${apForLine(state.client)}<label onclick="apToggleAll()" style="display:flex;align-items:center;gap:10px;padding:8px 2px;cursor:pointer;user-select:none;margin-bottom:6px;"><span id="ap-allBox"></span><span style="font-size:13px;color:var(--text-secondary);">Select all accounts</span></label><div id="ap-accList"></div>`;
+  apRenderAcc();
+  EL('ap-footer').innerHTML=`<div style="border-top:0.5px solid var(--border);padding:14px 20px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div id="ap-fCount" style="font-size:13px;color:var(--text-muted);">No accounts selected</div><div id="ap-fTotal" style="font-size:14px;font-weight:500;">—</div></div><div id="ap-fNote" style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;"></div><button id="ap-fBtn" onclick="apContinueFetch()" style="width:100%;height:44px;font-size:14px;background:var(--fill-accent);color:var(--on-accent);border:none;border-radius:var(--radius);cursor:not-allowed;opacity:0.45;">Continue with selection</button></div>`;
+  apUpdateBar();
+}
+function apRenderAcc(){
+  EL('ap-accList').innerHTML=banks.map(g=>`<div style="margin-top:10px;"><div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;padding-left:2px;"><span style="font-size:14px;font-weight:500;">${g.bank}</span><span style="font-size:12px;color:var(--text-muted);">${g.accounts.length} account${g.accounts.length>1?'s':''}</span></div><div style="border:0.5px solid var(--border);border-radius:12px;overflow:hidden;">${g.accounts.map((a,i)=>{const on=sel.has(a.id);return `<label onclick="apToggleOne('${a.id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;${i>0?'border-top:0.5px solid var(--border);':''}${on?'background:var(--surface-0);':''}">${apBox(on)}<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;">${a.name}</span><span style="font-size:11px;color:var(--text-secondary);background:var(--surface-0);padding:2px 8px;border-radius:6px;">${a.type}</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:3px;">${a.num}, ${fmt(a.mv)}</div></div></label>`;}).join('')}</div></div>`).join('');
+  const ab=EL('ap-allBox'); if(ab) ab.innerHTML=apBox(allAcc.every(a=>sel.has(a.id)));
+}
+function apToggleOne(id){ sel.has(id)?sel.delete(id):sel.add(id); apRenderAcc(); apUpdateBar(); }
+function apToggleAll(){ const all=allAcc.every(a=>sel.has(a.id)); all?sel.clear():allAcc.forEach(a=>sel.add(a.id)); apRenderAcc(); apUpdateBar(); }
+function apUpdateBar(){
+  const chosen=allAcc.filter(a=>sel.has(a.id)); const total=chosen.reduce((s,a)=>s+a.mv,0); const btn=EL('ap-fBtn');
+  if(!chosen.length){ EL('ap-fCount').textContent='No accounts selected'; EL('ap-fTotal').textContent='—'; EL('ap-fNote').textContent=''; btn.style.opacity='0.45'; btn.style.cursor='not-allowed'; }
+  else{ EL('ap-fCount').innerHTML=`<span style="color:var(--text-primary);font-weight:500;">${chosen.length}</span> account${chosen.length>1?'s':''} selected`; EL('ap-fTotal').textContent=fmt(total); EL('ap-fNote').textContent=chosen.length>1?'Matching holdings will be merged into one position':''; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+}
+function apContinueFetch(){ const n=sel.size; if(!n){ PB.toast('Select at least one account first.'); return; } AP.close(); PB.toast(`Opens the builder with ${n} account${n>1?'s':''} merged.`); }
+function apDdOptions(name){
+  if(name==='client'){ const seen=['all',...Array.from(new Set(library.map(p=>p.origin||'No client')))]; return seen.map(v=>[v,v==='all'?'All clients':v]); }
+  if(name==='time') return [['any','Any time'],['30','Last 30 days'],['90','Last 90 days'],['year','This year']];
+  return [['new','Newest first'],['old','Oldest first'],['high','Highest value'],['low','Lowest value']];
+}
+function apDdLabel(name){ const cur=libf[name]; const o=apDdOptions(name).find(x=>x[0]===cur); return o?o[1]:''; }
+function apDdItems(name){ const cur=libf[name]; return apDdOptions(name).map(([v,l])=>`<div onclick="apDdPick('${name}','${v}',event)" style="padding:9px 12px;font-size:13px;cursor:pointer;white-space:nowrap;${v===cur?'background:var(--bg-selected);':''}" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='${v===cur?'var(--bg-selected)':'transparent'}'">${l}</div>`).join(''); }
+function apDropdown(name){ return `<div style="position:relative;"><button onclick="apDdToggle('${name}',event)" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 8px 0 12px;font-size:13px;color:var(--text-primary);background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:12px;cursor:pointer;"><span id="ap-ddLabel-${name}">${apDdLabel(name)}</span><i class="ti ti-chevron-down" style="font-size:15px;color:var(--text-secondary);"></i></button><div id="ap-ddPop-${name}" style="display:none;position:absolute;top:40px;left:0;min-width:100%;background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-popover);z-index:60;overflow:hidden;">${apDdItems(name)}</div></div>`; }
+function apCloseAllDD(){ document.querySelectorAll('[id^=ap-ddPop-]').forEach(p=>p.style.display='none'); }
+function apDdToggle(name,e){ e.stopPropagation(); const p=EL('ap-ddPop-'+name); const open=p.style.display==='block'; apCloseAllDD(); p.style.display=open?'none':'block'; }
+function apDdPick(name,val,e){ e.stopPropagation(); libf[name]=val; EL('ap-ddLabel-'+name).textContent=apDdLabel(name); const pop=EL('ap-ddPop-'+name); if(pop){ pop.innerHTML=apDdItems(name); pop.style.display='none'; } apApplyLib(); }
+document.addEventListener('click', apCloseAllDD);
+function apRenderLibrary(){
+  EL('ap-body').style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;';
+  EL('ap-body').innerHTML=`<div style="flex-shrink:0;padding:16px 20px 12px;position:relative;z-index:5;">${apDesc('Pick a portfolio from the library to start from.')}${apForLine(state.client)}<div style="display:flex;align-items:center;gap:8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:0 12px;height:40px;margin-bottom:10px;"><i class="ti ti-search" style="font-size:18px;color:var(--text-muted);"></i><input id="ap-lSearch" type="text" placeholder="Search by name" oninput="apApplyLib()" style="border:none;outline:none;height:38px;flex:1;font-size:14px;background:transparent;color:var(--text-primary);"></div><div style="display:flex;gap:8px;">${apDropdown('client')}${apDropdown('time')}${apDropdown('sort')}</div></div><div style="flex:1;min-height:0;overflow-y:auto;border-top:0.5px solid var(--border);"><div id="ap-lList"></div></div>`;
+  apApplyLib();
+}
+function apApplyLib(){
+  const q=(EL('ap-lSearch')?EL('ap-lSearch').value:'').toLowerCase();
+  let rows=library.filter(p=>p.name.toLowerCase().includes(q));
+  if(libf.client!=='all') rows=rows.filter(p=>(p.origin||'No client')===libf.client);
+  if(libf.time==='30') rows=rows.filter(p=>apDaysAgo(p.date)<=30);
+  else if(libf.time==='90') rows=rows.filter(p=>apDaysAgo(p.date)<=90);
+  else if(libf.time==='year') rows=rows.filter(p=>new Date(p.date).getFullYear()===AP_NOW.getFullYear());
+  rows.sort((a,b)=>libf.sort==='new'?b.date.localeCompare(a.date):libf.sort==='old'?a.date.localeCompare(b.date):libf.sort==='high'?b.mv-a.mv:a.mv-b.mv);
+  EL('ap-lList').innerHTML=rows.length?rows.map((p,i)=>`<div onclick="apChooseLib(${library.indexOf(p)})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;${i>0?'border-top:0.5px solid var(--border);':''}" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background='transparent'"><div style="flex:1;min-width:0;"><div style="font-size:14px;">${p.name}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Created for ${p.origin||'no client'}</div><div style="font-size:12px;color:var(--text-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${fmtDate(p.date)}, ${apHolds(p)}</div></div><div style="font-size:14px;font-weight:500;white-space:nowrap;">${fmt(p.mv)}</div><i class="ti ti-chevron-right" style="font-size:18px;color:var(--border-stronger);flex-shrink:0;"></i></div>`).join(''):`<div style="padding:24px 20px;font-size:13px;color:var(--text-muted);text-align:center;">Nothing matches those filters.</div>`;
+}
+function apChooseLib(i){
+  const item=library[i]; const flowName=state.client?state.client.n:null;
+  if(item.origin && item.origin!==flowName) apShowCopyConfirm(i);
+  else { AP.close(); PB.toast(`Opens the builder from "${item.name}".`); }
+}
+function apShowCopyConfirm(i){
+  apCancelCopy();
+  const item=library[i], cl=item.origin, belongs=state.client?state.client.n:'no client (draft)';
+  EL('ap-confirm-root').innerHTML=`<div id="ap-confirmBackdrop" onclick="if(event.target===this)apCancelCopy()" style="position:fixed;inset:0;background:rgba(20,20,20,0.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1100;"><div style="width:400px;max-width:100%;background:var(--surface-2);border-radius:16px;padding:22px;box-shadow:var(--shadow-popover);"><div style="font-size:17px;font-weight:500;margin-bottom:6px;">Start from “${item.name}”?</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:16px;">${apHoldCount(item)} holdings, ${fmt(item.mv)} will be copied into a new editable portfolio.</div><div style="display:flex;gap:10px;background:var(--bg-warning);border-radius:12px;padding:14px;margin-bottom:18px;"><i class="ti ti-info-circle" style="font-size:18px;color:#854f0b;flex-shrink:0;margin-top:1px;"></i><div style="font-size:13px;color:#633806;line-height:1.55;">You're copying the setup of <span style="font-weight:500;color:#412402;">${cl}</span>'s portfolio as a starting point. It won't affect ${cl}'s records, and this new portfolio will belong to <span style="font-weight:500;color:#412402;">${belongs}</span>.</div></div><div style="display:flex;gap:10px;"><button onclick="apCancelCopy()" style="flex:1;height:44px;font-size:14px;background:var(--surface-2);color:var(--text-primary);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;">Cancel</button><button onclick="apDoCopy(${i})" style="flex:1;height:44px;font-size:14px;background:var(--fill-accent);color:var(--on-accent);border:none;border-radius:var(--radius);cursor:pointer;">Copy holdings</button></div></div></div>`;
+}
+function apCancelCopy(){ const r=EL('ap-confirm-root'); if(r) r.innerHTML=''; }
+function apDoCopy(i){ const item=library[i]; apCancelCopy(); AP.close(); PB.toast(`Opens the builder, copied from "${item.name}".`); }
+</script>
+
+<script>
+window.NAV = { toCreate(){ AP.open(); }, toList(){ AP.close(); } };
+</script>
+
+<script>
+  window.addEventListener("message", function(e){
+    if(e && e.data && e.data.type === "sidebarState"){
+      document.body.classList.toggle("outer-sidebar-collapsed", !!e.data.collapsed);
+    }
+  });
+</script>
+
+<!-- library date filter: our own calendar under the From and To fields (always English; the browser date input follows the OS language). Injected by build-pb-app.js -->
+<style>
+  #datePop label { position: relative; }
+  #datePop label .pbcal-ic { position: absolute; right: 10px; bottom: 8px; font-size: 16px; color: #6b6f76; pointer-events: none; }
+  #dFrom, #dTo { padding-right: 32px !important; }
+  .pbcal { position: absolute; top: 100%; margin-top: 4px; z-index: 40; width: 260px; box-sizing: border-box; background: #fff; border: 0.5px solid #d6d6dc; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 12px; color: #1a1a1e; font-size: 13px; }
+  .pbcal.l { left: 0; } .pbcal.r { right: 0; }
+  .pbcal-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+  .pbcal-h button { width: 28px; height: 28px; padding: 0; border: none; background: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6b6f76; cursor: pointer; }
+  .pbcal-h button:hover { background: #f3e9ff; color: #7d33e0; }
+  .pbcal-g { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 2px; }
+  .pbcal-w { height: 24px; line-height: 24px; text-align: center; font-size: 12px; color: #6b6f76; }
+  .pbcal-d { height: 32px; padding: 0; border: none; background: none; border-radius: 8px; font: inherit; font-size: 13px; color: #1a1a1e; cursor: pointer; }
+  .pbcal-d:hover { background: #f3e9ff; }
+  .pbcal-d.o { color: #a3a3ab; }
+  .pbcal-d.now { box-shadow: inset 0 0 0 1px #d6d6dc; }
+  .pbcal-d.in { background: #f3e9ff; border-radius: 0; }
+  .pbcal-d.on, .pbcal-d.on:hover { background: #9f59fb; color: #fff; box-shadow: none; }
+</style>
+<script>
+(function () {
+  var M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var W = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  var CH = function (d) { return '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="' + d + '" stroke="currentColor" stroke-width="2"/></svg>'; };
+  var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  var dots = function (k) { var p = k.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; };
+  var E = function (id) { return document.getElementById(id); };
+  var val = function (el) { return PB.isoDate(el.value.trim()) || ''; };
+  var cal = null, inp = null, view = null;
+
+  function close() { if (cal) cal.remove(); cal = null; inp = null; }
+  function draw() {
+    var y = view.getFullYear(), m = view.getMonth();
+    var off = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+    var cells = Math.ceil((off + days) / 7) * 7;
+    var f = val(E('dFrom')), t = val(E('dTo')), now = iso(new Date());
+    var h = '<div class="pbcal-h"><button type="button" data-nav="-1" aria-label="Previous month">' + CH('M14.75 6.5L9.25 12L14.75 17.5') + '</button><span>' + M[m] + ' ' + y + '</span><button type="button" data-nav="1" aria-label="Next month">' + CH('M9.25 6.5L14.75 12L9.25 17.5') + '</button></div><div class="pbcal-g">';
+    h += W.map(function (w) { return '<div class="pbcal-w">' + w + '</div>'; }).join('');
+    for (var i = 0; i < cells; i++) {
+      var d = new Date(y, m, 1 - off + i), k = iso(d), c = 'pbcal-d';
+      if (d.getMonth() !== m) c += ' o';
+      if (k === now) c += ' now';
+      if (f && t && k > f && k < t) c += ' in';
+      if (k === f || k === t) c += ' on';
+      h += '<button type="button" class="' + c + '" data-day="' + k + '">' + d.getDate() + '</button>';
+    }
+    cal.innerHTML = h + '</div>';
+  }
+  function open(el) {
+    if (inp === el) return;
+    close(); inp = el;
+    var v = val(el) || (el.id === 'dTo' && val(E('dFrom'))) || iso(new Date());
+    var p = v.split('-'); view = new Date(+p[0], +p[1] - 1, 1);
+    cal = document.createElement('div');
+    cal.className = 'pbcal ' + (el.id === 'dTo' ? 'r' : 'l');
+    cal.addEventListener('mousedown', function (e) { e.preventDefault(); });   // keeps the focus in the field
+    cal.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.nav) { view = new Date(view.getFullYear(), view.getMonth() + +b.dataset.nav, 1); draw(); return; }
+      var k = b.dataset.day, field = inp;
+      field.value = dots(k); field.classList.remove('bad');
+      if (field.id === 'dFrom') {
+        var to = E('dTo');
+        if (val(to) && val(to) < k) to.value = '';
+        if (!val(to)) { close(); to.focus(); open(to); return; }   // the range goes on in To
+      } else {
+        var fr = E('dFrom');
+        if (val(fr) && val(fr) > k) fr.value = '';
+      }
+      close();
+    });
+    el.parentNode.appendChild(cal);
+    draw();
+  }
+  function wire(el) {
+    var ic = document.createElement('i'); ic.className = 'ti ti-calendar pbcal-ic'; el.parentNode.appendChild(ic);
+    el.addEventListener('focus', function () { open(el); });
+    el.addEventListener('click', function () { open(el); });
+    el.addEventListener('blur', function () { if (inp === el) close(); });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
+    el.addEventListener('input', function () { if (cal && inp === el && val(el)) { var p = val(el).split('-'); view = new Date(+p[0], +p[1] - 1, 1); draw(); } });
+  }
+  wire(E('dFrom')); wire(E('dTo'));
+  // the calendar goes away with the popover
+  var pop = PB.pop.bind(PB); PB.pop = function (w) { close(); pop(w); };
+})();
+</script>
+
+<!-- library filters (All clients, Any time) in the style of the edited builder: white buttons with the light purple hover,
+     arrows that turn while a menu is open, menus like the builder client menu, and icons from the hc-ds library. Injected by build-pb-app.js -->
+<style>
+  /* the two filter buttons */
+  #view-list div[style*="position:relative"] > button[onclick^="PB.pop"] { height: 40px !important; padding: 0 12px !important; gap: 10px !important; min-width: 150px; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; background: #fff !important; font-size: 14px !important; color: #1a1a1e !important; transition: background .15s, border-color .15s; }
+  #view-list div[style*="position:relative"] > button[onclick^="PB.pop"]:hover,
+  #view-list div[style*="position:relative"] > button[onclick^="PB.pop"].pb-open { background: #f3e9ff !important; border-color: #c9a6fb !important; }
+  .pbf-ic { width: 16px; height: 16px; flex: none; color: #80848b; display: block; }
+  .pbf-chev { width: 16px; height: 16px; flex: none; color: #80848b; display: block; transition: transform .15s; }
+  .pb-open .pbf-chev { transform: rotate(180deg); }
+  #view-list div[style*="position:relative"] > button[onclick^="PB.pop"] > span { gap: 8px !important; }
+
+  /* the menus */
+  #cliPop, #datePop { top: 46px !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; padding: 6px !important; }
+  #cliPop { width: 260px !important; }
+  #datePop { padding: 12px !important; }
+
+  /* client menu: a search box with the icon inside, names with a check on the selected one */
+  #cliPop > div:first-child { position: relative; padding: 0 !important; border-bottom: none !important; margin-bottom: 4px; }
+  #cliSearch { height: 36px !important; padding: 0 10px 0 34px !important; border: 0.5px solid #d6d6dc !important; border-radius: 10px !important; font-size: 14px !important; background: #fff !important; }
+  .pbf-sic { position: absolute; left: 10px; top: 10px; width: 16px; height: 16px; color: #80848b; pointer-events: none; }
+  #cliItems > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px !important; border-radius: 8px; font-size: 14px !important; }
+  #cliItems > div[style*="bg-selected"] { background: #f3e9ff !important; }
+  #cliItems .pbf-check { width: 16px; height: 16px; flex: none; color: #7d33e0; }
+
+  /* Clear: a white button of the same height, the library close icon */
+  #clearf { height: 40px !important; padding: 0 14px !important; gap: 6px !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; background: #fff !important; font-size: 14px !important; color: #1a1a1e !important; align-items: center; transition: background .15s, border-color .15s; }
+  #clearf:hover { background: #f3e9ff !important; border-color: #c9a6fb !important; }
+
+  /* date menu: presets as white buttons, the same hover; the chosen one in light purple, like the shown column chips */
+  #presets { gap: 8px !important; margin-bottom: 12px !important; }
+  #presets button { height: 32px !important; padding: 0 12px !important; border: 0.5px solid #d6d6dc !important; border-radius: 10px !important; background: #fff !important; font-size: 13px !important; color: #1a1a1e !important; transition: background .15s, border-color .15s; }
+  #presets button:hover { background: #f3e9ff !important; border-color: #c9a6fb !important; }
+  #presets button.pbf-on { background: #f3e9ff !important; border-color: #c9a6fb !important; color: #7d33e0 !important; }
+  #datePop > div:nth-child(2) { font-size: 12px !important; color: #6b6f76 !important; }
+  #datePop label { font-size: 12px !important; color: #6b6f76 !important; }
+  #datePop label .pbcal-ic { display: none !important; }
+  /* one radius for every small control in the date menu: presets, date fields, Cancel and Apply (all 32 px tall) */
+  #dFrom, #dTo { height: 32px !important; border-radius: 10px !important; }
+  #datePop > div:last-child > button { border-radius: 10px !important; }
+  /* the plus in Add portfolio keeps the button's white */
+  .pbf-plus { width: 16px; height: 16px; flex: none; color: currentColor; display: block; }
+  /* clear cross in search fields, as in the clients prototype: shown while there is text, darker on hover, no fill */
+  .pbx { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; padding: 0; border: none !important; background: none !important; color: #80848b; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+  .pbx:hover { color: #1a1a1e; background: none !important; }
+  .pbx svg { width: 14px; height: 14px; }
+  .pbx-on > .pbx { display: flex; }
+  .pbx-host { position: relative; }
+  #datePop label .pbf-cal { position: absolute; right: 10px; bottom: 8px; width: 16px; height: 16px; color: #80848b; pointer-events: none; }
+</style>
+<script>
+(function () {
+  // icons from the hc-ds library (icons.js and the clients prototype set); calendar drawn in the same 2 px outline
+  var P = {
+    user: '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20.5C4 16.9 7.6 14.5 12 14.5C16.4 14.5 20 16.9 20 20.5" stroke="currentColor" stroke-width="2"/>',
+    calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M4 10.5H20M8.5 3.5V7.5M15.5 3.5V7.5" stroke="currentColor" stroke-width="2"/>',
+    chev: '<path d="M6.5 9.25L12 14.75L17.5 9.25" stroke="currentColor" stroke-width="2"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L20.5 20.5" stroke="currentColor" stroke-width="2"/>',
+    check: '<path d="M5 12.5L10 17.5L19 6.5" stroke="currentColor" stroke-width="2"/>',
+    plus: '<path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2"/>',
+    close: '<path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2"/>'
+  };
+  var svg = function (k, cls) { return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" aria-hidden="true">' + P[k] + '</svg>'; };
+  var swap = function (sel, k, cls) { document.querySelectorAll(sel).forEach(function (i) { i.insertAdjacentHTML('afterend', svg(k, cls)); i.remove(); }); };
+  var E = function (id) { return document.getElementById(id); };
+
+  swap('button[onclick="PB.pop(\'cli\')"] .ti-user', 'user', 'pbf-ic');
+  swap('button[onclick="PB.pop(\'date\')"] .ti-calendar', 'calendar', 'pbf-ic');
+  swap('button[onclick^="PB.pop"] .ti-chevron-down', 'chev', 'pbf-chev');
+  swap('#view-list .ti-search', 'search', 'pbf-ic');
+  swap('#view-list button .ti-plus', 'plus', 'pbf-plus');
+  swap('#clearf .ti', 'close', 'pbf-ic');
+  E('cliSearch').insertAdjacentHTML('beforebegin', svg('search', 'pbf-sic'));
+  ['dFrom', 'dTo'].forEach(function (id) { E(id).insertAdjacentHTML('afterend', svg('calendar', 'pbf-cal')); });
+
+  // a clear cross in every search field (library search, client search in the filter, the add portfolio window)
+  var clearable = function (inp) {
+    if (inp.dataset.pbx) return; inp.dataset.pbx = '1';
+    var host = inp.parentElement; host.classList.add('pbx-host');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'pbx'; b.setAttribute('aria-label', 'Clear search'); b.innerHTML = svg('close', '');
+    host.appendChild(b);
+    inp.style.paddingRight = '34px';
+    var sync = function () { host.classList.toggle('pbx-on', !!inp.value); };
+    inp.addEventListener('input', sync); sync();
+    b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    b.addEventListener('click', function (e) { e.stopPropagation(); inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); sync(); inp.focus(); });
+  };
+  var scan = function () { document.querySelectorAll('input[placeholder^="Search"]').forEach(clearable); };
+  new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+  scan();
+
+  // the selected client gets a check on the right
+  var items = E('cliItems');
+  var mark = function () { items.querySelectorAll(':scope > div').forEach(function (d) { var on = /bg-selected/.test(d.getAttribute('style') || ''); var c = d.querySelector('.pbf-check'); if (on && !c) d.insertAdjacentHTML('beforeend', svg('check', 'pbf-check')); if (!on && c) c.remove(); }); };
+  new MutationObserver(mark).observe(items, { childList: true });
+  mark();
+
+  // arrows: up while the menu under the button is open
+  [['cliPop', 'cli'], ['datePop', 'date']].forEach(function (p) {
+    var pop = E(p[0]), btn = document.querySelector('button[onclick="PB.pop(\'' + p[1] + '\')"]');
+    var sync = function () {
+      btn.classList.toggle('pb-open', pop.style.display === 'block');
+      if (p[1] === 'date') { var cur = E('dateLabel').textContent.trim(); E('presets').querySelectorAll('button').forEach(function (x) { x.classList.toggle('pbf-on', x.textContent.trim() === cur); }); }
+    };
+    new MutationObserver(sync).observe(pop, { attributes: true, attributeFilter: ['style'] });
+    sync();
+  });
+  // a click outside closes the open menu (the calendar dropdown keeps its own clicks inside the date menu)
+  document.addEventListener('mousedown', function (e) {
+    ['cliPop', 'datePop'].forEach(function (id) {
+      var pop = E(id); if (pop.style.display !== 'block') return;
+      if (!pop.parentNode.contains(e.target)) PB.pop(id === 'cliPop' ? 'cli' : 'date');
+    });
+  });
+})();
+</script>
+
+<!-- one field style for the library and the builder, the same as the clients prototype (hc-ds .cs-input):
+     border #d6d6dc, white, text #1a1a1e 14 px, placeholder #9a9ea5, darker border on hover, purple when active.
+     Only the size may differ (radius 12 from 38 px up, 10 below). The script tags each field: the input itself when it
+     draws the border (.pbin), or the box around a borderless input (.pbin-box: search boxes, amounts, value).
+     Injected by build-pb-app.js into list.html and builder.html; in the builder only next to the portal menu (menu=1). -->
+<style>
+  .pbin, .pbin-box { border: 0.5px solid #d6d6dc !important; background: #fff !important; transition: border-color .15s; }
+  .pbin:not([style*="text-muted"]) { color: #1a1a1e !important; }   /* a calculated value (Cash) keeps its grey text */
+  .pbin-box input:not([style*="text-muted"]) { color: #1a1a1e !important; }
+  .pbin:hover:not(:focus), .pbin-box:hover:not(:focus-within) { border-color: #a9a9b2 !important; }
+  .pbin:focus, .pbin-box:focus-within { border-color: #9f59fb !important; outline: none !important; box-shadow: none !important; }
+  .pbin.pbin-l, .pbin-box.pbin-l { border-radius: 12px !important; }
+  .pbin.pbin-s, .pbin-box.pbin-s { border-radius: 10px !important; }
+  .pbin::placeholder, .pbin-box input::placeholder { color: #9a9ea5 !important; opacity: 1; }
+  /* search icons in the same grey as on the clients page */
+  .pbin-box .ti-search, .pbin-box .pbf-ic, .pbin-box > svg, .pbf-sic { color: #9a9ea5 !important; }
+  #view-list .pbin-box:has(> #q) { gap: 12px !important; }   /* the text starts 40 px in, as in the clients search */
+</style>
+<script>
+(function () {
+  var root = document.documentElement;
+  // the builder keeps its own look on the case page; the library always uses it
+  if (/builder\.html/.test(location.pathname) && !root.classList.contains('has-menu')) return;
+  var drawsBorder = function (el) { var c = getComputedStyle(el); return parseFloat(c.borderTopWidth) > 0 && c.borderTopStyle !== 'none' && c.borderLeftStyle !== 'none'; };
+  var tag = function (inp) {
+    if (inp.dataset.pbin || !inp.offsetParent) return;
+    var el = drawsBorder(inp) ? inp : (inp.parentElement && drawsBorder(inp.parentElement) ? inp.parentElement : null);
+    if (!el) return;
+    inp.dataset.pbin = '1';
+    el.classList.add(el === inp ? 'pbin' : 'pbin-box');
+    el.classList.add(el.offsetHeight >= 38 ? 'pbin-l' : 'pbin-s');
+  };
+  var scan = function () { document.querySelectorAll('input[type=text], input:not([type]), input[type=search], input[type=number], textarea').forEach(tag); };
+  new MutationObserver(scan).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+  scan();
+})();
+</script>
+
+<!-- one look for every actions menu, the row menu of the clients prototype (hc-ds .cs-pop): white, radius 12, 4 px inside,
+     items 8/12 px with radius 8, 14 px text, grey hover, red for delete, a hairline between groups, 16 px outline icons.
+     The same action has the same icon everywhere (delete, copy, file, edit...). Injected by build-pb-app.js into list.html
+     and builder.html (in the builder only next to the portal menu). -->
+<style>
+  .pbm { background: #fff !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; padding: 4px !important; overflow: hidden; }
+  .pbm-it { display: flex !important; align-items: center !important; gap: 8px !important; width: 100%; padding: 8px 12px !important; border: none !important; border-radius: 8px !important; background: transparent !important; font: inherit; font-size: 14px !important; color: #1a1a1e !important; text-align: left; cursor: pointer; }
+  .pbm-it.pbm-two { align-items: flex-start !important; }
+  .pbm-it:hover:not([disabled]) { background: #f4f4f6 !important; }
+  .pbm-it[disabled] { cursor: default; }
+  .pbm-it.pbm-danger, .pbm-it.pbm-danger span { color: #c1382f !important; }
+  .pbm-ic { width: 16px; height: 16px; flex: none; color: currentColor; display: block; }
+  .pbm-two .pbm-ic { margin-top: 2px; }
+  .pbm-it span[style*="font-size:12px"] { color: #6b6f76 !important; }
+  .pbm-sep { height: 0 !important; border: none !important; border-top: 0.5px solid #e6e6ea !important; background: none !important; margin: 4px 0 !important; }
+</style>
+<script>
+(function () {
+  if (/builder\.html/.test(location.pathname) && !document.documentElement.classList.contains('has-menu')) return;
+  // the hc-ds outline icons (icons.js and the clients set); the ones the library lacks are drawn in the same 2 px line
+  var P = {
+    'delete': '<path d="M4.5 7H19.5M9.5 7V4.5H14.5V7M6.5 7L7.5 19.5H16.5L17.5 7M10 11V16M14 11V16" stroke="currentColor" stroke-width="2"/>',
+    'copy': '<path d="M8 8V4H20V16H16M4 8H16V20H4V8Z" stroke="currentColor" stroke-width="2"/>',
+    'file': '<path d="M6 3H14L19 8V21H6V3Z M14 3V8H19 M9 13H16 M9 17H14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+    'edit': '<path d="M5 19V15.4L15.2 5.2L18.8 8.8L8.6 19H5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12.6 7.8L16.2 11.4" stroke="currentColor" stroke-width="2"/>',
+    'save': '<path d="M4.5 4.5H16L19.5 8V19.5H4.5V4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 4.5V9H15V4.5M8 19.5V14H16V19.5" stroke="currentColor" stroke-width="2"/>',
+    'equal': '<path d="M4.5 4V20M19.5 4V20M9 8H15V16H9V8Z" stroke="currentColor" stroke-width="2"/>',
+    'recalc': '<path d="M19 12C19 15.9 15.9 19 12 19C8.1 19 5 15.9 5 12C5 8.1 8.1 5 12 5C14.4 5 16.5 6.2 17.8 8M18 3.5V8H13.5" stroke="currentColor" stroke-width="2"/>',
+    'reset': '<path d="M5 19.5H19M8.5 16L4.5 12L12.5 4L18.5 10L12.5 16H8.5Z M9 8L15 14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
+  };
+  // the same action, the same icon
+  var MAP = { 'trash': 'delete', 'copy': 'copy', 'copy-plus': 'copy', 'file-type-pdf': 'file', 'file': 'file', 'pencil': 'edit', 'edit': 'edit',
+              'device-floppy': 'save', 'layout-distribute-horizontal': 'equal', 'refresh': 'recalc', 'eraser': 'reset' };
+  var svg = function (k) { return '<svg class="pbm-ic" viewBox="0 0 24 24" fill="none" aria-hidden="true">' + P[k] + '</svg>'; };
+  var SKIP = '#cli-menu, #cliPop, #datePop, .pdf-menu, #pdf-menu, #period-menu, .pm, .pbcal, #ap-backdrop, #ap-confirm-root, .cs-modal';
+  var norm = function (m) {
+    if (m.closest(SKIP) || getComputedStyle(m).position !== 'absolute') return;   // only dropdown menus, never a modal window
+    var items = [].filter.call(m.children, function (c) { return c.tagName === 'BUTTON' || c.hasAttribute('onclick'); });
+    if (!items.length || !items.some(function (c) { return c.querySelector('i.ti, svg'); })) return;   // only menus of actions with icons
+    m.classList.add('pbm');
+    [].forEach.call(m.children, function (c) {
+      if (items.indexOf(c) >= 0) {
+        c.classList.add('pbm-it');
+        if (c.querySelector('span span + span, span > span:nth-child(2)')) c.classList.add('pbm-two');
+        if (/text-danger/.test(c.getAttribute('style') || '') || c.querySelector('[style*="text-danger"]')) c.classList.add('pbm-danger');
+        c.querySelectorAll('i.ti').forEach(function (i) {
+          var name = (i.className.match(/ti-([a-z-]+)/) || [])[1];
+          if (MAP[name]) { i.insertAdjacentHTML('afterend', svg(MAP[name])); i.remove(); }
+        });
+      } else if (!c.textContent.trim()) c.classList.add('pbm-sep');
+    });
+  };
+  var scan = function () { document.querySelectorAll('.pbmenu, #save-menu, #actions-menu, [style*="shadow-popover"]').forEach(function (m) { if (m.offsetParent || m.style.display === 'block') norm(m); }); };
+  new MutationObserver(scan).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+  scan();
+})();
+</script>
+
+<!-- Add portfolio (library) in the style of the clients prototype modals (Add client, Build portfolio from the profile):
+     title 18 px with a back arrow, the close cross in the corner, the text under it, no dividers, buttons at the bottom right,
+     the same starting point cards, account list with bank logos and portfolio list as in Build portfolio. Injected by build-pb-app.js -->
+<style>
+  #ap-backdrop { background: rgba(0,0,0,.45) !important; padding: 24px !important; }
+  #ap-backdrop > div { position: relative; width: 580px !important; height: auto !important; max-height: min(640px, calc(100vh - 48px)) !important; padding: 24px !important; border: 0.5px solid #d6d6dc; border-radius: 16px !important; box-shadow: none !important; }
+  #ap-backdrop > div > div:first-child { padding: 0 40px 0 0 !important; border-bottom: none !important; gap: 8px !important; min-height: 28px; margin-bottom: 12px; }
+  #ap-title { font-size: 18px !important; font-weight: 500 !important; line-height: 24px; }
+  #ap-back { width: 28px !important; height: 28px !important; margin: -2px 0 -2px -4px; border-radius: 8px !important; color: #6b6f76 !important; }
+  #ap-back:hover { background: #f4f4f6 !important; color: #1a1a1e !important; }
+  #ap-backdrop .apx-x { position: absolute; top: 16px; right: 16px; width: 28px !important; height: 28px !important; color: #6b6f76 !important; background: none !important; border: none !important; }
+  #ap-backdrop .apx-x:hover { color: #1a1a1e !important; }
+  #ap-backdrop svg.apx-i { width: 16px; height: 16px; flex: none; display: block; }
+  #ap-backdrop .apx-x svg.apx-i, #ap-back svg.apx-i { width: 20px; height: 20px; }
+  #ap-body { flex: 1 1 auto !important; min-height: 0; overflow-y: auto !important; display: block !important; margin: 0 -24px !important; padding: 0 24px !important; }
+  #ap-footer:empty { display: none; }
+
+  .apx-sub { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: #6b6f76; }
+  .apx-for { margin: 0 0 16px; font-size: 13px; color: #6b6f76; }
+  .apx-for b { color: #1a1a1e; font-weight: 500; }
+
+  /* search, as on the clients page */
+  .apx-search { position: relative; margin: 0 0 12px; }
+  .apx-search > svg { position: absolute; left: 12px; top: 12px; color: #9a9ea5; }
+  .apx-search input { width: 100%; height: 40px; box-sizing: border-box; padding: 0 40px; border: 0.5px solid #d6d6dc; border-radius: 12px; background: #fff; font: inherit; font-size: 14px; color: #1a1a1e; outline: none; }
+
+  /* a bordered list: clients, accounts, portfolios */
+  .apx-list { border: 0.5px solid #e6e6ea; border-radius: 12px; overflow: hidden; }
+  .apx-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-top: 0.5px solid #e6e6ea; cursor: pointer; transition: background .12s; }
+  .apx-row:first-child { border-top: none; }
+  .apx-row:hover { background: #f4f4f6; }
+  .apx-row .tx { flex: 1; min-width: 0; font-size: 14px; color: #1a1a1e; }
+  .apx-row .tx b { font-weight: 500; }
+  .apx-row .tx small { display: block; margin-top: 2px; font-size: 12px; color: #6b6f76; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .apx-row .v { font-size: 14px; font-weight: 500; white-space: nowrap; color: #1a1a1e; }
+  .apx-row .go { color: #9a9ea5; }
+  .apx-tag { flex: none; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: #f4f4f6; color: #6b6f76; white-space: nowrap; }
+  .apx-tag.acc { background: #f3e9ff; color: #7d33e0; }
+  .apx-empty { padding: 24px; text-align: center; font-size: 14px; color: #6b6f76; }
+
+  /* starting point cards (the clients .opt) */
+  .apx-opt { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 16px; margin-bottom: 12px; text-align: left; background: #fff; border: 0.5px solid #d6d6dc; border-radius: 12px; cursor: pointer; transition: background .15s; font: inherit; color: #1a1a1e; }
+  .apx-opt:last-child { margin-bottom: 0; }
+  .apx-opt:hover { background: #f4f4f6; }
+  .apx-opt .ic { flex: none; width: 40px; height: 40px; border-radius: 10px; background: #f4f4f6; color: #6b6f76; display: flex; align-items: center; justify-content: center; }
+  .apx-opt .ic svg { width: 20px; height: 20px; }
+  .apx-opt .tx { flex: 1; min-width: 0; }
+  .apx-opt .tx b { display: block; font-size: 14px; font-weight: 500; }
+  .apx-opt .tx small { display: block; margin-top: 2px; font-size: 12px; color: #6b6f76; }
+  .apx-opt .go { color: #9a9ea5; }
+  .apx-opt.off { cursor: default; }
+  .apx-opt.off:hover { background: #fff; }
+  .apx-opt.off .ic, .apx-opt.off .tx { opacity: .55; }
+  /* starting point cards (her ask, 11 Nov): no count tags, bare icons without a tile, all three cards grey (no purple Start from holdings) */
+  .apx-opt .apx-tag { display: none; }
+  .apx-opt .ic, .apx-opt.acc .ic { width: 24px; height: 24px; background: none; border-radius: 0; }
+
+  /* accounts */
+  .apx-all { display: flex; align-items: center; gap: 12px; padding: 4px 0 12px; font-size: 13px; color: #6b6f76; cursor: pointer; user-select: none; }
+  .apx-bank { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; font-size: 14px; font-weight: 500; }
+  .apx-bank small { font-weight: 400; font-size: 12px; color: #9a9ea5; }
+  .apx-logo { width: 24px; height: 24px; border-radius: 8px; overflow: hidden; border: 0.5px solid #e6e6ea; flex: none; }
+  .apx-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .apx-cb { flex: none; width: 20px; height: 20px; box-sizing: border-box; border-radius: 6px; border: 1.5px solid #d6d6dc; display: flex; align-items: center; justify-content: center; color: transparent; }
+  .apx-cb.on { background: #9f59fb; border-color: #9f59fb; color: #fff; }
+  .apx-cb svg { width: 14px; height: 14px; }
+
+  /* filters in Load from library */
+  .apx-filters { display: flex; gap: 8px; margin: 0 0 12px; }
+
+  /* footer: no divider, buttons on the right */
+  .apx-foot { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
+  .apx-foot .sp { flex: 1; font-size: 13px; color: #6b6f76; }
+  .apx-foot .sp b { color: #1a1a1e; font-weight: 500; }
+  .apx-foot .sp a { color: #7d33e0; text-decoration: none; font-weight: 500; }
+  .apx-foot .sp a:hover { text-decoration: underline; }
+  .apx-btn { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border-radius: 12px; border: 0.5px solid #d6d6dc; background: #fff; color: #1a1a1e; font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+  .apx-btn:hover { background: #f3e9ff; border-color: #c9a6fb; color: #7d33e0; }
+  .apx-btn.pri { background: #9f59fb; border-color: #9f59fb; color: #fff; }
+  .apx-btn.pri:hover { background: #894dd7; border-color: #894dd7; color: #fff; }
+  .apx-btn.pri:disabled, .apx-btn.pri:disabled:hover { background: #b6b7b7; border-color: #b6b7b7; color: #fff; cursor: default; }
+
+  /* copy confirmation: the same modal look */
+  .apx-confirm { position: relative; width: 440px; max-width: 100%; box-sizing: border-box; background: #fff; border: 0.5px solid #d6d6dc; border-radius: 16px; padding: 24px; }
+  .apx-confirm h4 { margin: 0 0 12px; padding-right: 40px; font-size: 18px; font-weight: 500; }
+  .apx-note { display: flex; gap: 8px; padding: 12px; border-radius: 12px; background: #fcf4e4; font-size: 13px; line-height: 1.5; color: #633806; }
+  .apx-note b { font-weight: 500; color: #412402; }
+  .apx-confirm svg.apx-i { width: 16px; height: 16px; flex: none; display: block; }
+  .apx-note svg.apx-i { margin-top: 2px; color: #854f0b; }
+  .apx-confirm .apx-x svg.apx-i { width: 20px; height: 20px; }
+  .apx-confirm .apx-x { width: 28px; height: 28px; background: none; border: none; color: #6b6f76; }
+  .apx-confirm .apx-x:hover { color: #1a1a1e; }
+</style>
+<script>
+(function () {
+  // hc-ds outline icons (icons.js and the clients prototype set)
+  var P = {
+    back: '<path d="M20 12H5M11 5.5L4.5 12L11 18.5" stroke="currentColor" stroke-width="2"/>',
+    close: '<path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L20.5 20.5" stroke="currentColor" stroke-width="2"/>',
+    arrow: '<path d="M9 5.5L15.5 12L9 18.5" stroke="currentColor" stroke-width="2"/>',
+    check: '<path d="M5 12.5L10 17.5L19 6.5" stroke="currentColor" stroke-width="2"/>',
+    chev: '<path d="M6.5 9.25L12 14.75L17.5 9.25" stroke="currentColor" stroke-width="2"/>',
+    wallet: '<path d="M3 8H21V20H3V8ZM3 8V4H17V8M15 14H18" stroke="currentColor" stroke-width="2"/>',
+    pencil: '<path d="M4 20H8L18.5 9.5L14.5 5.5L4 16V20Z M12.5 7.5L16.5 11.5 M16 18H22 M19 15V21" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+    folder: '<path d="M3 6.5C3 5.7 3.7 5 4.5 5H9.5L11.5 7.5H19.5C20.3 7.5 21 8.2 21 9V18C21 18.8 20.3 19.5 19.5 19.5H4.5C3.7 19.5 3 18.8 3 18V6.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+    info: '<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 11V16.5M12 7.5V8.5" stroke="currentColor" stroke-width="2"/>'
+  };
+  var I = function (k, cls) { return '<svg class="apx-i ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" aria-hidden="true">' + P[k] + '</svg>'; };
+  var LOGO = { 'Avanza': 'avanza', 'Nordea': 'nordea', 'SEB': 'seb', 'Skandia': 'skandia', 'Handelsbanken': 'handelsbanken', 'Swedbank': 'swedbank', 'Nordnet': 'nordnet' };
+  var esc = function (s) { return String(s).replace(/'/g, '&#39;'); };
+  var first = function (n) { return n.split(' ')[0]; };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var day = function (iso) { var p = iso.split('-'); return +p[2] + ' ' + MON[+p[1] - 1] + ' ' + p[0]; };   // 10 Apr 2026, as in Build portfolio
+
+  // the head: hc-ds icons, the close cross in the corner
+  var back = EL('ap-back'); back.innerHTML = I('back');
+  var x = back.parentNode.querySelector('button[onclick="AP.close()"]'); x.classList.add('apx-x'); x.innerHTML = I('close');
+  back.parentNode.parentNode.appendChild(x);
+  apTitles.holdings = 'Select accounts';
+
+  window.apDesc = function (t) { return '<p class="apx-sub">' + t + '</p>'; };
+  window.apForLine = function (c) { return '<div class="apx-for">For: <b>' + (c ? c.n : 'No client') + '</b></div>'; };
+  var search = function (id, ph, on) { return '<div class="apx-search">' + I('search') + '<input id="' + id + '" type="text" placeholder="' + ph + '" oninput="' + on + '" autocomplete="off"></div>'; };
+  var cb = function (on) { return '<span class="apx-cb' + (on ? ' on' : '') + '">' + I('check') + '</span>'; };
+
+  // 1. client
+  window.apRenderClient = function () {
+    EL('ap-body').style.cssText = '';
+    EL('ap-body').innerHTML = apDesc('Choose a client to work with their bank data, or continue without one and link a client later.')
+      + search('ap-cSearch', 'Search by name or Personal ID', 'apFilter(this.value)') + '<div class="apx-list" id="ap-cList"></div>';
+    apFilter('');
+    EL('ap-footer').innerHTML = '<div class="apx-foot"><span class="sp">Client not listed? <a href="#" onclick="apAddClient(event)">Add a client</a></span><button class="apx-btn" onclick="apNoClient()">Continue without a client</button></div>';
+  };
+  window.apFilter = function (q) {
+    q = (q || '').toLowerCase();
+    var rows = clients.filter(function (c) { return c.n.toLowerCase().indexOf(q) >= 0 || c.id.indexOf(q) >= 0; });
+    EL('ap-cList').innerHTML = rows.length ? rows.map(function (c) {
+      return '<div class="apx-row" onclick="apPick(\'' + c.id + '\')"><span class="tx">' + c.n + '<small>' + c.id + '</small></span>'
+        + (c.holdingsCollected ? '<span class="apx-tag acc">Holdings collected</span>' : '') + I('arrow', 'go') + '</div>';
+    }).join('') : '<div class="apx-empty">No clients match</div>';
+  };
+
+  // 2. starting point: the same cards as Build portfolio on the client profile
+  var opt = function (cls, ic, t, sub, tag, go) {
+    return '<button class="apx-opt ' + cls + '"' + (go ? ' onclick="' + go + '"' : '') + '><span class="ic">' + I(ic) + '</span><span class="tx"><b>' + t + '</b><small>' + sub + '</small></span>' + (tag || '') + I('arrow', 'go') + '</button>';
+  };
+  window.apRenderSource = function () {
+    EL('ap-body').style.cssText = '';
+    var c = state.client, h = '';
+    if (c && c.holdingsCollected) h += opt('acc', 'wallet', 'Start from holdings', 'The accounts collected from the client’s banks', '<span class="apx-tag acc">' + allAcc.length + ' accounts</span>', 'apToHoldings()');
+    else if (c) h += '<div class="apx-opt acc off"><span class="ic">' + I('wallet') + '</span><span class="tx"><b>Start from holdings</b><small>No holdings collected for ' + first(c.n) + ' yet</small></span><button class="apx-btn" onclick="apCollectHoldings(event)">Request data</button></div>';
+    h += opt('', 'pencil', 'Start from scratch', 'An empty portfolio to fill in', '', 'apEmpty()');
+    h += opt('', 'folder', 'Load from library', 'Start from a saved portfolio', '<span class="apx-tag">' + library.length + ' saved</span>', 'apToLibrary()');
+    EL('ap-body').innerHTML = apDesc('Choose what to start from. Everything can be changed later in the builder.') + apForLine(c) + h;
+  };
+
+  // 3. accounts: bank logos, the number under the name, the value on the right
+  window.apRenderHoldings = function () {
+    EL('ap-body').style.cssText = '';
+    EL('ap-body').innerHTML = apDesc('The accounts to combine into one portfolio. Matching holdings are merged.') + apForLine(state.client)
+      + '<div class="apx-all" onclick="apToggleAll()" id="ap-all"></div><div id="ap-accList"></div>';
+    EL('ap-footer').innerHTML = '<div class="apx-foot"><span class="sp" id="ap-fSum"></span><button class="apx-btn pri" id="ap-fBtn" onclick="apContinueFetch()">Open in builder</button></div>';
+    apRenderAcc(); apUpdateBar();
+  };
+  window.apRenderAcc = function () {
+    EL('ap-all').innerHTML = cb(allAcc.every(function (a) { return sel.has(a.id); })) + 'Select all accounts';
+    EL('ap-accList').innerHTML = banks.map(function (g) {
+      return '<div class="apx-bank">' + (LOGO[g.bank] ? '<span class="apx-logo"><img src="../hc-ds/assets/logos/' + LOGO[g.bank] + '.png" alt=""></span>' : '') + g.bank + ' <small>' + g.accounts.length + ' account' + (g.accounts.length > 1 ? 's' : '') + '</small></div>'
+        + '<div class="apx-list">' + g.accounts.map(function (a) {
+          return '<div class="apx-row" onclick="apToggleOne(\'' + a.id + '\')">' + cb(sel.has(a.id)) + '<span class="tx">' + a.name + '<small>' + a.type + ', ' + a.num + '</small></span><span class="v" style="font-weight:400">' + fmt(a.mv) + '</span></div>';
+        }).join('') + '</div>';
+    }).join('');
+  };
+  window.apUpdateBar = function () {
+    var on = allAcc.filter(function (a) { return sel.has(a.id); }), tot = on.reduce(function (s, a) { return s + a.mv; }, 0);
+    EL('ap-fSum').innerHTML = on.length ? '<b>' + on.length + '</b> account' + (on.length > 1 ? 's' : '') + ', <b>' + fmt(tot) + '</b>' : 'No accounts selected';
+    EL('ap-fBtn').disabled = !on.length;
+  };
+
+  // 4. library: search, filters, the list as in Build portfolio
+  window.apRenderLibrary = function () {
+    EL('ap-body').style.cssText = '';
+    var c = state.client;
+    EL('ap-body').innerHTML = apDesc('A copy of the saved portfolio opens in the builder' + (c ? ' for ' + first(c.n) : '') + '.') + apForLine(c)
+      + search('ap-lSearch', 'Search by name', 'apApplyLib()')
+      + '<div class="apx-filters">' + apDropdown('client') + apDropdown('time') + apDropdown('sort') + '</div><div class="apx-list" id="ap-lList"></div>';
+    EL('ap-body').querySelectorAll('.apx-filters .ti-chevron-down').forEach(function (i) { i.outerHTML = I('chev'); });
+    apApplyLib();
+  };
+  window.apApplyLib = function () {
+    var q = (EL('ap-lSearch') ? EL('ap-lSearch').value : '').toLowerCase(), me = state.client ? state.client.n : null;
+    var rows = library.filter(function (p) { return p.name.toLowerCase().indexOf(q) >= 0; });
+    if (libf.client !== 'all') rows = rows.filter(function (p) { return (p.origin || 'No client') === libf.client; });
+    if (libf.time === '30') rows = rows.filter(function (p) { return apDaysAgo(p.date) <= 30; });
+    else if (libf.time === '90') rows = rows.filter(function (p) { return apDaysAgo(p.date) <= 90; });
+    else if (libf.time === 'year') rows = rows.filter(function (p) { return new Date(p.date).getFullYear() === AP_NOW.getFullYear(); });
+    rows.sort(function (a, b) { return libf.sort === 'new' ? b.date.localeCompare(a.date) : libf.sort === 'old' ? a.date.localeCompare(b.date) : libf.sort === 'high' ? b.mv - a.mv : a.mv - b.mv; });
+    EL('ap-lList').innerHTML = rows.length ? rows.map(function (p) {
+      var who = p.origin ? (p.origin === me ? 'This client' : 'Created for ' + p.origin) : 'No client';
+      return '<div class="apx-row" onclick="apChooseLib(' + library.indexOf(p) + ')"><span class="tx"><b>' + p.name + '</b><small>' + who + ', ' + day(p.date) + '</small></span><span class="v">' + fmt(p.mv) + '</span>' + I('arrow', 'go') + '</div>';
+    }).join('') : '<div class="apx-empty">No portfolios match</div>';
+  };
+
+  // copy confirmation: title, text, note, buttons on the right
+  window.apShowCopyConfirm = function (i) {
+    apCancelCopy();
+    var item = library[i], cl = item.origin, belongs = state.client ? state.client.n : 'no client';
+    EL('ap-confirm-root').innerHTML = '<div id="ap-confirmBackdrop" onclick="if(event.target===this)apCancelCopy()" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:1100;">'
+      + '<div class="apx-confirm"><button class="apx-x" style="position:absolute;top:16px;right:16px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="apCancelCopy()" aria-label="Close">' + I('close') + '</button>'
+      + '<h4>Start from “' + item.name + '”?</h4><p class="apx-sub">' + apHoldCount(item) + ' holdings, ' + fmt(item.mv) + ' will be copied into a new portfolio you can edit.</p>'
+      + '<div class="apx-note">' + I('info') + '<span>You copy the setup of <b>' + cl + '</b>’s portfolio as a starting point. It doesn’t change ' + first(cl) + '’s records, and the new portfolio belongs to <b>' + belongs + '</b>.</span></div>'
+      + '<div class="apx-foot"><span class="sp"></span><button class="apx-btn" onclick="apCancelCopy()">Cancel</button><button class="apx-btn pri" onclick="apDoCopy(' + i + ')">Copy holdings</button></div></div></div>';
+  };
+})();
+</script>
+
+<!-- modal frame shared by the builder (Add a proposal: Select accounts, Load from library; the small confirmations)
+     and the library's Add portfolio. The item classes (.apx-row, .apx-opt, .apx-foot, .apx-btn...) come from the style
+     of data/pb-ap.html, which build-pb-app.js injects into the builder too.
+     Two heights only (her rule, 9 Nov): a window that fits its content, or 640 px with the list scrolling inside. -->
+<style>
+  .apx-back { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,.45); }
+  .apx-box { position: relative; display: flex; flex-direction: column; width: 580px; max-width: 100%; max-height: min(640px, calc(100vh - 48px)); box-sizing: border-box; padding: 24px; background: #fff; border: 0.5px solid #d6d6dc; border-radius: 16px; color: #1a1a1e; font-family: var(--font-sans); }
+  .apx-head { display: flex; align-items: center; gap: 8px; min-height: 28px; margin: 0 0 12px; padding-right: 40px; }
+  .apx-head h4 { margin: 0; font-size: 18px; font-weight: 500; line-height: 24px; }
+  .apx-box > .apx-x { position: absolute; top: 16px; right: 16px; width: 28px; height: 28px; padding: 0; border: none; background: none; color: #6b6f76; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .apx-box > .apx-x:hover { color: #1a1a1e; }
+  .apx-box svg.apx-i { width: 16px; height: 16px; flex: none; display: block; }
+  .apx-box > .apx-x svg.apx-i { width: 20px; height: 20px; }
+  .apx-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -24px; padding: 0 24px; }
+  /* filters in the library windows: the page filters (All clients, Any time) in a smaller size — white, light purple hover
+     and open state, an icon in front, the arrow turns while open; the menu like the client menu: selected light purple with a check */
+  .apx-filters > div > button { height: 36px !important; padding: 0 10px !important; gap: 8px !important; border: 0.5px solid #d6d6dc !important; border-radius: 10px !important; font-size: 14px !important; color: #1a1a1e !important; background: #fff !important; transition: background .15s, border-color .15s; }
+  .apx-filters > div > button:hover, .apx-filters > div > button.pbf-open { background: #f3e9ff !important; border-color: #c9a6fb !important; }
+  .apx-filters svg.apx-fi { width: 16px; height: 16px; flex: none; color: #80848b; display: block; }
+  .apx-filters svg.apx-fc { width: 16px; height: 16px; flex: none; color: #80848b; display: block; transition: transform .15s; }
+  .apx-filters .pbf-open svg.apx-fc { transform: rotate(180deg); }
+  .apx-filters > div > div { top: 42px !important; min-width: 200px !important; border: 0.5px solid #d6d6dc !important; border-radius: 12px !important; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; }
+  .apx-filters > div > div > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; font-size: 14px !important; padding: 9px 10px !important; color: #1a1a1e; }
+  .apx-filters > div > div > div:hover { background: #f4f4f6 !important; }
+  .apx-filters > div > div > div[style*="bg-selected"] { background: #f3e9ff !important; }
+  .apx-filters svg.apx-fk { width: 16px; height: 16px; flex: none; color: #7d33e0; }
+
+  /* the inline Add a proposal panel in the builder: the same head, text and cards as Choose a starting point */
+  .apx-panel { box-sizing: border-box; padding: 24px; background: #fff; border: 0.5px dashed #d6d6dc; border-radius: 16px; position: relative; color: #1a1a1e; }
+  .apx-panel > .apx-x { position: absolute; top: 16px; right: 16px; width: 28px; height: 28px; padding: 0; border: none; background: none; color: #6b6f76; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .apx-panel > .apx-x:hover { color: #1a1a1e; }
+  .apx-panel svg.apx-i { width: 16px; height: 16px; flex: none; display: block; }
+  .apx-panel > .apx-x svg.apx-i { width: 20px; height: 20px; }
+  .apx-box .apx-opt .ic svg.apx-i, .apx-panel .apx-opt .ic svg.apx-i, #ap-backdrop .apx-opt .ic svg.apx-i { width: 20px; height: 20px; }   /* starting point cards: 20 px icons in the 40 px tile (her ask, 10 Nov) */
+  .apx-hint { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: #6b6f76; }
+
+  /* small confirmations (Discard, Save as new, Remove all products): the same frame, title and buttons */
+  #modal-root > div > div[style*="padding:1.5rem"] { padding: 24px !important; border-radius: 16px !important; border: 0.5px solid #d6d6dc; max-width: 440px !important; }
+  #modal-root > div > div[style*="padding:1.5rem"] h3 { font-size: 18px !important; font-weight: 500 !important; margin: 0 0 12px !important; }
+  #modal-root > div > div[style*="padding:1.5rem"] p { font-size: 14px !important; line-height: 1.5 !important; color: #6b6f76 !important; }
+  #modal-root > div > div[style*="padding:1.5rem"] > div:last-child { margin-top: 24px !important; gap: 8px !important; justify-content: flex-end; }
+  #modal-root > div > div[style*="padding:1.5rem"] > div:last-child > button { height: 40px !important; padding: 0 16px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 500 !important; flex: none !important; }
+  #modal-root > div { background: rgba(0,0,0,.45) !important; }
+</style>
+<script>
+(function () {
+  // decorate the filter buttons and menus in the library windows (Add portfolio in the library, Load from library in the builder)
+  var P = {
+    user: '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20.5C4 16.9 7.6 14.5 12 14.5C16.4 14.5 20 16.9 20 20.5" stroke="currentColor" stroke-width="2"/>',
+    calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M4 10.5H20M8.5 3.5V7.5M15.5 3.5V7.5" stroke="currentColor" stroke-width="2"/>',
+    sort: '<path d="M8 4.5V19.5M8 19.5L4.5 16M8 19.5L11.5 16M16 19.5V4.5M16 4.5L12.5 8M16 4.5L19.5 8" stroke="currentColor" stroke-width="2"/>',
+    chev: '<path d="M6.5 9.25L12 14.75L17.5 9.25" stroke="currentColor" stroke-width="2"/>',
+    check: '<path d="M5 12.5L10 17.5L19 6.5" stroke="currentColor" stroke-width="2"/>'
+  };
+  var svg = function (k, cls) { return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" aria-hidden="true">' + P[k] + '</svg>'; };
+  var LEAD = ['user', 'calendar', 'sort'];
+  var deco = function () {
+    document.querySelectorAll('.apx-filters').forEach(function (f) {
+      [].forEach.call(f.children, function (w, n) {
+        var b = w.querySelector(':scope > button'); if (!b) return;
+        if (!b.querySelector('.apx-fi')) b.insertAdjacentHTML('afterbegin', svg(LEAD[n] || 'sort', 'apx-fi'));
+        b.querySelectorAll('i.ti-chevron-down, svg.apx-i').forEach(function (i) { i.insertAdjacentHTML('afterend', svg('chev', 'apx-fc')); i.remove(); });
+        var pop = w.querySelector(':scope > div');
+        var open = !!pop && getComputedStyle(pop).display !== 'none';
+        if (b.classList.contains('pbf-open') !== open) b.classList.toggle('pbf-open', open);
+        if (pop) [].forEach.call(pop.children, function (it) {
+          var on = /bg-selected/.test(it.getAttribute('style') || ''), c = it.querySelector('.apx-fk');
+          if (on && !c) it.insertAdjacentHTML('beforeend', svg('check', 'apx-fk'));
+          if (!on && c) c.remove();
+        });
+      });
+    });
+  };
+  var start = function () { new MutationObserver(deco).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }); deco(); };
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);   // in the builder this sits in <head>
+})();
+</script>
+
+<script>
+/* Limits of the prototype (her ask, 10 Nov), injected last into list.html by build-pb-app.js; only with the portal menu (menu=1).
+   One rule for what isn't built: one toast, "Not available in the prototype: …".
+   What the prototype can show instead of a toast, it shows:
+   - "opens the builder" (a library pick, a copy, collected accounts) opens the builder pane; Compare opens it side by side
+   - on the case page (case=1), Add a client and Collect holdings move the case page's deck to that prototype */
+(function () {
+  var q = new URLSearchParams(location.hash.slice(1));
+  if (q.get('menu') !== '1' || !window.PB) return;
+  var NA = 'Not available in the prototype: ';
+  function close() { if (window.AP && AP.close) AP.close(); }
+  function builder(st) { close(); parent.postMessage({ type: 'pb-open-builder', state: st }, '*'); }
+  function deck(to, k) {
+    if (q.get('case') !== '1' || top === window) return false;
+    close(); top.postMessage({ type: 'deck-go', to: to, k: k || 0 }, location.origin); return true;
+  }
+  var T = PB.toast;
+  PB.toast = function (m) {
+    m = String(m);
+    if (/^Exporting PDF for/.test(m)) return T.call(PB, NA + 'here you would choose where to save the PDF');
+    if (/^Opens the builder with an empty/.test(m)) return T.call(PB, NA + 'an empty builder');
+    if (/^Opens the builder/.test(m)) return builder('single');
+    if (/^Opening comparison/.test(m)) return builder('compare');
+    if (/^Deleted "/.test(m)) return T.call(PB, NA + 'deleting “' + m.slice(9, -1) + '”');
+    if (/^Created "/.test(m)) return T.call(PB, NA + 'duplicating a portfolio');
+    if (/^Opens the Clients tab/.test(m)) return deck('clients', 1) || T.call(PB, NA + 'adding a client from here. It is done in Clients');
+    if (/^Opens the holdings collection flow/.test(m)) return deck('holdings', 0) || T.call(PB, NA + 'collecting holdings from here. It starts from the client');
+    return T.apply(PB, arguments);
+  };
+})();
+</script>
+
+
+<script>
+/* case-page bridge (added by data/build-pb-app.js) */
+(function () {
+  var state = new URLSearchParams(location.hash.slice(1)).get('state') || 'library';
+  // the note sits under the table in the prototype, out of sight in a short screen: pin it to the bottom
+  var t = document.getElementById('toast');
+  t.style.cssText += 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;margin:0;box-shadow:var(--shadow-popover);color:var(--text-primary);';
+  var KARL = '19850312-4471', ERIK = '19770903-1156';
+  function pick(ids) { ids.forEach(function (id) { PB.toggle(id); }); }
+  if (state === 'pick-one') pick([5]);
+  if (state === 'pick-two') pick([5, 1]);       // both Erik's
+  if (state === 'pick-three') pick([5, 1, 2]);
+  if (state === 'mismatch') { pick([1, 3]); PB.compare(); }   // Erik's and Maria's
+  if (/^add-/.test(state)) AP.open();
+  // with the portal menu (menu=1), a row opens the builder pane instead of a note
+  if (new URLSearchParams(location.hash.slice(1)).get('menu') === '1') {
+    PB.open = function () { parent.postMessage({ type: 'pb-open-builder' }, '*'); };
+    // the page next to the menu: the same margins and head row as the Clients page
+    document.body.style.padding = '32px 32px 48px 24px';
+    var head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;';
+    var h = document.createElement('h1'); h.textContent = 'Portfolios';
+    h.style.cssText = 'flex:1;margin:0;font-size:24px;font-weight:500;line-height:normal;color:#1a1a1e;';
+    var act = document.createElement('div'); act.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    var q = document.getElementById('q'), sw = q.parentNode, add = document.querySelector('button[onclick="AP.open()"]');
+    sw.style.marginLeft = '0'; act.appendChild(sw); act.appendChild(add);
+    head.appendChild(h); head.appendChild(act);
+    document.getElementById('view-list').prepend(head);
+  }
+  if (state === 'add-source' || state === 'add-holdings' || state === 'add-library' || state === 'add-conflict') apPick(KARL);
+  if (state === 'add-source-none') apPick(ERIK);
+  if (state === 'add-holdings') { apGo('holdings'); apToggleOne('av1'); apToggleOne('no1'); }
+  if (state === 'add-library' || state === 'add-conflict') apGo('library');
+  if (state === 'add-conflict') apChooseLib(0);   // Maria's portfolio while working for Karl
+})();
+</script>
+</body>
+</html>
