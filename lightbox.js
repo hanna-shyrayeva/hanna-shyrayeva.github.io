@@ -73,7 +73,7 @@
     '.lb__view.is-zoomed { cursor: grab; }',
     '.lb__view.is-dragging { cursor: grabbing; user-select: none; }',
     '.lb__img { display: block; margin: auto; max-width: none; height: auto; border-radius: 8px; background: #fff; }',
-    '.lb__nav { position: absolute; top: 50%; transform: translateY(-50%); }',
+    '.lb__nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; }',
     '.lb__nav--prev { left: 16px; } .lb__nav--next { right: 16px; }',
     '.lb__nav[hidden] { display: none; }',
     '@media (max-width: 600px) { .lb__view { padding: 0 8px 16px; } .lb__nav { top: auto; bottom: 16px; transform: none; } }'
@@ -107,8 +107,13 @@
      own size, or twice the fit when that is hardly bigger */
   function size(keep) {
     if (!img.naturalWidth) return;
-    var room = view.clientWidth - (window.innerWidth <= 600 ? 16 : 32);
-    var fit = Math.min(img.naturalWidth, room);
+    var phone = window.innerWidth <= 600;
+    /* room beside the picture for the arrows (16 from the edge + 40 + 12), so the picture never covers them (her ask, 16 Nov);
+       on a phone the arrows sit below it instead */
+    var room = view.clientWidth - (phone ? 16 : list.length > 1 ? 136 : 32);
+    /* the whole picture fits the window height too, but a tall one (a long page) isn't shrunk below 480 wide */
+    var fitH = (view.clientHeight - (phone ? 16 : 24)) * img.naturalWidth / img.naturalHeight;
+    var fit = Math.min(img.naturalWidth, room, Math.max(fitH, Math.min(480, room)));
     var big = Math.max(img.naturalWidth, fit * 1.8);
     var w = zoomed ? big : fit;
     var cx = keep ? keep.x : 0.5, cy = keep ? keep.y : 0;
