@@ -13,7 +13,7 @@
   background: var(--surface-2); border: 0.5px solid var(--border-strong); border-radius: var(--radius);
 }
 .cs-input { transition: border-color var(--dur-fast, .15s); }
-.cs-input:hover:not(:focus):not(.ro):not(:disabled) { border-color: #a9a9b2; }   /* a darker border on hover, purple when active */
+.cs-input:hover:not(:focus):not(.ro):not(:disabled) { border-color: var(--dk-l-a9a9b2, #a9a9b2); }   /* a darker border on hover, purple when active */
 .cs-input:focus { border-color: var(--border-accent); }
 .cs-input::placeholder { color: var(--text-muted); }
 .cs-input.err { border-color: var(--fill-danger); }

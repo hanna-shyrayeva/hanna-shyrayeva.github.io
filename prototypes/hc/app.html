@@ -601,7 +601,7 @@
   .rp-tip b{font-weight:500}
   .rp-fees td:first-child{white-space:normal;min-width:200px}
   .rp-fees th:nth-child(2),.rp-fees td:nth-child(2){text-align:left}
-  .rp-tag-high{display:inline-block;margin-left:6px;font-size:11px;font-weight:500;color:#854f0b;background:#fcf4e4;border-radius:6px;padding:1px 6px;white-space:nowrap}
+  .rp-tag-high{display:inline-block;margin-left:6px;font-size:11px;font-weight:500;color:var(--dk-t-854f0b, #854f0b);background:var(--dk-b-fcf4e4, #fcf4e4);border-radius:6px;padding:1px 6px;white-space:nowrap}
   .rp-loans th:nth-child(2),.rp-loans td:nth-child(2),.rp-loans th:nth-child(3),.rp-loans td:nth-child(3){text-align:left}
   .rp-list div{font-size:13px;color:var(--text-secondary);padding:8px 0;border-top:0.5px solid var(--border)}
   .rp-list div:first-child{border-top:none}
@@ -619,24 +619,24 @@
   body:has(.cs-wrap.web) #protoShell{margin:auto 0}
   body:has(.cs-wrap.web) .cs-wrap.web{min-height:0}   /* the page centres, not the wrap */
   /* the page header (bridge): white, rounded like the portal's side menu, 24 px from the window edges */
-  .hc-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px;flex:none;margin:12px 12px 24px;padding:12px 20px;min-height:48px;box-sizing:border-box;background:#fff;border-radius:16px;font-size:13px;line-height:1.35;color:#6b6f76}
+  .hc-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px;flex:none;margin:12px 12px 24px;padding:12px 20px;min-height:48px;box-sizing:border-box;background:var(--dk-b-ffffff, #fff);border-radius:16px;font-size:13px;line-height:1.35;color:var(--dk-t-6b6f76, #6b6f76)}
   .hc-head[hidden],body:not(:has(.cs-wrap.web)) .hc-head{display:none}
   /* a long card (every bank open): the header stays at the top and the card's footer with its buttons at the bottom (her ask, 11 Nov) */
-  .hc-head{position:sticky;top:24px;z-index:30;border:0.5px solid #e6e6ea;box-shadow:0 0 0 12px #f0f0f2,0 -12px 0 12px #f0f0f2}   /* a band of the page colour around it: cards scroll under the grey, not into the white (her ask, 16 Nov) */
+  .hc-head{position:sticky;top:24px;z-index:30;border:0.5px solid var(--dk-l-e6e6ea, #e6e6ea);box-shadow:0 0 0 12px var(--dk-l-f0f0f2, #f0f0f2),0 -12px 0 12px #f0f0f2}   /* a band of the page colour around it: cards scroll under the grey, not into the white (her ask, 16 Nov) */
   .ptn-bar .ptn-bar-skip{flex:0 0 auto;width:auto;height:40px;margin:0;padding:0 24px;border-radius:12px;font-size:16px}   /* Skip: light, as wide as its word, next to Connect banks */
   .cs-wrap.web .rp-bar{position:static}   /* the report bar (Back, Download PDF) scrolls with the report (her ask, 16 Nov) */
   body:has(.cs-wrap.web) .cs-card > .cs-foot{position:sticky;bottom:0;z-index:5;background:var(--surface-2);border-radius:0 0 var(--radius-lg) var(--radius-lg)}
   .hc-head-l{display:flex;align-items:baseline;gap:10px;white-space:nowrap;min-width:0}   /* one line: the strip stays low (her ask) */
-  .hc-head-l b{font-size:15px;font-weight:500;color:#1a1a1e}
+  .hc-head-l b{font-size:15px;font-weight:500;color:var(--dk-t-1a1a1e, #1a1a1e)}
   .hc-head-l span{overflow:hidden;text-overflow:ellipsis}
   @media (max-width:900px){.hc-head-l span{display:none}}   /* a narrow window: the title alone, nothing runs into the steps */
   .hc-prog{display:flex;align-items:center;gap:12px;white-space:nowrap}
-  .hc-prog-t{color:#1a1a1e;font-weight:500}
+  .hc-prog-t{color:var(--dk-t-1a1a1e, #1a1a1e);font-weight:500}
   .hc-prog-s{display:flex;gap:4px}
-  .hc-prog-s i{width:32px;height:4px;border-radius:2px;background:#e6e6ea;transition:background .3s ease}
-  .hc-prog-s i.on{background:#9f59fb}
+  .hc-prog-s i{width:32px;height:4px;border-radius:2px;background:var(--dk-b-e6e6ea, #e6e6ea);transition:background .3s ease}
+  .hc-prog-s i.on{background:var(--dk-b-9f59fb, #9f59fb)}
   .hc-head-r{justify-self:end}
-  .hc-help{padding:0;border:0;background:none;font:inherit;font-weight:500;color:#7d33e0;cursor:pointer}
+  .hc-help{padding:0;border:0;background:none;font:inherit;font-weight:500;color:var(--dk-t-7d33e0, #7d33e0);cursor:pointer}
   .hc-help:hover{text-decoration:underline}
   .pk-addbox.narrow .pk-add-foot{flex-wrap:wrap}   /* the modal footer on a phone, like the bar: the text, then a full-width button (class names after the rename) */
   .pk-addbox.narrow .cs-primary.ptn-bar-next{flex:1 1 100%}
@@ -653,13 +653,13 @@
   .cs-tc-tx a,.cs-consent a{color:var(--text-accent);text-decoration:none}   /* Terms & Conditions: a purple text link like the others (her ask, 10 Nov) */
   .cs-tc-tx a:hover,.cs-consent a:hover{text-decoration:underline}
   .cs-input{transition:border-color .15s}
-  .cs-input:hover:not(:focus):not(:disabled){border-color:#a9a9b2}   /* fields: a darker border on hover, purple when active (as in the clients prototype) */
+  .cs-input:hover:not(:focus):not(:disabled){border-color:var(--dk-l-a9a9b2, #a9a9b2)}   /* fields: a darker border on hover, purple when active (as in the clients prototype) */
   .cs-input:focus{border-color:var(--border-accent)}
   /* Download PDF and Back in the report bar: the same plain white button as in the clients Analysis and the builder report (her rule, 9 Nov) */
   .rp-bar-in .rp-btn{height:40px;padding:0 16px;font-size:14px;border-radius:12px;transition:background .15s,border-color .15s,color .15s}
-  .rp-bar-in .rp-btn:hover{background:#f3e9ff;border-color:#c9a6fb;color:#7d33e0}
+  .rp-bar-in .rp-btn:hover{background:var(--dk-b-f3e9ff, #f3e9ff);border-color:var(--dk-l-c9a6fb, #c9a6fb);color:var(--dk-t-7d33e0, #7d33e0)}
   .rp-btn.rp-dl,.rp-btn.rp-dl:hover{min-width:0;background:var(--surface-2);border-color:var(--border-strong);color:var(--text-primary)}
-  .rp-btn.rp-dl:hover{background:#f3e9ff;border-color:#c9a6fb;color:#7d33e0}
+  .rp-btn.rp-dl:hover{background:var(--dk-b-f3e9ff, #f3e9ff);border-color:var(--dk-l-c9a6fb, #c9a6fb);color:var(--dk-t-7d33e0, #7d33e0)}
   .rp-tip{background:var(--surface-2);color:var(--text-primary);border:0.5px solid var(--border-strong)}   /* chart hover in the report: white, like every tooltip in the case prototypes */
   /* one report kit (9 Nov), the look of the clients Analysis: a grey page, section titles 18 above white cards (radius 16),
      figures as white stat cards (label 14 grey, value 22), tables 12 / 13 with 12 px rows, chart cards with a 14 grey title */
@@ -693,14 +693,16 @@
   .rp-table tr:hover td:last-child{border-radius:0 8px 8px 0}   /* Bank after the right-aligned Value: room between them */
   .cs-wrap:not(.web) .rp-tile-lbl{font-size:13px}   /* phone: the figures a size down, two in a row */
   .cs-wrap:not(.web) .rp-tile-val{font-size:18px}
-  svg.rp-map path[fill="var(--surface-1)"]{fill:#e6e6ea}   /* the world map: land with no holdings in a visible light grey, as in every report */
+  svg.rp-map path[fill="var(--surface-1)"]{fill:var(--dk-f-e6e6ea, #e6e6ea)}   /* the world map: land with no holdings in a visible light grey, as in every report */
   .cs-wrap.web .rp-alloc-grid.rp-pies:has(>.rp-chart:nth-child(4)){grid-template-columns:repeat(4,minmax(0,1fr))}   /* four charts: four in a row, none left alone */
   .rp-legend>.rp-leg-row{padding-top:7px;padding-bottom:7px}   /* dividers between the legend rows of every allocation chart */
   .rp-legend>.rp-leg-row:not(:first-child){position:relative}   /* the divider: a straight line above the row, not the border of the rounded hover row */
   .rp-legend>.rp-leg-row:not(:first-child)::before{content:"";position:absolute;left:0;right:0;top:0;border-top:0.5px solid var(--border)}
-  .rp-leg-row[data-l="No info"] .rp-leg-dot{background:#cbd5e1!important;box-shadow:none}   /* No info and Other: the same greys in every legend, pies and the region map alike */
-  .rp-leg-row[data-l="Other"] .rp-leg-dot{background:#94a3b8!important;box-shadow:none}
-</style></head>
+  .rp-leg-row[data-l="No info"] .rp-leg-dot{background:var(--dk-b-cbd5e1, #cbd5e1)!important;box-shadow:none}   /* No info and Other: the same greys in every legend, pies and the region map alike */
+  .rp-leg-row[data-l="Other"] .rp-leg-dot{background:var(--dk-b-94a3b8, #94a3b8)!important;box-shadow:none}
+</style><script src="../shared/b2b-theme.js" data-app="hc-own"></script>
+<link rel="stylesheet" href="../shared/b2b-dark.css">
+</head>
 <body>
   <div class="proto-shell" id="protoShell">
     <aside class="proto-panel">

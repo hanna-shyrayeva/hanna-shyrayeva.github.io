@@ -47,25 +47,25 @@
 <style>/* case page */ .sidebar, .sidebar-toggle { display: none !important; }</style>
 <style>/* the portal side menu, as in clients-2026.html (light Njorda app menu); only with menu=1 */
   .pside { display: none; }
-  html.has-menu body { background: #f0f0f2; }
-  html.has-menu body .pside { display: flex; flex: 0 0 auto; flex-direction: column; gap: 20px; width: 264px; margin: 24px 0 24px 24px; padding: 20px 16px; background: #fff; border-radius: 16px; overflow: hidden; font-family: var(--font-sans); transition: width .15s, padding .15s; }
+  html.has-menu body { background: var(--dk-b-f0f0f2, #f0f0f2); }
+  html.has-menu body .pside { display: flex; flex: 0 0 auto; flex-direction: column; gap: 20px; width: 264px; margin: 24px 0 24px 24px; padding: 20px 16px; background: var(--dk-b-ffffff, #fff); border-radius: 16px; overflow: hidden; font-family: var(--font-sans); transition: width .15s, padding .15s; }
   .pside-top { display: flex; align-items: center; gap: 12px; }
-  .pside-burger { flex: none; width: 32px; height: 32px; padding: 0; border: none; background: none; border-radius: 8px; color: #1a1a1e; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .pside-burger:hover { background: #f4f4f6; }
-  .pside-brand b { display: block; font-size: 16px; font-weight: 500; white-space: nowrap; color: #1a1a1e; }
-  .pside-brand small { display: block; font-size: 12px; color: #6b6f76; margin-top: 2px; white-space: nowrap; }
+  .pside-burger { flex: none; width: 32px; height: 32px; padding: 0; border: none; background: none; border-radius: 8px; color: var(--dk-t-1a1a1e, #1a1a1e); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .pside-burger:hover { background: var(--dk-b-f4f4f6, #f4f4f6); }
+  .pside-brand b { display: block; font-size: 16px; font-weight: 500; white-space: nowrap; color: var(--dk-t-1a1a1e, #1a1a1e); }
+  .pside-brand small { display: block; font-size: 12px; color: var(--dk-t-6b6f76, #6b6f76); margin-top: 2px; white-space: nowrap; }
   .pside-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .pnav { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 10px; border: none; border-radius: 8px; background: none; color: #6b6f76; font: 500 14px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
+  .pnav { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 10px; border: none; border-radius: 8px; background: none; color: var(--dk-t-6b6f76, #6b6f76); font: 500 14px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
   .pnav svg { flex: none; }
-  .pnav:hover { background: #f4f4f6; color: #1a1a1e; }
-  .pnav.on { background: #f3e9ff; color: #7d33e0; }
-  .pnav.off, .pnav.off:hover { background: none; color: #6b6f76; cursor: default; }
-  .pside-cta { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: none; border-radius: 12px; background: #9f59fb; color: #fff; font: 500 14px var(--font-sans); cursor: pointer; }
-  .pside-cta:hover { background: #894dd7; }
+  .pnav:hover { background: var(--dk-b-f4f4f6, #f4f4f6); color: var(--dk-t-1a1a1e, #1a1a1e); }
+  .pnav.on { background: var(--dk-b-f3e9ff, #f3e9ff); color: var(--dk-t-7d33e0, #7d33e0); }
+  .pnav.off, .pnav.off:hover { background: none; color: var(--dk-t-6b6f76, #6b6f76); cursor: default; }
+  .pside-cta { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: none; border-radius: 12px; background: var(--dk-b-9f59fb, #9f59fb); color: var(--dk-t-ffffff, #fff); font: 500 14px var(--font-sans); cursor: pointer; }
+  .pside-cta:hover { background: var(--dk-b-894dd7, #894dd7); }
   .pside-cta svg { display: none; width: 22px; height: 22px; }
-  .pside-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 0.5px solid #e6e6ea; }
-  .pside-me { display: flex; align-items: center; gap: 12px; padding: 4px 10px; white-space: nowrap; color: #6b6f76; }
-  .pside-me b { display: block; font-size: 14px; font-weight: 500; color: #1a1a1e; }
+  .pside-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 0.5px solid var(--dk-l-e6e6ea, #e6e6ea); }
+  .pside-me { display: flex; align-items: center; gap: 12px; padding: 4px 10px; white-space: nowrap; color: var(--dk-t-6b6f76, #6b6f76); }
+  .pside-me b { display: block; font-size: 14px; font-weight: 500; color: var(--dk-t-1a1a1e, #1a1a1e); }
   .pside-me small { display: block; font-size: 12px; }
   html.has-menu.side-min body .pside { width: 72px; padding: 20px 12px; }
   .side-min .pside-brand, .side-min .pnav-l { display: none; }
@@ -73,9 +73,11 @@
   .side-min .pnav, .side-min .pside-me { justify-content: center; padding-left: 0; padding-right: 0; }
   .side-min .pside-cta { width: 40px; padding: 0; margin: 0 auto; }
   .side-min .pside-cta svg { display: block; }
-  html.has-menu body { background: #f0f0f2; }
+  html.has-menu body { background: var(--dk-b-f0f0f2, #f0f0f2); }
 </style>
 <script>/* before the first paint: no jump when the page opens */ (function () { if (/(^|[#&])menu=1(&|$)/.test(location.hash)) { var c = document.documentElement.classList; c.add("has-menu"); try { if (/(^|[#&])case=1(&|$)/.test(location.hash) || localStorage.getItem("pside-min") === "1") c.add("side-min"); } catch (e) {} } })();</script>
+<link rel="stylesheet" href="../shared/b2b-dark.css">
+<script src="../shared/b2b-theme.js" data-app="pb"></script>
 </head>
 <body>
   <aside class="pside" id="pside">

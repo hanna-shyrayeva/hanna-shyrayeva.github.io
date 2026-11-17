@@ -36,9 +36,21 @@
   @media (max-width: 600px) { body { padding: 16px; } }
   .ds { color: var(--color-fg-primary); font-family: var(--font-family-base); }
   .ds h1, .ds h2, .ds h3, .ds p { margin: 0; }
-  .pb > .ds { min-width: 0; }
-  html.ds-fit .pb > .ds { height: calc(var(--pb-vh) - 64px); overflow-y: auto; scrollbar-width: none; border-radius: 24px; }
-  html.ds-fit .pb > .ds::-webkit-scrollbar { display: none; }
+  .pb .ds-sbox > .ds { min-width: 0; }
+  html.ds-fit .pb .ds-sbox > .ds { height: calc(var(--pb-vh) - 64px); overflow-y: auto; scrollbar-width: none; border-radius: 24px; }
+  html.ds-fit .pb .ds-sbox > .ds::-webkit-scrollbar { display: none; }
+  /* a phone (17 Nov, her pick A): as the prototypes above. The groups as tabs and the group's note on top, then one
+     window-tall frame that scrolls inside, with the theme icon in its top left corner, where the prototypes have it */
+  .ds-area, .ds-sbox { display: contents; }
+  .ds-fpanel, .ds-theme { display: none; }
+  .ds-one .pb-steps, .ds-one .pb-controls { display: none; }
+  .ds-one .ds-area { display: flex; flex-direction: column; height: var(--pb-sh, 100svh); }
+  .ds-one .ds-fpanel { display: flex; flex-direction: column; gap: 10px; flex: none; padding: 4px 0 12px; }
+  .ds-one .ds-sbox { display: block; position: relative; flex: 1 1 auto; min-height: 0; }
+  .ds-one .ds-sbox > .ds { height: 100%; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; border-radius: 24px; }
+  .ds-one .ds-sbox > .ds::-webkit-scrollbar { display: none; }
+  .ds-one .ds-sbox .ds-frame { min-height: 100%; padding-top: 60px; }   /* room under the theme icon */
+  .ds-one .ds-theme { display: grid; position: absolute; top: 8px; left: 8px; z-index: 2; width: 36px; height: 36px; background: var(--pb-page-bg, #fff); }
   html.ds-fit .ds-frame { min-height: 100%; }
   .ds-frames { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
   .ds-frame { grid-column: span 1; display: flex; flex-direction: column; gap: var(--space-xl); padding: 32px; border-radius: 24px; background: var(--color-surface-primary); min-width: 0; box-shadow: inset 0 0 0 1px var(--color-border-primary); }   /* the app page colour is close to the band: a hairline keeps the frame visible */
@@ -124,10 +136,33 @@
     root.innerHTML = '<div class="pb-story"><div class="pb-head"><p class="pb-eyebrow">Njorda app</p><h2 class="pb-title">The design system, live</h2>' +
       '<p class="pb-intro">The parts the prototypes above are built from, each with its states. Switch the theme: everything reads the same tokens.</p></div>' +
       '<ol class="pb-steps" aria-label="Components"></ol><div class="pb-controls"><div class="pb-seg" role="group" aria-label="Theme"><button type="button" data-theme-pick="light">Light</button><button type="button" data-theme-pick="dark">Dark</button></div></div>' +
-      '</div><div class="ds" id="ds-screen"></div>';
+      '</div><div class="ds-area"><div class="ds-fpanel"><div class="pb-fchips" role="group" aria-label="Components"></div><p class="pb-fnote"></p></div>' +
+      '<div class="ds-sbox"><div class="ds" id="ds-screen"></div><button type="button" class="pb-ficon ds-theme"></button></div></div>';
     var screen = document.getElementById('ds-screen'), steps = root.querySelector('.pb-steps'), api;
-    function paintSwitch() { root.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-pick') === st.theme)); }); }
+    var chips = root.querySelector('.ds-fpanel .pb-fchips'), fnote = root.querySelector('.ds-fpanel .pb-fnote'), themeBtn = root.querySelector('.ds-theme');
+    var MOON = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>', SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+    function paintTheme() {
+      var dark = st.theme === 'dark';
+      themeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (dark ? SUN : MOON) + '</svg>';
+      themeBtn.setAttribute('aria-label', dark ? 'Light theme' : 'Dark theme'); themeBtn.title = themeBtn.getAttribute('aria-label');
+    }
+    themeBtn.onclick = function () { st.theme = st.theme === 'dark' ? 'light' : 'dark'; screen.setAttribute('data-theme', st.theme); paintSwitch(); };
+    STATES.forEach(function (x, i) { var b = document.createElement('button'); b.type = 'button'; b.className = 'pb-fchip'; b.textContent = x.label; b.onclick = function () { api.go(i); }; chips.appendChild(b); });
+    function paintChips(g) {
+      [].forEach.call(chips.children, function (b, k) { if (k === g) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+      var c = chips.children[g]; if (c) chips.scrollLeft = Math.max(0, c.offsetLeft - (chips.clientWidth - c.offsetWidth) / 2);
+      fnote.innerHTML = STATES[g].note;
+    }
+    function lockNote() {   // the note keeps the height of the longest one, so the frame never changes size
+      fnote.style.minHeight = ''; var keep = fnote.innerHTML, max = 0;
+      STATES.forEach(function (x) { fnote.innerHTML = x.note; max = Math.max(max, fnote.offsetHeight); });
+      fnote.innerHTML = keep; if (max) fnote.style.minHeight = max + 'px';
+    }
+    var VH = 0, TOPBAR = 0;
+    function sizeArea() { root.style.setProperty('--pb-sh', Math.max(420, Math.round((VH || window.innerHeight) - TOPBAR - 12)) + 'px'); }
+    function paintSwitch() { paintTheme(); root.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-pick') === st.theme)); }); }
     function paintSteps(g) {
+      paintChips(g);
       steps.innerHTML = STATES.map(function (x, i) {
         return '<li><button type="button" class="pb-step" data-step="' + i + '"' + (i === g ? ' aria-current="step"' : '') + '><span class="pb-step__t">' + x.label + '</span><span class="pb-step__d">' + x.note + '</span></button></li>';
       }).join('');
@@ -138,7 +173,13 @@
     root.querySelectorAll('[data-theme-pick]').forEach(function (b) { b.onclick = function () { st.theme = b.getAttribute('data-theme-pick'); screen.setAttribute('data-theme', st.theme); paintSwitch(); }; });
     screen.setAttribute('data-theme', st.theme); paintSwitch();
     api = render({ screen: screen, onGroup: paintSteps });
-    function layout() { root.classList.toggle('is-stacked', root.clientWidth < 860); }
+    var lockedW = -1;
+    function layout() {
+      root.classList.toggle('is-stacked', root.clientWidth < 860);
+      var one = root.clientWidth < 560; root.classList.toggle('ds-one', one);
+      if (one) { sizeArea(); if (root.clientWidth !== lockedW) { lockedW = root.clientWidth; lockNote(); } }
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { lockedW = -1; layout(); });
     layout(); window.addEventListener('resize', layout);
     function report() { if (EMBED && !document.documentElement.classList.contains('ds-fit')) parent.postMessage({ type: 'pb-height', h: document.body.scrollHeight }, '*'); }
     if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
@@ -148,6 +189,9 @@
         if (m.type !== 'pb-vh') return;
         document.documentElement.classList.toggle('ds-fit', !!m.pin);
         document.documentElement.style.setProperty('--pb-vh', m.h + 'px');
+        if (!m.pin && VH && m.h > VH) {} else VH = m.h;   // a phone: the smallest height (the address bar shown), so the frame doesn't follow the bar
+        if (typeof m.top === 'number') TOPBAR = m.top;
+        layout();
         if (m.bg) { document.documentElement.style.setProperty('--pb-page-bg', m.bg); document.documentElement.classList.add('pb-on-band'); }
         if (m.site) { document.documentElement.classList.toggle('pb-site-dark', m.site === 'dark'); if (m.site !== st.theme) { st.theme = m.site; screen.setAttribute('data-theme', st.theme); paintSwitch(); } }
         report();

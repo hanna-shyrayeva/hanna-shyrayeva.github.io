@@ -19,8 +19,26 @@
       .then(function () { return new Promise(function (r) { setTimeout(r, 60); }); });   // a beat to lay out (not rAF: it pauses in hidden frames)
   }
 
+  /* light / dark (17 Nov): the app opens in the block's theme (#theme=), and a switch later (the Light / Dark
+     control, or the case page's own theme) reaches the app live, without a reload (shared/b2b-theme.js) */
+  var css = document.createElement('style');
+  css.textContent = '.pb-screen[data-theme="dark"] { background: #0f0f11 !important; }';
+  document.head.appendChild(css);
+  function watch(screen) {
+    if (screen._themeWatch || !window.MutationObserver) return;
+    screen._themeWatch = new MutationObserver(function () {
+      var t = screen.getAttribute('data-theme');
+      [].forEach.call(screen.querySelectorAll('.pb-app'), function (x) { try { if (x.contentWindow && x.contentWindow.B2BTheme) x.contentWindow.B2BTheme(t); } catch (e) {} });
+    });
+    screen._themeWatch.observe(screen, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
   window.PBFrame = function (screen, url, title) {
+    watch(screen);
+    url += (url.indexOf('#') < 0 ? '#' : '&') + 'theme=' + (screen.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
     var f = document.createElement('iframe');
+    // once loaded, the app takes the block's theme as it is now: the case page's dark theme can arrive while the app is still loading (17 Nov)
+    f.addEventListener('load', function () { try { var t = screen.getAttribute('data-theme'); if (f.contentWindow && f.contentWindow.B2BTheme) f.contentWindow.B2BTheme(t === 'dark' ? 'dark' : 'light'); } catch (e) {} });
     f.className = 'pb-app';
     f.title = title;
     f.src = url;

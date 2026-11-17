@@ -355,13 +355,13 @@
   .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); }
   .alloc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
   .alloc .card { padding: var(--space-lg); }
-  svg.rp-map path[fill="var(--surface-1)"] { fill: #e6e6ea; }   /* the world map: land with no holdings in a visible light grey, as in every report */
+  svg.rp-map path[fill="var(--surface-1)"] { fill: var(--dk-f-e6e6ea, #e6e6ea); }   /* the world map: land with no holdings in a visible light grey, as in every report */
   .rp-legend > .rp-leg-row { padding-top: 7px !important; padding-bottom: 7px !important; }   /* dividers between the legend rows of every allocation chart (her ask, 10 Nov) */
   .rp-legend > .rp-leg-row:not(:first-child) { position: relative; }   /* the divider is a straight line drawn above the row, not the border of the rounded hover row */
-  .rp-legend > .rp-leg-row:not(:first-child)::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 0.5px solid #e6e6ea; }
+  .rp-legend > .rp-leg-row:not(:first-child)::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 0.5px solid var(--dk-l-e6e6ea, #e6e6ea); }
   .rp-legend > .rp-leg-head { padding-bottom: 8px !important; }
-  .rp-leg-row[data-l="No info"] .rp-leg-dot { background: #cbd5e1 !important; box-shadow: none; }   /* No info and Other: the same greys in every legend, pies and the region map alike (her ask, 10 Nov) */
-  .rp-leg-row[data-l="Other"] .rp-leg-dot { background: #94a3b8 !important; box-shadow: none; }
+  .rp-leg-row[data-l="No info"] .rp-leg-dot { background: var(--dk-b-cbd5e1, #cbd5e1) !important; box-shadow: none; }   /* No info and Other: the same greys in every legend, pies and the region map alike (her ask, 10 Nov) */
+  .rp-leg-row[data-l="Other"] .rp-leg-dot { background: var(--dk-b-94a3b8, #94a3b8) !important; box-shadow: none; }
   /* one spacing inside every section of the Analysis tab, the same as in the builder report (her ask, 10 Nov): 16 px between cards across and down */
   #tab-analysis .stats, #tab-analysis .two, #tab-analysis .alloc, #tab-analysis .wi-grid { gap: 16px; }
   #tab-analysis .stats { margin-bottom: 16px; }
@@ -382,7 +382,7 @@
   #tab-analysis .wi-tbl { width: calc(100% + 16px); margin: 0 -8px; }   /* row hover in the report tables, as in the builder and holdings collection reports */
   #tab-analysis .wi-tbl tr > :first-child { padding-left: 8px; }
   #tab-analysis .wi-tbl tr > :last-child { padding-right: 8px; }
-  #tab-analysis .wi-tbl tbody tr:hover td { background: #fafafa; }
+  #tab-analysis .wi-tbl tbody tr:hover td { background: var(--dk-b-fafafa, #fafafa); }
   #tab-analysis .wi-tbl tbody tr:hover td:first-child { border-radius: 8px 0 0 8px; }
   #tab-analysis .wi-tbl tbody tr:hover td:last-child { border-radius: 0 8px 8px 0; }   /* fixed columns: nothing moves when the switcher changes the numbers */
   .wi-tbl th:first-child, .wi-tbl td:first-child { padding-left: 0; }
@@ -546,7 +546,7 @@
   .mail .cs-textarea { border: none; border-radius: 0; margin: 0; min-height: 120px; }
   .mail-btn { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); font-size: var(--font-size-xs); color: var(--text-secondary); background: var(--surface-1); }
   .meet { display: flex; flex-direction: column; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--surface-1); border-radius: var(--radius); text-align: center; }   /* grey panel, QR centred, caption under it */
-  .meet #qr { flex: none; width: 128px; height: 128px; padding: var(--space-sm); border-radius: var(--radius-xs); background: #fff; }
+  .meet #qr { flex: none; width: 128px; height: 128px; padding: var(--space-sm); border-radius: var(--radius-xs); background: white; }   /* white in both themes: a QR code scans dark on light (a keyword, so build-b2b-dark.js leaves it) */
   .meet ol { margin: 0; padding-left: 18px; font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.6; }
   .meet .btn { margin-top: var(--space-md); }
   tr.fresh td { animation: fresh 2.4s ease-out; }
@@ -562,6 +562,8 @@
     .col-id, .col-upd { display: none; }
   }
 </style>
+<link rel="stylesheet" href="shared/b2b-dark.css">
+<script src="shared/b2b-theme.js" data-app="hc"></script>
 </head>
 <body class="hc-app">
 
