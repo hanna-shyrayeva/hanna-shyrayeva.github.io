@@ -209,6 +209,11 @@
   [data-reveal] { transition: opacity .5s ease, transform .5s ease; }
   html.intro-on [data-reveal] { opacity: 0; transform: translateY(12px); }
   html.intro-on [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* case covers: a light and a dark picture, the one for the site theme shows (dark: images/*-dark.png) */
+  .th-dark { display: none !important; }
+  [data-theme="dark"] .th-dark { display: block !important; }
+  [data-theme="dark"] .th-light { display: none !important; }
 </style>
 </head>
 <body>
@@ -367,7 +372,7 @@
     <div class="next">
       <p class="next__label">Next case study</p>
       <a class="next__card" href="portfolio-builder.html">
-        <div class="next__img next__img--portal"><img src="images/pb-card.png" width="1800" height="1000" alt="" loading="lazy"></div>
+        <div class="next__img next__img--portal"><img class="th-light" src="images/pb-card.png" width="1800" height="1000" alt="" loading="lazy"><img class="th-dark" src="images/pb-card-dark.png" width="1800" height="1000" alt="" loading="lazy"></div>
         <div class="next__body">
           <p class="next__meta">Njorda, 2022 to 2026</p>
           <h3>Advisor portal and portfolio builder</h3>

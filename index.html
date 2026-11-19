@@ -172,6 +172,11 @@
   [data-reveal] { transition: opacity .5s ease, transform .5s ease; }
   html.intro-on [data-reveal] { opacity: 0; transform: translateY(12px); }
   html.intro-on [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* case covers: a light and a dark picture, the one for the site theme shows (dark: images/*-dark.png) */
+  .th-dark { display: none !important; }
+  [data-theme="dark"] .th-dark { display: block !important; }
+  [data-theme="dark"] .th-light { display: none !important; }
 </style>
 </head>
 <body>
@@ -212,7 +217,7 @@
   <section class="wide section" id="work">
     <div class="section__head"><h2>Selected case studies</h2></div>
     <a class="case" href="njorda-app.html">
-      <div class="case__img"><img src="images/njorda-card.png" width="1800" height="1000" alt="The Njorda app: Overview on the web, and the AI assistant answering a question on a phone" loading="lazy"></div>
+      <div class="case__img"><img class="th-light" src="images/njorda-card.png" width="1800" height="1000" alt="The Njorda app: Risk and spread on the web, and the AI assistant answering a question on a phone" loading="lazy"><img class="th-dark" src="images/njorda-card-dark.png" width="1800" height="1000" alt="The Njorda app: Risk and spread on the web, and the AI assistant answering a question on a phone" loading="lazy"></div>
       <div class="case__body">
         <p class="case__meta">Njorda, 2023 to 2026</p>
         <h3>From a dashboard to an assistant</h3>
@@ -222,7 +227,7 @@
       </div>
     </a>
     <a class="case" href="portfolio-builder.html">
-      <div class="case__img case__img--portal"><img src="images/pb-card.png" width="1800" height="1000" alt="The Njorda advisor portal: the client list, and the portfolio builder comparing a client’s current portfolio with a proposal" loading="lazy"></div>
+      <div class="case__img case__img--portal"><img class="th-light" src="images/pb-card.png" width="1800" height="1000" alt="The Njorda advisor portal: the client list, and the portfolio builder comparing a client’s current portfolio with a proposal" loading="lazy"><img class="th-dark" src="images/pb-card-dark.png" width="1800" height="1000" alt="The Njorda advisor portal: the client list, and the portfolio builder comparing a client’s current portfolio with a proposal" loading="lazy"></div>
       <div class="case__body">
         <p class="case__meta">Njorda, 2022 to 2026</p>
         <h3>Advisor portal and portfolio builder</h3>
